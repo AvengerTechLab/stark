@@ -8,24 +8,27 @@ Tick a task only with evidence: the commit, the file created, or the command run
 
 ---
 
-## Current Phase — Phase 0: Discovery
+## Current Phase — Phase 2: Architecture
 
-> Started 2026-10-03 on the PO's instruction to set up the repository structure.
+> Started 2026-10-03 on the PO's instruction ("เริ่ม Phase 2 ได้เลย"). Phase 1 of the standard is folded into
+> Phase 0 for Stark.
 
-- [x] **S0-1. Engineering package** — `CLAUDE.md`, `SPEC.md`, `ARCHITECTURE.md`, `SECURITY.md`, `TASKS.md`, and the
-  `engineering-playbook` skill with section 11 written for Stark (`.claude/skills/engineering-playbook/`).
-- [x] **S0-2. Open questions answered** — Q-01 to Q-11 answered: `SPEC.md` §6 D-06 to D-17 (2026-10-03).
-- [x] **S0-3. Problem, scope, actors, success criteria** — problem statement (`SPEC.md` §2) and non-goals (§3)
-  approved by the PO (D-18); scope by release (§3), actors (§4) and success criteria (§9) from D-06 to D-17.
-
-All Phase 0 tasks are done. Moving to Phase 2 waits on the PO.
+- [~] **S2-1. Design draft** — components, data flow, timing budget, failure handling and hosting test in
+  `ARCHITECTURE.md` §4–8. *Done when:* Q-16 is answered, hosting is picked and the draft matches every answer.
+- [x] **S2-2. Rule semantics** — `SPEC.md` D-19, D-20; reflected in `ARCHITECTURE.md` §4–5.
+- [x] **S2-3. Owner interface and storage** — `SPEC.md` D-21 (web page and Telegram bot), D-22 (PostgreSQL).
+- [ ] **S2-4. Hosting** — candidates decided (`SPEC.md` D-23). `[!]` waiting on the PO for the budget (Q-16); then run the checks in
+  `ARCHITECTURE.md` §8 from each candidate and record the results here; the PO picks (D-13).
+- [x] **S2-5. Email method** — `SPEC.md` D-24 (SMTP of the PO's existing mailbox).
+- [ ] **S2-6. Provider terms and channel limits read** in primary sources — `[!]` blocked: this session's network
+  policy denies `www.bitkub.com`, `www.binance.com`, `developers.binance.com`, `developers.line.biz`,
+  `core.telegram.org` and `discord.com`. Needs those hosts allowed, or the PO reads them. Replaces the two matching
+  Discovered Work items.
 
 ## Next Phases (not started)
 
 Detailed tasks are written when the phase becomes current. Order from the standard §2.2 and §4–10.
 
-- **Phase 2 — Architecture:** fill `ARCHITECTURE.md`; test that Bitkub and Binance answer from two or three candidate
-  hosts, then the PO picks hosting (`SPEC.md` D-13).
 - **Phase 3 — Contracts:** `API.md`, `DATABASE.md`, event contracts; AI contracts before v1.2 (`SPEC.md` D-06).
 - **Phase 4 — Security:** threat model in `SECURITY.md` §2.
 - **Phase 5 — Foundation:** project skeleton, lint / typecheck / test / build commands, CI workflow, `.env.example`,
@@ -45,11 +48,6 @@ Detailed tasks are written when the phase becomes current. Order from the standa
 - [ ] **`tdd` skill not copied.** The avengertech copy's "AvengerTech" section is specific to that repo. Copy it
   in Phase 5 with a Stark section that names this repo's commands.
 - [ ] **`.gitignore` is the generic Node template.** Review it in Phase 5 (stack: `SPEC.md` D-13).
-- [ ] **Read Bitkub's and Binance's terms of use** for storing market data and sending alerts (`SPEC.md` D-08, risk
-  table). Bitkub's terms were not found; Binance's developer docs were blocked by the network policy of the session
-  that collected `ARCHITECTURE.md` §2.1. Needed before Phase 2.
-- [ ] **Verify channel limits** for Telegram, LINE, Discord and email (`ARCHITECTURE.md` §2.2). The LINE quota comes
-  from secondary sources only. Needed before Phase 2.
 - [ ] **MSAP V1.0 path in `AvengerTechLab/avengertech` not confirmed** (`SPEC.md` D-03). The PO supplied the file in
   a session on 2026-10-03; adding it to avengertech is outside this repository's scope. Once it is there,
   `CLAUDE.md` §6a names its path. Needed before gate A-1.
@@ -58,4 +56,12 @@ Detailed tasks are written when the phase becomes current. Order from the standa
 
 ## Done
 
-(nothing yet)
+### Phase 0: Discovery (2026-10-03)
+
+> Started 2026-10-03 on the PO's instruction to set up the repository structure.
+
+- [x] **S0-1. Engineering package** — `CLAUDE.md`, `SPEC.md`, `ARCHITECTURE.md`, `SECURITY.md`, `TASKS.md`, and the
+  `engineering-playbook` skill with section 11 written for Stark (`.claude/skills/engineering-playbook/`).
+- [x] **S0-2. Open questions answered** — Q-01 to Q-11 answered: `SPEC.md` §6 D-06 to D-17 (2026-10-03).
+- [x] **S0-3. Problem, scope, actors, success criteria** — problem statement (`SPEC.md` §2) and non-goals (§3)
+  approved by the PO (D-18); scope by release (§3), actors (§4) and success criteria (§9) from D-06 to D-17.

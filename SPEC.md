@@ -1,6 +1,7 @@
 # Stark — Specification (Phase 0: Discovery)
 
-Status: **discovery complete** (2026-10-03). Every decision appears in §6 with who decided and when.
+Status: **discovery complete** (2026-10-03); Phase 2 question Q-16 (hosting budget) is open. Every decision appears in §6
+with who decided and when.
 Structure follows the Discovery outputs in `AVENGERTECH_ENGINEERING_INTEGRATION_SYSTEM_V1.md` §4.
 
 ---
@@ -81,6 +82,12 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | Q-09 | ~~Success criteria~~ Answered: D-14, §9 | — | — |
 | Q-10 | ~~Which audits besides A-1?~~ Answered: D-16 | — | — |
 | Q-11 | ~~How is email sent; what if LINE's free quota runs out?~~ Answered: D-17 | — | — |
+| Q-12 | ~~Which rule types does v1.0 need?~~ Answered: D-19 | — | — |
+| Q-13 | ~~How often does a rule alert while its condition stays true?~~ Answered: D-20 | — | — |
+| Q-14 | ~~How does the PO manage rules and channels?~~ Answered: D-21 | — | — |
+| Q-15 | ~~Which storage engine?~~ Answered: D-22 | — | — |
+| Q-16 | Candidates answered: D-23. Still open: what monthly hosting cost is acceptable? | Hosting choice (D-13) | **PO to name the budget** before VPS candidates are rented |
+| Q-17 | ~~How is email sent?~~ Answered: D-24 | — | — |
 
 ## 6. Decisions
 
@@ -104,6 +111,12 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | D-16 | (Q-10) Besides A-1, an MSAP audit of the affected area runs before each scope expansion: before v1.1, before v1.2 (adds AI), before any user other than the PO (against D-10), and before any link to `ai-trading` (against D-11). A full audit runs every quarter. Mode C (runtime) only once Stark is hosted, authorised each time. Claude asks the PO before every audit (D-05) | PO (accepted the recommendation) | 2026-10-03 | Audit before risk changes, and catch drift that builds up between releases |
 | D-17 | (Q-11) The email sending method is chosen in Phase 2. LINE sends stop when the free monthly quota is reached and the PO is told through another channel; a paid LINE plan needs the PO's approval | PO (accepted the recommendation) | 2026-10-03 | No money is spent without approval (`CLAUDE.md` §6) |
 | D-18 | The problem statement in §2 and the five non-goals in §3 | PO ("ใช้ร่างตามนั้น และยืนยันทั้ง 5 ข้อ") | 2026-10-03 | Closes Phase 0 discovery (S0-3) |
+| D-19 | (Q-12) v1.0 rule types: price above a level, price below a level, and percentage change compared with the price N minutes earlier, upwards, downwards or either way. Each rule names its pair and its quote (THB or USDT) | PO (chose "ระดับ + เปลี่ยนแปลง %", "เทียบราคา N นาทีก่อน") | 2026-10-03 | The PO wants both level and movement alerts from the first release |
+| D-20 | (Q-13) A rule alerts once when its condition becomes true (the price crosses the level, or the change crosses the percentage), and re-arms only after the condition has become false again | PO (accepted the recommendation) | 2026-10-03 | A price hovering at the level does not flood the channels |
+| D-21 | (Q-14) The PO manages rules and channels through both a small web page with a single owner login and Telegram bot commands, from v1.0. The bot obeys commands only from the PO's own Telegram chat | PO (chose "ทั้งสองตั้งแต่ v1.0") | 2026-10-03 | The PO wants both ways from the first release |
+| D-22 | (Q-15) Storage is PostgreSQL | PO (chose PostgreSQL over the recommended SQLite) | 2026-10-03 | Not stated; leaves room to grow beyond one user |
+| D-23 | (Q-16, part) Hosting candidates for the test in `ARCHITECTURE.md` §8: the PO's own machine and one or two low-cost VPS providers in Asia. The budget is still open | PO | 2026-10-03 | Not stated |
+| D-24 | (Q-17) Email is sent through the SMTP server of a mailbox the PO already has, with an app password | PO (accepted the recommendation) | 2026-10-03 | No new account and no cost |
 
 ## 7. Constraints
 
@@ -117,7 +130,7 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | Risk | Why it matters | Mitigation |
 |---|---|---|
 | Scope overlaps with `ai-trading` | Two systems doing the same job, diverging data | Kept fully separate in v1 (D-11); any later link needs a contract and a re-audit first |
-| Data provider terms forbid redistribution or storage | Legal exposure; may block alerts to others | Read Bitkub's and Binance's terms before Phase 2 (`TASKS.md` Discovered Work) |
+| Data provider terms forbid redistribution or storage | Legal exposure; may block alerts to others | Read Bitkub's and Binance's terms in Phase 2 (`TASKS.md` S2-6) |
 | LINE's free monthly message quota runs out | LINE alerts stop, or sending more costs money | Count LINE sends and stop at the free quota, then tell the PO (D-17) |
 | Binance refuses requests from the hosting region (HTTP 451) | No USDT prices, so USDT alerts fail | Hosting is picked only after Bitkub and Binance are reached from each candidate host (D-13) |
 | An alert is read as investment advice | Legal and trust risk | Wording decided by the PO; disclaimer if the audience is beyond the PO |

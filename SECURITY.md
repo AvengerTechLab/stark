@@ -20,8 +20,9 @@ To be assessed in Phase 4. v1 has one user, the PO (`SPEC.md` D-10).
 
 | Threat | Applies when |
 |---|---|
-| Leaked provider or channel credentials (Telegram bot token, LINE channel token, Discord webhook URL, email credentials) | Always; four channels in v1.0 (D-09) |
+| Leaked provider or channel credentials (Telegram bot token, LINE channel token, Discord webhook URL, email app password, PostgreSQL password) | Always; four channels in v1.0 (D-09) |
 | Alert spoofing or tampered alert rules | Anyone but the PO reaches Stark's interface (v1 must allow only the PO, D-10) |
+| Telegram bot commands from someone other than the PO | The bot accepts commands (D-21); it must check the sender's chat ID |
 | Unauthenticated access to rules, data or history | Stark exposes an API or UI; v1 needs single-owner authentication (D-10) |
 | Cost abuse of paid APIs (data provider, model) | Paid data plan (D-08: free first) or AI (v1.2; budget set before v1.2, D-12) |
 | Alert flood exhausting a channel's quota or rate limit | Always; LINE's free quota is small; LINE stops at the quota (D-17) |
