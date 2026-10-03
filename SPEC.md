@@ -1,6 +1,6 @@
 # Stark — Specification (Phase 0: Discovery)
 
-Status: **draft, waiting on the PO.** Nothing below §1 is decided until it appears in §6 with who decided and when.
+Status: **discovery complete** (2026-10-03). Every decision appears in §6 with who decided and when.
 Structure follows the Discovery outputs in `AVENGERTECH_ENGINEERING_INTEGRATION_SYSTEM_V1.md` §4.
 
 ---
@@ -22,7 +22,16 @@ Evidence only. Each line names its source.
 
 ## 2. Problem statement
 
-*PO to write.* One paragraph: who has which problem today, and what changes for them when Stark works.
+Approved by the PO (D-18), drafted in Thai from D-06 to D-17:
+
+> PO ติดตามราคาคริปโตทั้งราคาบาท (Bitkub) และราคา USDT (Binance) และต้องการรู้ทันทีเมื่อราคาเข้าเงื่อนไขที่ตั้งไว้
+> ผ่านช่องทางที่ใช้อยู่ ได้แก่ Telegram, LINE, Discord และอีเมล โดยไม่ต้องเฝ้าหน้าจอ เมื่อ Stark ใช้งานได้ PO จะได้รับแจ้งเตือน
+> ภายใน 10 วินาที ไม่พลาด และรู้ทันทีถ้าระบบเองมีปัญหา
+
+In English: the PO follows crypto prices in THB (Bitkub) and USDT (Binance) and wants to know at once when a price
+meets a condition they set, on the channels they already use (Telegram, LINE, Discord, email), without watching a
+screen. When Stark works, the PO gets each alert within 10 seconds, misses none, and learns at once if Stark itself
+has a problem.
 
 ## 3. Scope and non-goals
 
@@ -36,7 +45,7 @@ user in v1 is the PO (D-10), and Stark is fully separate from `ai-trading` (D-11
 | v1.1 | Summary reports (daily or weekly market summary) from fixed templates (D-12) | No |
 | v1.2 | News analysis: summarise or classify market news | Yes |
 
-*PO to confirm.* Proposed non-goals:
+Non-goals, confirmed by the PO (D-18):
 
 | Area | Proposed non-goal |
 |---|---|
@@ -94,6 +103,7 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | D-15 | How SC-1 to SC-4 are measured, as written in §9: SC-1 ends when the channel's API accepts the message, and SC-2 replays the stored price log against the rules | PO (accepted the proposal) | 2026-10-03 | Both can be measured automatically from Stark's side |
 | D-16 | (Q-10) Besides A-1, an MSAP audit of the affected area runs before each scope expansion: before v1.1, before v1.2 (adds AI), before any user other than the PO (against D-10), and before any link to `ai-trading` (against D-11). A full audit runs every quarter. Mode C (runtime) only once Stark is hosted, authorised each time. Claude asks the PO before every audit (D-05) | PO (accepted the recommendation) | 2026-10-03 | Audit before risk changes, and catch drift that builds up between releases |
 | D-17 | (Q-11) The email sending method is chosen in Phase 2. LINE sends stop when the free monthly quota is reached and the PO is told through another channel; a paid LINE plan needs the PO's approval | PO (accepted the recommendation) | 2026-10-03 | No money is spent without approval (`CLAUDE.md` §6) |
+| D-18 | The problem statement in §2 and the five non-goals in §3 | PO ("ใช้ร่างตามนั้น และยืนยันทั้ง 5 ข้อ") | 2026-10-03 | Closes Phase 0 discovery (S0-3) |
 
 ## 7. Constraints
 

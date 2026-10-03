@@ -15,9 +15,10 @@ Tick a task only with evidence: the commit, the file created, or the command run
 - [x] **S0-1. Engineering package** — `CLAUDE.md`, `SPEC.md`, `ARCHITECTURE.md`, `SECURITY.md`, `TASKS.md`, and the
   `engineering-playbook` skill with section 11 written for Stark (`.claude/skills/engineering-playbook/`).
 - [x] **S0-2. Open questions answered** — Q-01 to Q-11 answered: `SPEC.md` §6 D-06 to D-17 (2026-10-03).
-- [~] **S0-3. Problem, scope, actors, success criteria** — scope by release (`SPEC.md` §3), actors (§4) and success
-  criteria (§9) written from D-06 to D-17. `[!]` waiting on the PO: the problem statement (§2) and the proposed
-  non-goals (§3).
+- [x] **S0-3. Problem, scope, actors, success criteria** — problem statement (`SPEC.md` §2) and non-goals (§3)
+  approved by the PO (D-18); scope by release (§3), actors (§4) and success criteria (§9) from D-06 to D-17.
+
+All Phase 0 tasks are done. Moving to Phase 2 waits on the PO.
 
 ## Next Phases (not started)
 
