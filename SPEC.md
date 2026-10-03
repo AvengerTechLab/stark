@@ -70,8 +70,8 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | Q-07 | ~~Does Stark use AI, and for what?~~ Answered: D-06, D-12 | — | — |
 | Q-08 | ~~Stack and hosting~~ Answered: D-13 (hosting is picked in Phase 2 after reachability tests) | — | — |
 | Q-09 | ~~Success criteria~~ Answered: D-14, §9 | — | — |
-| Q-10 | Which audits besides A-1 (D-02)? | Audit plan after v1 | **Re-audit the affected area before each scope expansion** (AI, against D-06 and D-12; users beyond the PO, against D-10; a broker; or a link to `ai-trading`, against D-11); **periodic audit every N features or every quarter, PO to set N**; Mode C (runtime) only once Stark is hosted, authorised each time |
-| Q-11 | (from D-09) How is email sent: a mailbox's SMTP or an email-sending service? And if LINE's free monthly message quota runs out, is a paid LINE plan acceptable? | Phase 2 (email), alert volume (LINE) | **Decide the email method in Phase 2**; **for LINE, stop LINE sends at the free quota and tell the PO**, so nothing is spent without approval (`CLAUDE.md` §6) |
+| Q-10 | ~~Which audits besides A-1?~~ Answered: D-16 | — | — |
+| Q-11 | ~~How is email sent; what if LINE's free quota runs out?~~ Answered: D-17 | — | — |
 
 ## 6. Decisions
 
@@ -91,6 +91,9 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | D-12 | (Q-07) v1.1 summary reports are built from fixed templates with deterministic figures, no AI. The monthly model budget for v1.2 news analysis is set by the PO before v1.2 starts, from a cost estimate Claude prepares then | PO (accepted both recommendations) | 2026-10-03 | Keeps v1.0 and v1.1 free of model cost and model error; the budget needs real news volumes and current model prices |
 | D-13 | (Q-08) The stack is TypeScript on Node.js. Hosting is picked by the PO in Phase 2 after Claude tests that Bitkub and Binance answer from two or three candidate hosts | PO (accepted both recommendations) | 2026-10-03 | Shares tooling with avengertech; Binance's reported region blocks (HTTP 451) make an untested host a risk |
 | D-14 | (Q-09) v1.0 success criteria SC-1 to SC-4 in §9: alerts within 10 seconds, 30 days with no missed or false alerts, failures reported within 15 minutes, 4 weeks of real use | PO (chose all four criteria and each number) | 2026-10-03 | Measurable acceptance for v1.0 |
+| D-15 | How SC-1 to SC-4 are measured, as written in §9: SC-1 ends when the channel's API accepts the message, and SC-2 replays the stored price log against the rules | PO (accepted the proposal) | 2026-10-03 | Both can be measured automatically from Stark's side |
+| D-16 | (Q-10) Besides A-1, an MSAP audit of the affected area runs before each scope expansion: before v1.1, before v1.2 (adds AI), before any user other than the PO (against D-10), and before any link to `ai-trading` (against D-11). A full audit runs every quarter. Mode C (runtime) only once Stark is hosted, authorised each time. Claude asks the PO before every audit (D-05) | PO (accepted the recommendation) | 2026-10-03 | Audit before risk changes, and catch drift that builds up between releases |
+| D-17 | (Q-11) The email sending method is chosen in Phase 2. LINE sends stop when the free monthly quota is reached and the PO is told through another channel; a paid LINE plan needs the PO's approval | PO (accepted the recommendation) | 2026-10-03 | No money is spent without approval (`CLAUDE.md` §6) |
 
 ## 7. Constraints
 
@@ -105,7 +108,7 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 |---|---|---|
 | Scope overlaps with `ai-trading` | Two systems doing the same job, diverging data | Kept fully separate in v1 (D-11); any later link needs a contract and a re-audit first |
 | Data provider terms forbid redistribution or storage | Legal exposure; may block alerts to others | Read Bitkub's and Binance's terms before Phase 2 (`TASKS.md` Discovered Work) |
-| LINE's free monthly message quota runs out | LINE alerts stop, or sending more costs money | Q-11; count LINE sends and stop at the quota |
+| LINE's free monthly message quota runs out | LINE alerts stop, or sending more costs money | Count LINE sends and stop at the free quota, then tell the PO (D-17) |
 | Binance refuses requests from the hosting region (HTTP 451) | No USDT prices, so USDT alerts fail | Hosting is picked only after Bitkub and Binance are reached from each candidate host (D-13) |
 | An alert is read as investment advice | Legal and trust risk | Wording decided by the PO; disclaimer if the audience is beyond the PO |
 | Missed or late alerts | The core promise fails silently | Observability and alerting on Stark itself, defined in Phase 2 |
@@ -114,7 +117,7 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 
 v1.0 is accepted when all four hold (D-14). The numbers are the PO's.
 
-| ID | Criterion | Target | How it is measured (proposed, **PO to confirm**) |
+| ID | Criterion | Target | How it is measured (D-15) |
 |---|---|---|---|
 | SC-1 | Alerts are timely | Within **10 seconds** of the price meeting the condition, on every channel | From the timestamp of the price update that meets the condition to the moment the channel's API accepts the message. Email is held to the same target because the PO did not exempt it; delivery after the email service accepts the message is outside Stark's control |
 | SC-2 | No missed or false alerts | **30 consecutive days** | Replay the stored price log against the stored rules and compare with the alerts actually sent: zero missing, zero extra |

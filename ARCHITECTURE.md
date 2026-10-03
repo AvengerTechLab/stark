@@ -36,7 +36,7 @@ logic) and never decide an alert or a financial action on their own.
 | Boundary | Question | Waits on |
 |---|---|---|
 | Stark ↔ data providers | Bitkub (THB) and Binance (USDT), decided in `SPEC.md` D-08; facts in §2.1 | Terms of use not yet read |
-| Stark ↔ alert channels | Telegram, LINE, Discord, email (`SPEC.md` D-09); delivery guarantees, retries, per-channel on/off; facts in §2.2 | Email method and LINE quota: Q-11 |
+| Stark ↔ alert channels | Telegram, LINE, Discord, email (`SPEC.md` D-09); delivery guarantees, retries, per-channel on/off; facts in §2.2 | Email method: Phase 2; LINE stops at its free quota (`SPEC.md` D-17) |
 | Stark ↔ `ai-trading` | None in v1: no calls, no shared data (`SPEC.md` D-11) | — |
 | Stark ↔ AvengerTech site | Whether Stark feeds `/api/v1/labs/status` and `/api/v1/activity` (avengertech backlog 3.0); those contracts are fixed in avengertech `src/lib/api/schemas.ts` | Later release |
 
@@ -64,7 +64,7 @@ test fakes are the same for all four (`CLAUDE.md` §5).
 | Telegram | A bot token and a chat ID | Not yet read |
 | LINE | A LINE Official Account with Messaging API (LINE Notify is closed) | Free plan in Thailand reported as 300 messages a month; reply messages free, push messages counted (secondary sources; `developers.line.biz` was blocked by the network policy of the session that collected this). Must be verified before Phase 2 |
 | Discord | A webhook URL | Not yet read |
-| Email | An SMTP mailbox or an email-sending service (Q-11) | Not yet read |
+| Email | An SMTP mailbox or an email-sending service, chosen in Phase 2 (`SPEC.md` D-17) | Not yet read |
 
 ### 2.3 What the success criteria imply
 

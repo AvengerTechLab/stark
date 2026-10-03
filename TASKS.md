@@ -14,10 +14,10 @@ Tick a task only with evidence: the commit, the file created, or the command run
 
 - [x] **S0-1. Engineering package** — `CLAUDE.md`, `SPEC.md`, `ARCHITECTURE.md`, `SECURITY.md`, `TASKS.md`, and the
   `engineering-playbook` skill with section 11 written for Stark (`.claude/skills/engineering-playbook/`).
-- [~] **S0-2. Open questions answered** — Q-01 to Q-09 answered (`SPEC.md` D-06 to D-14). `[!]` waiting on the PO:
-  Q-10, Q-11, and how SC-1 to SC-4 are measured (`SPEC.md` §9).
-  *Done when:* every question has a row in `SPEC.md` §6.
-- [ ] **S0-3. Problem, scope, actors, success criteria** written from the answers (`SPEC.md` §2–4, §9).
+- [x] **S0-2. Open questions answered** — Q-01 to Q-11 answered: `SPEC.md` §6 D-06 to D-17 (2026-10-03).
+- [~] **S0-3. Problem, scope, actors, success criteria** — scope by release (`SPEC.md` §3), actors (§4) and success
+  criteria (§9) written from D-06 to D-17. `[!]` waiting on the PO: the problem statement (§2) and the proposed
+  non-goals (§3).
 
 ## Next Phases (not started)
 
@@ -33,6 +33,8 @@ Detailed tasks are written when the phase becomes current. Order from the standa
 - **Gate A-1 — MSAP audit** (`SPEC.md` D-02): Modes A + B once Phase 6 works end to end on fakes. Ask the PO
   before starting (D-05). No real alert is sent until A-1 passes its Stop Gate; findings are fixed only in a
   separate, PO-authorised remediation change, then re-audited (MSAP §28–29).
+- **Later audits** (`SPEC.md` D-16): before v1.1, before v1.2, before any user other than the PO, before any link to
+  `ai-trading`, and a full audit every quarter. Ask the PO before each (D-05).
 
 ---
 
