@@ -1,7 +1,8 @@
 # Stark — Architecture
 
-Status: **not started (Phase 2).** It is written once `SPEC.md` Q-01 to Q-08 are answered. This file holds the
-target shape from the engineering standard (§6) so the decisions have a place to land. No technology is chosen.
+Status: **not started (Phase 2).** `SPEC.md` Q-01 to Q-08 are answered (D-06 to D-13); Phase 2 fills this file. It
+holds the target shape from the engineering standard (§6) so the decisions have a place to land. The stack is
+TypeScript on Node.js (D-13); hosting is picked in Phase 2.
 
 This file is the "original design" that MSAP audits compare the built system against to find drift (MSAP §18,
 `SPEC.md` D-02). Record each boundary and dependency rule here when it is decided.
@@ -10,12 +11,12 @@ This file is the "original design" that MSAP audits compare the built system aga
 
 ## 1. Layers
 
-From the standard §6. Each layer gets a concrete component once the stack is decided.
+From the standard §6. Each layer gets a concrete component in Phase 2.
 
 ```text
 Market data provider / user / AvengerTech site
         ↓
-Interface layer            — API and/or scheduled jobs                     (Q-05, Q-08)
+Interface layer            — API and/or scheduled jobs                     (D-10, D-13)
         ↓
 Application / orchestration — schedules data reads, evaluates alert rules
         ↓
@@ -35,8 +36,8 @@ logic) and never decide an alert or a financial action on their own.
 | Boundary | Question | Waits on |
 |---|---|---|
 | Stark ↔ data providers | Bitkub (THB) and Binance (USDT), decided in `SPEC.md` D-08; facts in §2.1 | Terms of use not yet read |
-| Stark ↔ alert channel | Which channel, delivery guarantees, retries | Q-04 |
-| Stark ↔ `ai-trading` | Separate, caller, or shared data | Q-06 |
+| Stark ↔ alert channels | Telegram, LINE, Discord, email (`SPEC.md` D-09); delivery guarantees, retries, per-channel on/off; facts in §2.2 | Email method: Phase 2; LINE stops at its free quota (`SPEC.md` D-17) |
+| Stark ↔ `ai-trading` | None in v1: no calls, no shared data (`SPEC.md` D-11) | — |
 | Stark ↔ AvengerTech site | Whether Stark feeds `/api/v1/labs/status` and `/api/v1/activity` (avengertech backlog 3.0); those contracts are fixed in avengertech `src/lib/api/schemas.ts` | Later release |
 
 ### 2.1 Data providers (v1.0)
@@ -53,7 +54,29 @@ must be checked before Phase 2.
 | Region | — | Reported to refuse US and many cloud IP ranges with HTTP 451, public endpoints included (web search, several user reports) |
 | Terms of use | Not found yet | Use is under the Binance Terms of Use; redistribution to third parties is not covered by personal use (web search) |
 
+### 2.2 Alert channels (v1.0)
 
+Collected 2026-10-03. Each channel sits behind one channel interface so that switching it on or off, retries and
+test fakes are the same for all four (`CLAUDE.md` §5).
+
+| Channel | What Stark needs | Known limit or caveat |
+|---|---|---|
+| Telegram | A bot token and a chat ID | Not yet read |
+| LINE | A LINE Official Account with Messaging API (LINE Notify is closed) | Free plan in Thailand reported as 300 messages a month; reply messages free, push messages counted (secondary sources; `developers.line.biz` was blocked by the network policy of the session that collected this). Must be verified before Phase 2 |
+| Discord | A webhook URL | Not yet read |
+| Email | An SMTP mailbox or an email-sending service, chosen in Phase 2 (`SPEC.md` D-17) | Not yet read |
+
+### 2.3 What the success criteria imply
+
+From `SPEC.md` §9 (D-14), to be designed in Phase 2:
+
+- SC-1 (10 seconds end to end) leaves little room for polling plus four channel sends; Bitkub's public WebSocket
+  (§2.1) and Binance's streams are the likely sources, with polling as a fallback.
+- SC-2 needs every price update and every alert decision stored, so that a replay can prove nothing was missed.
+- SC-3 needs Stark to watch its own data feeds and channels, and to report a failure through a channel other than the
+  one that failed.
+
+## 3. Contracts
 
 Written before implementation (standard §7): API, data and event contracts, plus AI contracts
 before v1.2 (`SPEC.md` D-06). They go in `API.md` and `DATABASE.md` when Phase 3 starts.

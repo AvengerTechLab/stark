@@ -21,7 +21,8 @@ The standard says no module starts with "start coding" (§2.2). Stark is in Phas
 constraints are being defined in `SPEC.md`. Until the product owner (PO) closes the open questions there:
 
 - Do not add application code, a framework, a package manager or dependencies.
-- Do not choose a stack, data provider, broker, exchange or alert channel. These are PO decisions.
+- The stack, data providers and alert channels are decided (`SPEC.md` D-08, D-09, D-13). Do not change them, and do
+  not choose hosting, a broker or another exchange. These are PO decisions.
 - Documents may describe options and recommend one; they must mark it **PO to confirm**.
 
 The phase order after discovery is in `TASKS.md`.
@@ -90,7 +91,7 @@ Update the matching record in the same change. Tick a task only with evidence.
 
 ## 8. Commands
 
-None yet: there is no code. When the stack is chosen, the first engineering task adds lint, typecheck, test and
+None yet: there is no code. The stack is TypeScript on Node.js (`SPEC.md` D-13); Phase 5 adds lint, typecheck, test and
 build commands and a CI workflow, and lists them here in CI order.
 
 For a documentation-only change, the report says which checks were skipped and why.
