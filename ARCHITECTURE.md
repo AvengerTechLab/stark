@@ -35,7 +35,7 @@ logic) and never decide an alert or a financial action on their own.
 | Boundary | Question | Waits on |
 |---|---|---|
 | Stark ↔ data providers | Bitkub (THB) and Binance (USDT), decided in `SPEC.md` D-08; facts in §2.1 | Terms of use not yet read |
-| Stark ↔ alert channel | Which channel, delivery guarantees, retries | Q-04 |
+| Stark ↔ alert channels | Telegram, LINE, Discord, email (`SPEC.md` D-09); delivery guarantees, retries, per-channel on/off; facts in §2.2 | Email method and LINE quota: Q-11 |
 | Stark ↔ `ai-trading` | Separate, caller, or shared data | Q-06 |
 | Stark ↔ AvengerTech site | Whether Stark feeds `/api/v1/labs/status` and `/api/v1/activity` (avengertech backlog 3.0); those contracts are fixed in avengertech `src/lib/api/schemas.ts` | Later release |
 
@@ -53,7 +53,19 @@ must be checked before Phase 2.
 | Region | — | Reported to refuse US and many cloud IP ranges with HTTP 451, public endpoints included (web search, several user reports) |
 | Terms of use | Not found yet | Use is under the Binance Terms of Use; redistribution to third parties is not covered by personal use (web search) |
 
+### 2.2 Alert channels (v1.0)
 
+Collected 2026-10-03. Each channel sits behind one channel interface so that switching it on or off, retries and
+test fakes are the same for all four (`CLAUDE.md` §5).
+
+| Channel | What Stark needs | Known limit or caveat |
+|---|---|---|
+| Telegram | A bot token and a chat ID | Not yet read |
+| LINE | A LINE Official Account with Messaging API (LINE Notify is closed) | Free plan in Thailand reported as 300 messages a month; reply messages free, push messages counted (secondary sources; `developers.line.biz` was blocked by the network policy of the session that collected this). Must be verified before Phase 2 |
+| Discord | A webhook URL | Not yet read |
+| Email | An SMTP mailbox or an email-sending service (Q-11) | Not yet read |
+
+## 3. Contracts
 
 Written before implementation (standard §7): API, data and event contracts, plus AI contracts
 before v1.2 (`SPEC.md` D-06). They go in `API.md` and `DATABASE.md` when Phase 3 starts.

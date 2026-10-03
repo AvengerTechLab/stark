@@ -20,10 +20,11 @@ To be assessed in Phase 4, once `SPEC.md` Q-04 and Q-05 are answered.
 
 | Threat | Applies when |
 |---|---|
-| Leaked provider or channel credentials (bot tokens, webhook URLs) | Always |
+| Leaked provider or channel credentials (Telegram bot token, LINE channel token, Discord webhook URL, email credentials) | Always; four channels in v1.0 (D-09) |
 | Alert spoofing or tampered alert rules | Anyone but the PO can change rules |
 | Unauthenticated access to rules, data or history | Stark exposes an API or UI (Q-05) |
 | Cost abuse of paid APIs (data provider, model) | Paid data plan (D-08: free first) or AI (v1.2, D-06; budget Q-07) |
+| Alert flood exhausting a channel's quota or rate limit | Always; LINE's free quota is small (D-09, Q-11) |
 | Prompt injection from market news or other fetched text | AI reads news, from v1.2 (`SPEC.md` D-06) |
 | Redistribution of licensed market data | Alerts go beyond the PO (Q-05); Bitkub and Binance terms not yet read (D-08) |
 
