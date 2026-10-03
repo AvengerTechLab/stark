@@ -64,7 +64,7 @@ test fakes are the same for all four (`CLAUDE.md` §5).
 | Telegram | A bot token and a chat ID | Not yet read |
 | LINE | A LINE Official Account with Messaging API (LINE Notify is closed) | Free plan in Thailand reported as 300 messages a month; reply messages free, push messages counted (secondary sources; `developers.line.biz` was blocked by the network policy of the session that collected this). Must be verified before Phase 2 |
 | Discord | A webhook URL | Not yet read |
-| Email | An SMTP mailbox or an email-sending service, chosen in Phase 2 (`SPEC.md` D-17) | Not yet read |
+| Email | SMTP of the PO's existing mailbox with an app password (`SPEC.md` D-24) | The mailbox provider's sending limits: not yet read |
 
 ### 2.3 What the success criteria imply
 
@@ -90,12 +90,12 @@ boundaries below are module boundaries inside that process, so they can be split
 |---|---|---|---|
 | Feed adapters (Bitkub, Binance) | Connect to each provider, turn each message into one normalised `PriceTick`, reconnect, fall back to REST polling | Provider APIs; the `PriceTick` type | Rules, channels, storage |
 | Price log | Append every `PriceTick` with exchange time and received time (SC-2 replay) | Storage | Feeds, rules |
-| Rule engine | Evaluate each tick against the PO's rules and decide whether an alert fires. Pure, deterministic code with no I/O (`CLAUDE.md` §4) | `PriceTick`, `Rule` types only | Anything with I/O |
+| Rule engine | Evaluate each tick against the PO's rules (level above/below, percentage change against the price N minutes earlier: `SPEC.md` D-19) and decide whether an alert fires, once per crossing with re-arm (D-20). Pure, deterministic code with no I/O (`CLAUDE.md` §4); the caller passes in the reference price from the price log | `PriceTick`, `Rule` types only | Anything with I/O |
 | Alert dispatcher | Take each alert decision, store it, send to the channels switched on for the whole system and for that rule (D-09), record each delivery result | Channel interface, storage | Provider APIs |
 | Channel adapters (Telegram, LINE, Discord, email) | One interface: `send(alert) → delivered / failed(reason)`. LINE counts sends and refuses past the free quota (D-17) | Channel APIs | Rules, feeds |
 | Health monitor | Watch feed freshness and delivery failures; tell the PO through a working channel within 15 minutes (SC-3) | Feeds' last-tick times, dispatcher results, channel interface | Rule engine |
-| Owner interface | Lets the PO view prices, manage rules and switch channels; only the PO can use it (D-10). Form: **PO to confirm** (Q-14) | Rule store, channel settings, price log | Provider and channel APIs directly |
-| Storage | Rules, channel settings, price log, alert decisions, delivery results. Engine: **PO to confirm** (Q-15) | — | — |
+| Owner interface | Lets the PO view prices, manage rules and switch channels; only the PO can use it (D-10). Two forms from v1.0 (`SPEC.md` D-21): a web page with a single owner login, and Telegram bot commands accepted only from the PO's chat | Rule store, channel settings, price log | Provider and channel APIs directly |
+| Storage | Rules, channel settings, price log, alert decisions, delivery results, in PostgreSQL (`SPEC.md` D-22) | — | — |
 
 Dependency direction: interface and adapters → application (dispatcher, monitor) → domain (rule engine and types).
 The domain imports nothing from the layers around it. A test for each adapter uses a fake of the external system
@@ -121,6 +121,10 @@ Bitkub / Binance stream ──► feed adapter ──► PriceTick ──► pri
 
 `PriceTick` (proposed): exchange, symbol, quote currency (THB or USDT), price as a decimal string, exchange time,
 received time. Prices are never stored or compared as binary floating point (playbook §6, items 1–4).
+
+Open for Phase 3 contracts: which stored tick counts as "the price N minutes earlier" for a percentage rule
+(proposed: the last tick at or before that moment), and what happens when there is no tick that old yet (proposed:
+the rule does not fire).
 
 ## 6. Timing budget for SC-1 (10 seconds)
 
@@ -150,4 +154,6 @@ The 60-second stale threshold and the retry limits are proposals; they are fixed
 
 Before the PO picks hosting, Claude or the PO runs the same read-only checks from each candidate host: Bitkub
 `GET /api/v3/market/ticker`, Binance's public ticker, and one WebSocket connection to each, recording the HTTP status
-and response time. No API key is used and nothing is sent to any channel. Candidates: **PO to confirm** (Q-16).
+and response time. No API key is used and nothing is sent to any channel. Candidates: the PO's machine and one or two low-cost VPS
+providers in Asia (`SPEC.md` D-23); renting a VPS waits on the budget (Q-16). PostgreSQL (D-22) runs on the chosen
+host or as a managed service; that is decided with the host.
