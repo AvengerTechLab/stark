@@ -17,13 +17,15 @@ Tick a task only with evidence: the commit, the file created, or the command run
   `ARCHITECTURE.md` §4–8. *Done when:* Q-16 is answered, hosting is picked and the draft matches every answer.
 - [x] **S2-2. Rule semantics** — `SPEC.md` D-19, D-20; reflected in `ARCHITECTURE.md` §4–5.
 - [x] **S2-3. Owner interface and storage** — `SPEC.md` D-21 (web page and Telegram bot), D-22 (PostgreSQL).
-- [ ] **S2-4. Hosting** — candidates decided (`SPEC.md` D-23). `[!]` waiting on the PO for the budget (Q-16); then run the checks in
-  `ARCHITECTURE.md` §8 from each candidate and record the results here; the PO picks (D-13).
+- [ ] **S2-4. Hosting** — candidates decided (`SPEC.md` D-23); one always-on host runs everything, not Vercel
+  (D-25). Provider and budget deferred (D-26): likely `ai-trading`'s provider, separate machine. Next: run the checks
+  in `ARCHITECTURE.md` §8 from each candidate and record the results here; the PO picks (D-13).
 - [x] **S2-5. Email method** — `SPEC.md` D-24 (SMTP of the PO's existing mailbox).
-- [ ] **S2-6. Provider terms and channel limits read** in primary sources — `[!]` blocked: this session's network
-  policy denies `www.bitkub.com`, `www.binance.com`, `developers.binance.com`, `developers.line.biz`,
-  `core.telegram.org` and `discord.com`. Needs those hosts allowed, or the PO reads them. Replaces the two matching
-  Discovered Work items.
+- [~] **S2-6. Provider terms and channel limits read** in primary sources — done for the Bitkub and Binance APIs
+  and terms, Telegram, LINE (including the Thailand quota) and Discord (`ARCHITECTURE.md` §2.1–2.2, each source
+  named). Still open:
+  - `[!]` Binance's List of Prohibited Countries: waits on the PO (`SPEC.md` Q-18).
+  - `[!]` Gmail sending limits: `support.google.com` is not an allowed host.
 
 ## Next Phases (not started)
 
