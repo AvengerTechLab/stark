@@ -66,6 +66,16 @@ test fakes are the same for all four (`CLAUDE.md` §5).
 | Discord | A webhook URL | Not yet read |
 | Email | An SMTP mailbox or an email-sending service (Q-11) | Not yet read |
 
+### 2.3 What the success criteria imply
+
+From `SPEC.md` §9 (D-14), to be designed in Phase 2:
+
+- SC-1 (10 seconds end to end) leaves little room for polling plus four channel sends; Bitkub's public WebSocket
+  (§2.1) and Binance's streams are the likely sources, with polling as a fallback.
+- SC-2 needs every price update and every alert decision stored, so that a replay can prove nothing was missed.
+- SC-3 needs Stark to watch its own data feeds and channels, and to report a failure through a channel other than the
+  one that failed.
+
 ## 3. Contracts
 
 Written before implementation (standard §7): API, data and event contracts, plus AI contracts

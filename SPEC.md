@@ -69,7 +69,7 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | Q-06 | ~~What is Stark's boundary with `ai-trading`?~~ Answered: D-11 | — | — |
 | Q-07 | ~~Does Stark use AI, and for what?~~ Answered: D-06, D-12 | — | — |
 | Q-08 | ~~Stack and hosting~~ Answered: D-13 (hosting is picked in Phase 2 after reachability tests) | — | — |
-| Q-09 | Success criteria: how will we know v1 works? | Acceptance | — |
+| Q-09 | ~~Success criteria~~ Answered: D-14, §9 | — | — |
 | Q-10 | Which audits besides A-1 (D-02)? | Audit plan after v1 | **Re-audit the affected area before each scope expansion** (AI, against D-06 and D-12; users beyond the PO, against D-10; a broker; or a link to `ai-trading`, against D-11); **periodic audit every N features or every quarter, PO to set N**; Mode C (runtime) only once Stark is hosted, authorised each time |
 | Q-11 | (from D-09) How is email sent: a mailbox's SMTP or an email-sending service? And if LINE's free monthly message quota runs out, is a paid LINE plan acceptable? | Phase 2 (email), alert volume (LINE) | **Decide the email method in Phase 2**; **for LINE, stop LINE sends at the free quota and tell the PO**, so nothing is spent without approval (`CLAUDE.md` §6) |
 
@@ -90,6 +90,7 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | D-11 | (Q-06) Stark and `ai-trading` are fully separate in v1: neither calls the other and they share no data. A later link needs its own contract and a re-audit first (Q-10) | PO | 2026-10-03 | Recommendation accepted: keeps v1's boundary simple and avoids two systems diverging on shared data |
 | D-12 | (Q-07) v1.1 summary reports are built from fixed templates with deterministic figures, no AI. The monthly model budget for v1.2 news analysis is set by the PO before v1.2 starts, from a cost estimate Claude prepares then | PO (accepted both recommendations) | 2026-10-03 | Keeps v1.0 and v1.1 free of model cost and model error; the budget needs real news volumes and current model prices |
 | D-13 | (Q-08) The stack is TypeScript on Node.js. Hosting is picked by the PO in Phase 2 after Claude tests that Bitkub and Binance answer from two or three candidate hosts | PO (accepted both recommendations) | 2026-10-03 | Shares tooling with avengertech; Binance's reported region blocks (HTTP 451) make an untested host a risk |
+| D-14 | (Q-09) v1.0 success criteria SC-1 to SC-4 in §9: alerts within 10 seconds, 30 days with no missed or false alerts, failures reported within 15 minutes, 4 weeks of real use | PO (chose all four criteria and each number) | 2026-10-03 | Measurable acceptance for v1.0 |
 
 ## 7. Constraints
 
@@ -111,4 +112,11 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 
 ## 9. Success criteria
 
-*PO to confirm* (Q-09).
+v1.0 is accepted when all four hold (D-14). The numbers are the PO's.
+
+| ID | Criterion | Target | How it is measured (proposed, **PO to confirm**) |
+|---|---|---|---|
+| SC-1 | Alerts are timely | Within **10 seconds** of the price meeting the condition, on every channel | From the timestamp of the price update that meets the condition to the moment the channel's API accepts the message. Email is held to the same target because the PO did not exempt it; delivery after the email service accepts the message is outside Stark's control |
+| SC-2 | No missed or false alerts | **30 consecutive days** | Replay the stored price log against the stored rules and compare with the alerts actually sent: zero missing, zero extra |
+| SC-3 | Stark reports its own failures | Within **15 minutes** | If prices cannot be read or an alert cannot be sent, the PO is told through another working channel; never silent |
+| SC-4 | Real use | **4 consecutive weeks** of the PO using Stark | The PO confirms; may overlap with SC-2 |
