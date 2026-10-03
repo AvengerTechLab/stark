@@ -14,8 +14,8 @@ Tick a task only with evidence: the commit, the file created, or the command run
 
 - [x] **S0-1. Engineering package** — `CLAUDE.md`, `SPEC.md`, `ARCHITECTURE.md`, `SECURITY.md`, `TASKS.md`, and the
   `engineering-playbook` skill with section 11 written for Stark (`.claude/skills/engineering-playbook/`).
-- [~] **S0-2. Open questions answered** — Q-01 to Q-06 answered (`SPEC.md` D-06 to D-11), Q-07 partly. `[!]` waiting
-  on the PO: Q-07 to Q-11.
+- [~] **S0-2. Open questions answered** — Q-01 to Q-08 answered (`SPEC.md` D-06 to D-13). `[!]` waiting on the PO:
+  Q-09 to Q-11.
   *Done when:* every question has a row in `SPEC.md` §6.
 - [ ] **S0-3. Problem, scope, actors, success criteria** written from the answers (`SPEC.md` §2–4, §9).
 
@@ -23,7 +23,8 @@ Tick a task only with evidence: the commit, the file created, or the command run
 
 Detailed tasks are written when the phase becomes current. Order from the standard §2.2 and §4–10.
 
-- **Phase 2 — Architecture:** fill `ARCHITECTURE.md`; choose the stack (Q-08).
+- **Phase 2 — Architecture:** fill `ARCHITECTURE.md`; test that Bitkub and Binance answer from two or three candidate
+  hosts, then the PO picks hosting (`SPEC.md` D-13).
 - **Phase 3 — Contracts:** `API.md`, `DATABASE.md`, event contracts; AI contracts before v1.2 (`SPEC.md` D-06).
 - **Phase 4 — Security:** threat model in `SECURITY.md` §2.
 - **Phase 5 — Foundation:** project skeleton, lint / typecheck / test / build commands, CI workflow, `.env.example`,
@@ -40,7 +41,7 @@ Detailed tasks are written when the phase becomes current. Order from the standa
 - [ ] **No CI yet.** There is nothing to check until Phase 5. Add the workflow with the first code.
 - [ ] **`tdd` skill not copied.** The avengertech copy's "AvengerTech" section is specific to that repo. Copy it
   in Phase 5 with a Stark section that names this repo's commands.
-- [ ] **`.gitignore` is the generic Node template.** Review it once the stack is chosen.
+- [ ] **`.gitignore` is the generic Node template.** Review it in Phase 5 (stack: `SPEC.md` D-13).
 - [ ] **Read Bitkub's and Binance's terms of use** for storing market data and sending alerts (`SPEC.md` D-08, risk
   table). Bitkub's terms were not found; Binance's developer docs were blocked by the network policy of the session
   that collected `ARCHITECTURE.md` §2.1. Needed before Phase 2.

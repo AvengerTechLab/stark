@@ -219,7 +219,7 @@ description: กฎเหล็กและหลักการทำงาน�
 
 ### 11.1 Full check
 
-ยังไม่มี: ยังไม่มีโค้ดและยังไม่ได้เลือก stack (`SPEC.md` Q-08)
+ยังไม่มี: ยังไม่มีโค้ด stack คือ TypeScript + Node.js (`SPEC.md` D-13) คำสั่งจะเพิ่มใน Phase 5
 
 - งานแก้เอกสารล้วนตอนนี้: อ่าน diff ทวนอีกรอบ ตรวจลิงก์และชื่อไฟล์ที่อ้างถึง แล้วบอกในรายงานว่าไม่มีคำสั่งให้รัน
 - Phase 5 ต้องเพิ่ม lint → typecheck → test → build และ CI workflow ลำดับเดียวกัน แล้วเขียนตารางคำสั่งลงหมวดนี้และ `CLAUDE.md` §8
@@ -258,7 +258,7 @@ description: กฎเหล็กและหลักการทำงาน�
 |---|---|
 | 2 synthetic ID / concurrency / invariant | ใช้เมื่อมี storage (Phase 3) |
 | 6 Money path | ใช้ทั้งหมดถ้า PO อนุมัติงานที่เกี่ยวกับคำสั่งซื้อขายหรือเงิน (`CLAUDE.md` §4); ถ้าไม่มี ยังใช้ข้อ 1–4 กับราคาและตัวเลขในเงื่อนไขแจ้งเตือน |
-| 7 Logging | รอ PO: เลือกรูปแบบตอนเลือก stack |
+| 7 Logging | เลือก logger และรูปแบบใน Phase 2 (stack: `SPEC.md` D-13) |
 | 8 Layer / DB / whitelabel | layer ตาม `ARCHITECTURE.md` §1 |
 | 10 การสื่อสาร | ใช้ตามเดิม รายงานใช้รูปแบบ `CLAUDE.md` §9 |
 

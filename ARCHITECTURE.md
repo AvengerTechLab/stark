@@ -1,7 +1,8 @@
 # Stark — Architecture
 
-Status: **not started (Phase 2).** It is written once `SPEC.md` Q-01 to Q-08 are answered. This file holds the
-target shape from the engineering standard (§6) so the decisions have a place to land. No technology is chosen.
+Status: **not started (Phase 2).** `SPEC.md` Q-01 to Q-08 are answered (D-06 to D-13); Phase 2 fills this file. It
+holds the target shape from the engineering standard (§6) so the decisions have a place to land. The stack is
+TypeScript on Node.js (D-13); hosting is picked in Phase 2.
 
 This file is the "original design" that MSAP audits compare the built system against to find drift (MSAP §18,
 `SPEC.md` D-02). Record each boundary and dependency rule here when it is decided.
@@ -10,12 +11,12 @@ This file is the "original design" that MSAP audits compare the built system aga
 
 ## 1. Layers
 
-From the standard §6. Each layer gets a concrete component once the stack is decided.
+From the standard §6. Each layer gets a concrete component in Phase 2.
 
 ```text
 Market data provider / user / AvengerTech site
         ↓
-Interface layer            — API and/or scheduled jobs                     (D-10, Q-08)
+Interface layer            — API and/or scheduled jobs                     (D-10, D-13)
         ↓
 Application / orchestration — schedules data reads, evaluates alert rules
         ↓

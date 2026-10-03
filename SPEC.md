@@ -33,7 +33,7 @@ user in v1 is the PO (D-10), and Stark is fully separate from `ai-trading` (D-11
 | Release | Delivers | Uses AI |
 |---|---|---|
 | v1.0 | Price tracking: read and store market data, and let the user view it. Rule alerts: user-defined, deterministic conditions (for example a price crossing a level) that send an alert | No |
-| v1.1 | Summary reports (daily or weekly market summary) | Open: Q-07 |
+| v1.1 | Summary reports (daily or weekly market summary) from fixed templates (D-12) | No |
 | v1.2 | News analysis: summarise or classify market news | Yes |
 
 *PO to confirm.* Proposed non-goals:
@@ -67,10 +67,10 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | Q-04 | ~~Which alert channel(s)?~~ Answered: D-09 | — | — |
 | Q-05 | ~~Who uses v1?~~ Answered: D-10 | — | — |
 | Q-06 | ~~What is Stark's boundary with `ai-trading`?~~ Answered: D-11 | — | — |
-| Q-07 | Partly answered by D-06: no AI in v1.0, AI news analysis in v1.2. Still open: are v1.1 summary reports written by AI or by fixed templates, and what monthly model budget is acceptable for v1.2? | v1.1 and v1.2 design, AI contracts, evals, cost | **Fixed templates for v1.1** (deterministic, no model cost); budget set before v1.2 starts |
-| Q-08 | Stack and hosting | Phase 2 | **TypeScript on Node.js**, to match the avengertech repo and share tooling; hosting for one user (D-10), in a region whose IP addresses Binance does not block (D-08) |
+| Q-07 | ~~Does Stark use AI, and for what?~~ Answered: D-06, D-12 | — | — |
+| Q-08 | ~~Stack and hosting~~ Answered: D-13 (hosting is picked in Phase 2 after reachability tests) | — | — |
 | Q-09 | Success criteria: how will we know v1 works? | Acceptance | — |
-| Q-10 | Which audits besides A-1 (D-02)? | Audit plan after v1 | **Re-audit the affected area before each scope expansion** (AI per Q-07, users beyond the PO, against D-10; a broker; or a link to `ai-trading`, against D-11); **periodic audit every N features or every quarter, PO to set N**; Mode C (runtime) only once Stark is hosted, authorised each time |
+| Q-10 | Which audits besides A-1 (D-02)? | Audit plan after v1 | **Re-audit the affected area before each scope expansion** (AI, against D-06 and D-12; users beyond the PO, against D-10; a broker; or a link to `ai-trading`, against D-11); **periodic audit every N features or every quarter, PO to set N**; Mode C (runtime) only once Stark is hosted, authorised each time |
 | Q-11 | (from D-09) How is email sent: a mailbox's SMTP or an email-sending service? And if LINE's free monthly message quota runs out, is a paid LINE plan acceptable? | Phase 2 (email), alert volume (LINE) | **Decide the email method in Phase 2**; **for LINE, stop LINE sends at the free quota and tell the PO**, so nothing is spent without approval (`CLAUDE.md` §6) |
 
 ## 6. Decisions
@@ -88,6 +88,8 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | D-09 | (Q-04) v1.0 sends alerts to all four channels: Telegram, LINE, Discord and email. Each channel can be switched on or off for the whole system, and each alert chooses its channels; a channel switched off system-wide sends nothing | PO (chose all four with on/off switches, "ครบ 4 ช่องทางใน v1.0", "ทั้งระบบ + รายแจ้งเตือน") | 2026-10-03 | The PO wants every channel available from the first release. Facts and caveats in `ARCHITECTURE.md` §2.2 |
 | D-10 | (Q-05) The only user of v1 is the PO: no user accounts or sign-up. Whatever Stark exposes is still protected so that only the PO can use it | PO | 2026-10-03 | Recommendation accepted: smallest security surface; keeps data use within personal use while provider terms are unread (D-08) |
 | D-11 | (Q-06) Stark and `ai-trading` are fully separate in v1: neither calls the other and they share no data. A later link needs its own contract and a re-audit first (Q-10) | PO | 2026-10-03 | Recommendation accepted: keeps v1's boundary simple and avoids two systems diverging on shared data |
+| D-12 | (Q-07) v1.1 summary reports are built from fixed templates with deterministic figures, no AI. The monthly model budget for v1.2 news analysis is set by the PO before v1.2 starts, from a cost estimate Claude prepares then | PO (accepted both recommendations) | 2026-10-03 | Keeps v1.0 and v1.1 free of model cost and model error; the budget needs real news volumes and current model prices |
+| D-13 | (Q-08) The stack is TypeScript on Node.js. Hosting is picked by the PO in Phase 2 after Claude tests that Bitkub and Binance answer from two or three candidate hosts | PO (accepted both recommendations) | 2026-10-03 | Shares tooling with avengertech; Binance's reported region blocks (HTTP 451) make an untested host a risk |
 
 ## 7. Constraints
 
@@ -103,7 +105,7 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | Scope overlaps with `ai-trading` | Two systems doing the same job, diverging data | Kept fully separate in v1 (D-11); any later link needs a contract and a re-audit first |
 | Data provider terms forbid redistribution or storage | Legal exposure; may block alerts to others | Read Bitkub's and Binance's terms before Phase 2 (`TASKS.md` Discovered Work) |
 | LINE's free monthly message quota runs out | LINE alerts stop, or sending more costs money | Q-11; count LINE sends and stop at the quota |
-| Binance refuses requests from the hosting region (HTTP 451) | No USDT prices, so USDT alerts fail | Choose hosting with Q-08 accordingly; test reachability from the chosen host before Phase 5 |
+| Binance refuses requests from the hosting region (HTTP 451) | No USDT prices, so USDT alerts fail | Hosting is picked only after Bitkub and Binance are reached from each candidate host (D-13) |
 | An alert is read as investment advice | Legal and trust risk | Wording decided by the PO; disclaimer if the audience is beyond the PO |
 | Missed or late alerts | The core promise fails silently | Observability and alerting on Stark itself, defined in Phase 2 |
 
