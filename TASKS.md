@@ -17,7 +17,7 @@ Tick a task only with evidence: the commit, the file created, or the command run
   `ARCHITECTURE.md` §4–8. *Done when:* Q-16 is answered, hosting is picked and the draft matches every answer.
 - [x] **S2-2. Rule semantics** — `SPEC.md` D-19, D-20; reflected in `ARCHITECTURE.md` §4–5.
 - [x] **S2-3. Owner interface and storage** — `SPEC.md` D-21 (web page and Telegram bot), D-22 (PostgreSQL).
-- [ ] **S2-4. Hosting** — candidates decided (`SPEC.md` D-23). `[!]` waiting on the PO for the budget (Q-16); then run the checks in
+- [ ] **S2-4. Hosting** — candidates decided (`SPEC.md` D-23); one always-on host runs everything, not Vercel (D-25). `[!]` waiting on the PO for the budget (Q-16); then run the checks in
   `ARCHITECTURE.md` §8 from each candidate and record the results here; the PO picks (D-13).
 - [x] **S2-5. Email method** — `SPEC.md` D-24 (SMTP of the PO's existing mailbox).
 - [ ] **S2-6. Provider terms and channel limits read** in primary sources — `[!]` blocked: this session's network

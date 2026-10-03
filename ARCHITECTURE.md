@@ -83,7 +83,9 @@ before v1.2 (`SPEC.md` D-06). They go in `API.md` and `DATABASE.md` when Phase 3
 
 ## 4. Components (v1.0, proposed)
 
-One Node.js process for v1.0: one user (D-10) needs no service split, and one process keeps SC-1 latency low. The
+One Node.js process on one always-on host for v1.0 (`SPEC.md` D-25): one user (D-10) needs no service split, and one
+process keeps SC-1 latency low. Vercel does not fit the core, because its functions end after a time limit and cannot
+hold the price streams open. The
 boundaries below are module boundaries inside that process, so they can be split later without changing contracts.
 
 | Component | Responsibility | Depends on | Must not depend on |
@@ -155,5 +157,5 @@ The 60-second stale threshold and the retry limits are proposals; they are fixed
 Before the PO picks hosting, Claude or the PO runs the same read-only checks from each candidate host: Bitkub
 `GET /api/v3/market/ticker`, Binance's public ticker, and one WebSocket connection to each, recording the HTTP status
 and response time. No API key is used and nothing is sent to any channel. Candidates: the PO's machine and one or two low-cost VPS
-providers in Asia (`SPEC.md` D-23); renting a VPS waits on the budget (Q-16). PostgreSQL (D-22) runs on the chosen
-host or as a managed service; that is decided with the host.
+providers in Asia (`SPEC.md` D-23); renting a VPS waits on the budget (Q-16). PostgreSQL (D-22) runs on the same host and
+accepts no connections from the internet (D-25).

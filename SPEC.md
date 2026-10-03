@@ -117,6 +117,7 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | D-22 | (Q-15) Storage is PostgreSQL | PO (chose PostgreSQL over the recommended SQLite) | 2026-10-03 | Not stated; leaves room to grow beyond one user |
 | D-23 | (Q-16, part) Hosting candidates for the test in `ARCHITECTURE.md` §8: the PO's own machine and one or two low-cost VPS providers in Asia. The budget is still open | PO | 2026-10-03 | Not stated |
 | D-24 | (Q-17) Email is sent through the SMTP server of a mailbox the PO already has, with an app password | PO (accepted the recommendation) | 2026-10-03 | No new account and no cost |
+| D-25 | v1 runs on one always-on host: web page, Telegram bot, feeds, rule engine, dispatcher, health monitor and PostgreSQL together, with the database not reachable from the internet. Vercel is not used for v1: its functions cannot hold the 24-hour price streams SC-1 needs. Feeding the AvengerTech site on Vercel stays a later release (§3) | PO (accepted the recommendation after asking whether Vercel fits) | 2026-10-03 | One place to deploy and secure for one user; avengertech already deploys on Vercel, which suits the later status feed |
 
 ## 7. Constraints
 
