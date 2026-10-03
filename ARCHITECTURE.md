@@ -15,7 +15,7 @@ From the standard §6. Each layer gets a concrete component once the stack is de
 ```text
 Market data provider / user / AvengerTech site
         ↓
-Interface layer            — API and/or scheduled jobs                     (Q-05, Q-08)
+Interface layer            — API and/or scheduled jobs                     (D-10, Q-08)
         ↓
 Application / orchestration — schedules data reads, evaluates alert rules
         ↓
@@ -36,7 +36,7 @@ logic) and never decide an alert or a financial action on their own.
 |---|---|---|
 | Stark ↔ data providers | Bitkub (THB) and Binance (USDT), decided in `SPEC.md` D-08; facts in §2.1 | Terms of use not yet read |
 | Stark ↔ alert channels | Telegram, LINE, Discord, email (`SPEC.md` D-09); delivery guarantees, retries, per-channel on/off; facts in §2.2 | Email method and LINE quota: Q-11 |
-| Stark ↔ `ai-trading` | Separate, caller, or shared data | Q-06 |
+| Stark ↔ `ai-trading` | None in v1: no calls, no shared data (`SPEC.md` D-11) | — |
 | Stark ↔ AvengerTech site | Whether Stark feeds `/api/v1/labs/status` and `/api/v1/activity` (avengertech backlog 3.0); those contracts are fixed in avengertech `src/lib/api/schemas.ts` | Later release |
 
 ### 2.1 Data providers (v1.0)

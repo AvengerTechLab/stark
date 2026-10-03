@@ -16,17 +16,17 @@ to design for once the scope is known (standard §8). Each control will name the
 
 ## 2. Threats to design for
 
-To be assessed in Phase 4, once `SPEC.md` Q-04 and Q-05 are answered.
+To be assessed in Phase 4. v1 has one user, the PO (`SPEC.md` D-10).
 
 | Threat | Applies when |
 |---|---|
 | Leaked provider or channel credentials (Telegram bot token, LINE channel token, Discord webhook URL, email credentials) | Always; four channels in v1.0 (D-09) |
-| Alert spoofing or tampered alert rules | Anyone but the PO can change rules |
-| Unauthenticated access to rules, data or history | Stark exposes an API or UI (Q-05) |
+| Alert spoofing or tampered alert rules | Anyone but the PO reaches Stark's interface (v1 must allow only the PO, D-10) |
+| Unauthenticated access to rules, data or history | Stark exposes an API or UI; v1 needs single-owner authentication (D-10) |
 | Cost abuse of paid APIs (data provider, model) | Paid data plan (D-08: free first) or AI (v1.2, D-06; budget Q-07) |
 | Alert flood exhausting a channel's quota or rate limit | Always; LINE's free quota is small (D-09, Q-11) |
 | Prompt injection from market news or other fetched text | AI reads news, from v1.2 (`SPEC.md` D-06) |
-| Redistribution of licensed market data | Alerts go beyond the PO (Q-05); Bitkub and Binance terms not yet read (D-08) |
+| Redistribution of licensed market data | Alerts go beyond the PO (not in v1, D-10); Bitkub and Binance terms not yet read (D-08) |
 
 ## 3. Audit
 

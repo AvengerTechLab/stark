@@ -14,8 +14,8 @@ Tick a task only with evidence: the commit, the file created, or the command run
 
 - [x] **S0-1. Engineering package** — `CLAUDE.md`, `SPEC.md`, `ARCHITECTURE.md`, `SECURITY.md`, `TASKS.md`, and the
   `engineering-playbook` skill with section 11 written for Stark (`.claude/skills/engineering-playbook/`).
-- [~] **S0-2. Open questions answered** — Q-01 to Q-04 answered (`SPEC.md` D-06 to D-09), Q-07 partly. `[!]` waiting
-  on the PO: Q-05 to Q-11.
+- [~] **S0-2. Open questions answered** — Q-01 to Q-06 answered (`SPEC.md` D-06 to D-11), Q-07 partly. `[!]` waiting
+  on the PO: Q-07 to Q-11.
   *Done when:* every question has a row in `SPEC.md` §6.
 - [ ] **S0-3. Problem, scope, actors, success criteria** written from the answers (`SPEC.md` §2–4, §9).
 
