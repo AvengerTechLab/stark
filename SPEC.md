@@ -1,6 +1,7 @@
 # Stark — Specification (Phase 0: Discovery)
 
-Status: **discovery complete** (2026-10-03); Phase 2 question Q-16 (hosting provider and budget) is deferred (D-26). Every decision appears in §6
+Status: **discovery complete** (2026-10-03). Q-16 (hosting provider and budget) is deferred (D-26); Phase 3
+questions Q-19 to Q-25 are open. Every decision appears in §6
 with who decided and when.
 Structure follows the Discovery outputs in `AVENGERTECH_ENGINEERING_INTEGRATION_SYSTEM_V1.md` §4.
 
@@ -89,6 +90,13 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | Q-16 | Which hosting provider, and what monthly budget? Deferred by the PO (D-26) | Hosting choice (D-13) | Decide together with `ai-trading`'s hosting; Stark's machine must still pass the test in `ARCHITECTURE.md` §8 |
 | Q-17 | ~~How is email sent?~~ Answered: D-24 | — | — |
 | Q-18 | ~~Is Thailand on Binance's List of Prohibited Countries?~~ Answered: D-27 | — | — |
+| Q-19 | Which price does a rule compare: the last traded price, or the bid/ask? | `EVENTS.md` §2.1 | **Last traded price**: what charts and the exchanges' apps show |
+| Q-20 | Does reaching the level exactly count (`>=`, `<=`), or must the price pass it (`>`, `<`)? | `EVENTS.md` §3.2 | **Reaching it counts** |
+| Q-21 | If a new or re-enabled rule's condition is already true, does it alert at once? | `EVENTS.md` §3.4 | **Yes, at once**, so the PO knows the condition already holds |
+| Q-22 | Alert message wording and language | `EVENTS.md` §4 | **Thai, one short message** with pair, condition, price, exchange and time, as in the example |
+| Q-23 | How long are stored prices kept? | `DATABASE.md` `price_ticks` | **35 days**: covers SC-2's 30-day window with margin |
+| Q-24 | About how many pairs will the PO watch? | Storage size, `DATABASE.md` §2 | PO to estimate |
+| Q-25 | When the PO wants an alert on both THB and USDT, is that two rules, one per quote? | `EVENTS.md` §3.1 | **Two rules**: each has its own price, state and history |
 
 ## 6. Decisions
 
@@ -122,6 +130,7 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | D-26 | (Q-16) The hosting budget is set later and can change. Stark will likely use the same hosting provider as `ai-trading` but its own machine, because `ai-trading` needs Windows Server; the OS for Stark's machine is chosen with the host. Sharing a provider shares no data or calls (D-11 holds) | PO ("ปรับทีหลังได้", "อาจจะคนละเครื่องแต่ host เดียวกัน ขึ้นอยู่กับ spec os") | 2026-10-03 | `ai-trading` needs hosting anyway; one provider for both is simpler to manage |
 | D-27 | (Q-18) Thailand is not on Binance's List of Prohibited Countries, so Binance stays the USDT source (D-08) | PO (checked the list: "ไม่อยู่") | 2026-10-03 | Binance Terms of Use clause 2.1(f) |
 | D-28 | Stark sends email through the PO's Gmail account signed in with OAuth ("Sign in with Google"), not an app password. This replaces the sign-in method in D-24 | PO (chose OAuth after Google's caveats on app passwords) | 2026-10-03 | Google does not recommend app passwords, they need 2-Step Verification, and Google revokes them when the account password changes |
+| D-29 | Close Phase 2 and start Phase 3 (contracts). Hosting (S2-4) is decided later with `ai-trading`'s hosting (D-26) and must be settled before Phase 5; the PO tests Bitkub and Binance from their own machine meanwhile | PO ("ทดสอบบนเครื่องของผม", "ปิด Phase 2 ตอนนี้ เริ่ม Phase 3 (contracts) เลย") | 2026-10-03 | Contracts do not depend on the host |
 
 ## 7. Constraints
 

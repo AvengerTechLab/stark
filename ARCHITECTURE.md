@@ -95,7 +95,8 @@ From `SPEC.md` §9 (D-14), to be designed in Phase 2:
 ## 3. Contracts
 
 Written before implementation (standard §7): API, data and event contracts, plus AI contracts
-before v1.2 (`SPEC.md` D-06). They go in `API.md` and `DATABASE.md` when Phase 3 starts.
+before v1.2 (`SPEC.md` D-06). v1.0 contracts: `EVENTS.md` (types, events, rule evaluation), `API.md` (owner
+interface), `DATABASE.md` (storage).
 
 ## 4. Components (v1.0, proposed)
 
@@ -166,7 +167,7 @@ chosen host.
 | LINE free quota reached | Stop LINE sends; tell the PO through another channel (D-17) |
 | Process restarts | Rules and settings reload from storage; no alert decision is lost because each is stored before it is sent |
 
-The 60-second stale threshold and the retry limits are proposals; they are fixed in Phase 3 contracts.
+The stale threshold and retry limits are specified in `EVENTS.md` §2.3–2.4.
 
 ## 8. Hosting test (D-13)
 
