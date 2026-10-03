@@ -1,6 +1,6 @@
 # Stark — Specification (Phase 0: Discovery)
 
-Status: **discovery complete** (2026-10-03); Phase 2 question Q-16 (hosting provider and budget) is deferred (D-26); Q-18 is open. Every decision appears in §6
+Status: **discovery complete** (2026-10-03); Phase 2 question Q-16 (hosting provider and budget) is deferred (D-26). Every decision appears in §6
 with who decided and when.
 Structure follows the Discovery outputs in `AVENGERTECH_ENGINEERING_INTEGRATION_SYSTEM_V1.md` §4.
 
@@ -88,7 +88,7 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | Q-15 | ~~Which storage engine?~~ Answered: D-22 | — | — |
 | Q-16 | Which hosting provider, and what monthly budget? Deferred by the PO (D-26) | Hosting choice (D-13) | Decide together with `ai-trading`'s hosting; Stark's machine must still pass the test in `ARCHITECTURE.md` §8 |
 | Q-17 | ~~How is email sent?~~ Answered: D-24 | — | — |
-| Q-18 | Is Thailand on Binance's List of Prohibited Countries (Binance Terms of Use clause 2.1(f))? If it is, does Stark keep Binance for USDT prices or switch source? | Binance as the USDT source (D-08) | **PO to check the list in the Binance app or website** (the list is a separate page Claude cannot open); if Thailand is listed, choose another USDT source before Phase 5 |
+| Q-18 | ~~Is Thailand on Binance's List of Prohibited Countries?~~ Answered: D-27 | — | — |
 
 ## 6. Decisions
 
@@ -117,9 +117,11 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | D-21 | (Q-14) The PO manages rules and channels through both a small web page with a single owner login and Telegram bot commands, from v1.0. The bot obeys commands only from the PO's own Telegram chat | PO (chose "ทั้งสองตั้งแต่ v1.0") | 2026-10-03 | The PO wants both ways from the first release |
 | D-22 | (Q-15) Storage is PostgreSQL | PO (chose PostgreSQL over the recommended SQLite) | 2026-10-03 | Not stated; leaves room to grow beyond one user |
 | D-23 | (Q-16, part) Hosting candidates for the test in `ARCHITECTURE.md` §8: the PO's own machine and one or two low-cost VPS providers in Asia. The budget is still open | PO | 2026-10-03 | Not stated |
-| D-24 | (Q-17) Email is sent through the SMTP server of a mailbox the PO already has, with an app password | PO (accepted the recommendation) | 2026-10-03 | No new account and no cost |
+| D-24 | (Q-17) Email is sent through the SMTP server of a mailbox the PO already has, with an app password (sign-in method replaced by D-28) | PO (accepted the recommendation) | 2026-10-03 | No new account and no cost |
 | D-25 | v1 runs on one always-on host: web page, Telegram bot, feeds, rule engine, dispatcher, health monitor and PostgreSQL together, with the database not reachable from the internet. Vercel is not used for v1: its functions cannot hold the 24-hour price streams SC-1 needs. Feeding the AvengerTech site on Vercel stays a later release (§3) | PO (accepted the recommendation after asking whether Vercel fits) | 2026-10-03 | One place to deploy and secure for one user; avengertech already deploys on Vercel, which suits the later status feed |
 | D-26 | (Q-16) The hosting budget is set later and can change. Stark will likely use the same hosting provider as `ai-trading` but its own machine, because `ai-trading` needs Windows Server; the OS for Stark's machine is chosen with the host. Sharing a provider shares no data or calls (D-11 holds) | PO ("ปรับทีหลังได้", "อาจจะคนละเครื่องแต่ host เดียวกัน ขึ้นอยู่กับ spec os") | 2026-10-03 | `ai-trading` needs hosting anyway; one provider for both is simpler to manage |
+| D-27 | (Q-18) Thailand is not on Binance's List of Prohibited Countries, so Binance stays the USDT source (D-08) | PO (checked the list: "ไม่อยู่") | 2026-10-03 | Binance Terms of Use clause 2.1(f) |
+| D-28 | Stark sends email through the PO's Gmail account signed in with OAuth ("Sign in with Google"), not an app password. This replaces the sign-in method in D-24 | PO (chose OAuth after Google's caveats on app passwords) | 2026-10-03 | Google does not recommend app passwords, they need 2-Step Verification, and Google revokes them when the account password changes |
 
 ## 7. Constraints
 
@@ -134,7 +136,7 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 |---|---|---|
 | Scope overlaps with `ai-trading` | Two systems doing the same job, diverging data | Kept fully separate in v1 (D-11); any later link needs a contract and a re-audit first |
 | Data provider terms forbid redistribution or storage | Legal exposure; may block alerts to others | Read 2026-10-03: both allow personal, non-commercial use, which fits D-10 (`ARCHITECTURE.md` §2.1). Any user beyond the PO needs Bitkub's written consent and a new review of Binance's terms |
-| The PO's country is on Binance's List of Prohibited Countries | Using Binance may break its terms; USDT prices may have to come from elsewhere | Q-18 |
+| The PO's country is on Binance's List of Prohibited Countries | Using Binance may break its terms; USDT prices may have to come from elsewhere | Checked by the PO: Thailand is not on it (D-27). The terms read are the ADGM Binance entities'; recheck if Binance moves Thai users to another entity | ~~Is Thailand on Binance's List of Prohibited Countries?~~ Answered: D-27 | — | — |
 | LINE's free monthly message quota runs out | LINE alerts stop, or sending more costs money | Count LINE sends and stop at the free quota, then tell the PO (D-17) |
 | Binance refuses requests from the hosting region (HTTP 451) | No USDT prices, so USDT alerts fail | Hosting is picked only after Bitkub and Binance are reached from each candidate host (D-13) |
 | An alert is read as investment advice | Legal and trust risk | Wording decided by the PO; disclaimer if the audience is beyond the PO |

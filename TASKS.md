@@ -20,12 +20,10 @@ Tick a task only with evidence: the commit, the file created, or the command run
 - [ ] **S2-4. Hosting** — candidates decided (`SPEC.md` D-23); one always-on host runs everything, not Vercel
   (D-25). Provider and budget deferred (D-26): likely `ai-trading`'s provider, separate machine. Next: run the checks
   in `ARCHITECTURE.md` §8 from each candidate and record the results here; the PO picks (D-13).
-- [x] **S2-5. Email method** — `SPEC.md` D-24 (SMTP of the PO's existing mailbox).
-- [~] **S2-6. Provider terms and channel limits read** in primary sources — done for the Bitkub and Binance APIs
-  and terms, Telegram, LINE (including the Thailand quota) and Discord (`ARCHITECTURE.md` §2.1–2.2, each source
-  named). Still open:
-  - `[!]` Binance's List of Prohibited Countries: waits on the PO (`SPEC.md` Q-18).
-  - `[!]` Gmail sending limits: `support.google.com` is not an allowed host.
+- [x] **S2-5. Email method** — `SPEC.md` D-24 (SMTP of the PO's Gmail), D-28 (signed in with OAuth).
+- [x] **S2-6. Provider terms and channel limits read** in primary sources — Bitkub and Binance APIs and terms,
+  Telegram, LINE (including the Thailand quota), Discord and Gmail (`ARCHITECTURE.md` §2.1–2.2, each source named);
+  Binance's List of Prohibited Countries checked by the PO (`SPEC.md` D-27).
 
 ## Next Phases (not started)
 
