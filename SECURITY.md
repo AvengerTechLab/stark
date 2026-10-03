@@ -27,6 +27,11 @@ To be assessed in Phase 4, once `SPEC.md` Q-03 to Q-05 are answered.
 | Prompt injection from market news or other fetched text | AI reads external text (Q-07) |
 | Redistribution of licensed market data | Alerts go beyond the PO (Q-03, Q-05) |
 
-## 3. Gaps
+## 3. Audit
+
+The first security review of the built system is MSAP audit A-1 (`SPEC.md` D-02), MSAP §16, before the first real
+alert. Phase 4 threat modelling is a design review, not an MSAP audit.
+
+## 4. Gaps
 
 All controls beyond §1 are open until the scope is decided.

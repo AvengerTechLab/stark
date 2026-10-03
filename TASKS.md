@@ -28,6 +28,9 @@ Detailed tasks are written when the phase becomes current. Order from the standa
 - **Phase 5 — Foundation:** project skeleton, lint / typecheck / test / build commands, CI workflow, `.env.example`,
   fakes for every external system; `CLAUDE.md` §8 lists the commands.
 - **Phase 6 — First feature**, test-first.
+- **Gate A-1 — MSAP audit** (`SPEC.md` D-02): Modes A + B once Phase 6 works end to end on fakes. Ask the PO
+  before starting (D-05). No real alert is sent until A-1 passes its Stop Gate; findings are fixed only in a
+  separate, PO-authorised remediation change, then re-audited (MSAP §28–29).
 
 ---
 
@@ -37,6 +40,9 @@ Detailed tasks are written when the phase becomes current. Order from the standa
 - [ ] **`tdd` skill not copied.** The avengertech copy's "AvengerTech" section is specific to that repo. Copy it
   in Phase 5 with a Stark section that names this repo's commands.
 - [ ] **`.gitignore` is the generic Node template.** Review it once the stack is chosen.
+- [ ] **MSAP V1.0 path in `AvengerTechLab/avengertech` not confirmed** (`SPEC.md` D-03). The PO supplied the file in
+  a session on 2026-10-03; adding it to avengertech is outside this repository's scope. Once it is there,
+  `CLAUDE.md` §6a names its path. Needed before gate A-1.
 
 ---
 

@@ -3,6 +3,9 @@
 Status: **not started (Phase 2).** It is written once `SPEC.md` Q-01 to Q-08 are answered. This file holds the
 target shape from the engineering standard (§6) so the decisions have a place to land. No technology is chosen.
 
+This file is the "original design" that MSAP audits compare the built system against to find drift (MSAP §18,
+`SPEC.md` D-02). Record each boundary and dependency rule here when it is decided.
+
 ---
 
 ## 1. Layers

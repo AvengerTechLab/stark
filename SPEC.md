@@ -58,18 +58,24 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | Q-07 | Does Stark use an AI model in v1, and for what? | AI contracts, evals, cost | **No AI in v1**: deterministic alerts first, AI after rules work (standard §2.3) |
 | Q-08 | Stack and hosting | Phase 2 | **TypeScript on Node.js**, to match the avengertech repo and share tooling; hosting after Q-05 |
 | Q-09 | Success criteria: how will we know v1 works? | Acceptance | — |
+| Q-10 | Which audits besides A-1 (D-02)? | Audit plan after v1 | **Re-audit the affected area before each scope expansion** (AI per Q-07, users beyond the PO per Q-05, a broker, or a link to `ai-trading` per Q-06); **periodic audit every N features or every quarter, PO to set N**; Mode C (runtime) only once Stark is hosted, authorised each time |
 
 ## 6. Decisions
 
 | ID | Decision | Who | When | Why |
 |---|---|---|---|---|
 | D-01 | Start Stark with the Phase 0 engineering package, no code | PO ("เริ่มวางโครงสร้าง repo stark ได้เลย") | 2026-10-03 | Standard §2.2 |
+| D-02 | Stark audits follow MASTER SYSTEM AUDIT PROTOCOL (MSAP) V1.0. The first full audit, A-1, runs at the end of Phase 6 (market data → rule → alert works end to end on fakes), Modes A + B, before the first real alert is sent; Stark does not go live until A-1 passes its Stop Gate. No MSAP audit before then: there is no system to reconstruct (MSAP §10) | PO | 2026-10-03 | Audit the real system before it acts on real channels |
+| D-03 | The MSAP source file lives in `AvengerTechLab/avengertech` beside the engineering standard; Stark refers to it and keeps no copy | PO | 2026-10-03 | One source of truth for platform standards |
+| D-04 | During an audit, its outputs are written outside the repository (no commit, MSAP §3). After the Stop Gate passes they are committed separately to `AUDIT/<audit-id>/` (MSAP §25 file set), documentation only | PO | 2026-10-03 | Keeps the audit read-only and the record in the repo |
+| D-05 | Claude asks the PO before starting any audit | PO ("ก่อนเริ่ม audit ถามผมอีกครั้ง") | 2026-10-03 | Starting an audit freezes the repository (MSAP §4) |
 
 ## 7. Constraints
 
 - Follow the AvengerTech engineering standard and the `engineering-playbook` rules (`CLAUDE.md`).
 - No fabricated market data or performance figures (`CLAUDE.md` §3).
 - Financial actions require human approval (standard §21).
+- Stark goes live only after audit A-1 passes (D-02).
 
 ## 8. Risks
 
