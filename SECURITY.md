@@ -27,7 +27,7 @@ To be assessed in Phase 4. v1 has one user, the PO (`SPEC.md` D-10).
 | Cost abuse of paid APIs (data provider, model) | Paid data plan (D-08: free first) or AI (v1.2; budget set before v1.2, D-12) |
 | Alert flood exhausting a channel's quota or rate limit | Always; LINE's free quota is small; LINE stops at the quota (D-17) |
 | Prompt injection from market news or other fetched text | AI reads news, from v1.2 (`SPEC.md` D-06) |
-| Redistribution of licensed market data | Alerts go beyond the PO (not in v1, D-10); Bitkub and Binance terms not yet read (D-08) |
+| Redistribution of licensed market data | Alerts go beyond the PO (not in v1, D-10). Both terms allow personal, non-commercial use only (`ARCHITECTURE.md` §2.1) |
 
 ## 3. Audit
 

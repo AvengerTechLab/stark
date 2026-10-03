@@ -21,12 +21,11 @@ Tick a task only with evidence: the commit, the file created, or the command run
   (D-25). Provider and budget deferred (D-26): likely `ai-trading`'s provider, separate machine. Next: run the checks
   in `ARCHITECTURE.md` §8 from each candidate and record the results here; the PO picks (D-13).
 - [x] **S2-5. Email method** — `SPEC.md` D-24 (SMTP of the PO's existing mailbox).
-- [~] **S2-6. Provider terms and channel limits read** in primary sources — done for the Bitkub and Binance APIs,
-  Telegram, LINE message counting and Discord (`ARCHITECTURE.md` §2.1–2.2, each source named). Still open:
-  - `[!]` Bitkub terms and Binance Product Terms: both sites answer automated requests with a bot challenge. Needs the
-    PO to save each page as PDF and upload it.
-  - `[!]` LINE free quota for Thailand: on `lineforbusiness.com`, not yet an allowed host.
-  - `[!]` Email sending limits: waits on the PO naming the mailbox provider.
+- [~] **S2-6. Provider terms and channel limits read** in primary sources — done for the Bitkub and Binance APIs
+  and terms, Telegram, LINE (including the Thailand quota) and Discord (`ARCHITECTURE.md` §2.1–2.2, each source
+  named). Still open:
+  - `[!]` Binance's List of Prohibited Countries: waits on the PO (`SPEC.md` Q-18).
+  - `[!]` Gmail sending limits: `support.google.com` is not an allowed host.
 
 ## Next Phases (not started)
 
