@@ -42,29 +42,44 @@ logic) and never decide an alert or a financial action on their own.
 
 ### 2.1 Data providers (v1.0)
 
-Collected 2026-10-03. "Verified" means read in the provider's own documentation; anything else names its source and
-must be checked before Phase 2.
+Collected 2026-10-03. "Verified" means read in the provider's own documentation, with the source named; anything
+else names its source and must still be checked.
+
+Sources: Bitkub `bitkub/bitkub-official-api-docs` (`rest-v3.md`, `websocket-public.md`, commit `d65eafa`,
+2026-09-09); Binance `binance/binance-spot-api-docs` (`rest-api.md`, `web-socket-streams.md`,
+`faqs/market_data_only.md`, `CHANGELOG.md`, commit `828ca74`, 2026-09-18).
 
 | | Bitkub (THB) | Binance (USDT) |
 |---|---|---|
-| Access | Public REST v3 market data, no API key (verified: `bitkub/bitkub-official-api-docs`, `rest-v3.md`, commit `d65eafa`, 2026-09-09) | Public market data, no API key (web search; official docs not reachable from the session that collected this) |
-| Endpoints | `/api/v3/market/symbols`, `ticker`, `bids`, `asks`, `depth`, `trades` (verified) | Not yet read |
-| Rate limit | `ticker`, `symbols`, `trades`: 100 req/sec; `depth`: 10 req/sec; over the limit blocks for 30 s with HTTP 429 (verified) | 6,000 request weight per minute per IP; HTTP 429 when exceeded (web search) |
-| Streaming | Public WebSocket, no auth (verified). The `market.trade` stream closed permanently on 2026-05-18 | Not yet read |
-| Region | — | Reported to refuse US and many cloud IP ranges with HTTP 451, public endpoints included (web search, several user reports) |
-| Terms of use | Not found yet | Use is under the Binance Terms of Use; redistribution to third parties is not covered by personal use (web search) |
+| Access | Public REST v3 market data, no API key (verified) | Market-data-only hosts need no API key: REST `https://data-api.binance.vision`, streams `wss://data-stream.binance.vision` (verified) |
+| Endpoints | `/api/v3/market/symbols`, `ticker`, `bids`, `asks`, `depth`, `trades` (verified) | `GET /api/v3/ticker/price`, `ticker/bookTicker`, `ticker/24hr`, `klines`, `trades`, `exchangeInfo` and others on the market-data host (verified) |
+| Rate limit | `ticker`, `symbols`, `trades`: 100 req/sec; `depth`: 10 req/sec; over the limit blocks for 30 s with HTTP 429 (verified) | 6,000 request weight per minute, counted per IP, not per API key (unchanged since 2023-08-25). HTTP 429 when exceeded; continuing after 429 brings an automatic IP ban (HTTP 418) of 2 minutes up to 3 days; `Retry-After` gives the wait. HTTP 403 means a WAF block (verified) |
+| Streaming | Public WebSocket, no auth (verified). The `market.trade` stream closed permanently on 2026-05-18 | A connection lasts at most 24 hours, then is closed; server pings every 20 s and expects a pong; at most 5 incoming messages per second per connection, 1,024 streams per connection, 300 connections per 5 minutes per IP (verified) |
+| Region | — | Reported to refuse US and many cloud IP ranges with HTTP 451, public endpoints included (web search, several user reports; not in the API docs) |
+| Terms of use | Not read: `www.bitkub.com` answers automated requests with a Cloudflare challenge | The API docs defer to the Binance Product Terms of Use at `www.binance.com/en/terms`. Not read: that page answers automated requests with a bot challenge (HTTP 202, empty body) |
+
+Design notes from the verified facts: reconnect the Binance stream before its 24-hour limit; on any 429 stop and wait
+`Retry-After`, never retry blindly (an IP ban would break SC-1 and SC-3); stay on the market-data-only hosts.
 
 ### 2.2 Alert channels (v1.0)
 
 Collected 2026-10-03. Each channel sits behind one channel interface so that switching it on or off, retries and
 test fakes are the same for all four (`CLAUDE.md` §5).
 
-| Channel | What Stark needs | Known limit or caveat |
+Sources: Telegram Bot FAQ (`core.telegram.org/bots/faq`, read 2026-10-03); LINE Messaging API pricing
+(`developers.line.biz/en/docs/messaging-api/pricing/`, read 2026-10-03); Discord `discord/discord-api-docs`
+(`developers/topics/rate-limits.mdx`, commit `c43598d`, 2026-10-02).
+
+| Channel | What Stark needs | Limits and caveats |
 |---|---|---|
-| Telegram | A bot token and a chat ID | Not yet read |
-| LINE | A LINE Official Account with Messaging API (LINE Notify is closed) | Free plan in Thailand reported as 300 messages a month; reply messages free, push messages counted (secondary sources; `developers.line.biz` was blocked by the network policy of the session that collected this). Must be verified before Phase 2 |
-| Discord | A webhook URL | Not yet read |
-| Email | SMTP of the PO's existing mailbox with an app password (`SPEC.md` D-24) | The mailbox provider's sending limits: not yet read |
+| Telegram | A bot token and a chat ID | In one chat, avoid more than one message per second; short bursts are allowed, then HTTP 429 (verified). One chat with the PO fits easily |
+| LINE | A LINE Official Account with Messaging API (LINE Notify is closed) | Push, multicast, broadcast and narrowcast messages count toward the monthly free quota; reply messages do not; counted per recipient. Past the limit the API returns an error and the message is not sent. The API reports the month's limit and usage (verified). Free quota for Thailand is on LINE for Business Thailand, not on the developer page; reported as 300 messages a month (secondary sources; `lineforbusiness.com` is not on this environment's allowed hosts) |
+| Discord | A webhook URL | Global limit 50 requests per second; per-route limits apply per webhook; HTTP 429 with `retry_after`; 10,000 invalid requests (401, 403, 429) per 10 minutes bring a temporary IP ban; a webhook answering 404 must not be used again (verified) |
+| Email | SMTP of the PO's existing mailbox with an app password (`SPEC.md` D-24) | The mailbox provider's sending limits: not yet read (provider not named) |
+
+Design notes: Stark sends alerts as push messages, so every LINE alert counts toward the quota; the LINE adapter
+reads the month's usage from the API to stop at the limit (D-17). A Discord webhook answering 404 is marked dead and
+reported (SC-3), not retried.
 
 ### 2.3 What the success criteria imply
 
