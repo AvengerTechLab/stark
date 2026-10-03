@@ -66,6 +66,14 @@ Stark works with market data. These hold regardless of what is built:
 - choosing or changing the stack, data provider or alert channel
 - production infrastructure changes
 - force-pushing or rewriting history on a shared branch
+- starting an audit (`SPEC.md` D-05)
+
+## 6a. Audits
+
+Audits follow MSAP V1.0 (`SPEC.md` D-02; source file in `AvengerTechLab/avengertech`, D-03). Inside an audit the
+repository is frozen: read only, no fix, no commit (MSAP §3). Outputs are written outside the repository and
+committed to `AUDIT/<audit-id>/` only after the Stop Gate passes (D-04). A finding is fixed only in a separate
+remediation change that the PO authorises (MSAP §28).
 
 ## 7. Records
 
@@ -75,6 +83,7 @@ Stark works with market data. These hold regardless of what is built:
 | `SPEC.md` | Problem, scope, non-goals, actors, open questions, decisions (who, when, why) |
 | `ARCHITECTURE.md` | Boundaries and layers; filled in as decisions land |
 | `SECURITY.md` | Threats, controls and gaps |
+| `AUDIT/<audit-id>/` | MSAP audit outputs, committed after the Stop Gate (none yet) |
 | Commit message and PR description | Why a change was made (replaces a fix log) |
 
 Update the matching record in the same change. Tick a task only with evidence.
