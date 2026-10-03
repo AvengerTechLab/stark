@@ -26,9 +26,9 @@ Data + external services   — data provider (Q-03), storage, alert channel (Q-0
 Observability              — logs, health, alerts on Stark itself
 ```
 
-If the PO approves an AI feature (Q-07), it sits behind the AI orchestrator shape in the standard §6
-(policy/validation → context builder → model → output validator → deterministic business logic) and never decides
-an alert or a financial action on its own.
+The AI feature approved for v1.2, news analysis (`SPEC.md` D-06), and any later one sit behind the AI orchestrator
+shape in the standard §6 (policy/validation → context builder → model → output validator → deterministic business
+logic) and never decide an alert or a financial action on their own.
 
 ## 2. Boundaries to define
 
@@ -41,5 +41,5 @@ an alert or a financial action on its own.
 
 ## 3. Contracts
 
-Written before implementation (standard §7): API, data and event contracts, plus AI contracts if Q-07 says yes.
-They go in `API.md` and `DATABASE.md` when Phase 3 starts.
+Written before implementation (standard §7): API, data and event contracts, plus AI contracts
+before v1.2 (`SPEC.md` D-06). They go in `API.md` and `DATABASE.md` when Phase 3 starts.

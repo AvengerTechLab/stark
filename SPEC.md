@@ -26,14 +26,23 @@ Evidence only. Each line names its source.
 
 ## 3. Scope and non-goals
 
-*PO to confirm.* Proposed first release, to be accepted or changed:
+v1 capabilities and their release order are decided (D-06). Markets, provider, channel and users wait on Q-02 to
+Q-05.
 
-| Area | Proposed for v1 | Proposed non-goal |
+| Release | Delivers | Uses AI |
 |---|---|---|
-| Market data | Read one market's data from one provider | Several markets or providers at once |
-| Alerts | User-defined, deterministic rules on that data; send to one channel | AI-generated trade signals |
-| Analysis | — | Automated order placement (see `CLAUDE.md` §4) |
-| AvengerTech site | — | Feeding the site's Lab status and activity (later, backlog 3.0) |
+| v1.0 | Price tracking: read and store market data, and let the user view it. Rule alerts: user-defined, deterministic conditions (for example a price crossing a level) that send an alert | No |
+| v1.1 | Summary reports (daily or weekly market summary) | Open: Q-07 |
+| v1.2 | News analysis: summarise or classify market news | Yes |
+
+*PO to confirm.* Proposed non-goals:
+
+| Area | Proposed non-goal |
+|---|---|
+| Market data | Several markets or providers at once in v1.0 |
+| Alerts | AI-generated trade signals; AI deciding whether an alert fires (`CLAUDE.md` §4) |
+| Trading | Automated order placement (`CLAUDE.md` §4) |
+| AvengerTech site | Feeding the site's Lab status and activity (later, backlog 3.0) |
 
 ## 4. Actors
 
@@ -49,13 +58,13 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 
 | ID | Question | Blocks | Options (recommendation in bold) |
 |---|---|---|---|
-| Q-01 | What must v1 do? (price tracking, rule alerts, news analysis, reports …) | Scope, everything after | — |
+| Q-01 | ~~What must v1 do?~~ Answered: D-06 | — | — |
 | Q-02 | Which market(s)? (Thai stocks / SET, crypto, forex, US stocks …) | Data provider, data model | — |
 | Q-03 | Which data provider, and is a paid plan acceptable? | Architecture, contracts | Decide after Q-02 |
 | Q-04 | Which alert channel(s)? (LINE, Telegram, email, web push …) | Architecture, contracts | — |
 | Q-05 | Who uses v1: only the PO, a team, or the public? | Security model, auth, hosting | **Only the PO** for v1: no accounts, smallest security surface |
 | Q-06 | What is Stark's boundary with `ai-trading`? Does either call the other, or share data? | Scope, architecture | — |
-| Q-07 | Does Stark use an AI model in v1, and for what? | AI contracts, evals, cost | **No AI in v1**: deterministic alerts first, AI after rules work (standard §2.3) |
+| Q-07 | Partly answered by D-06: no AI in v1.0, AI news analysis in v1.2. Still open: are v1.1 summary reports written by AI or by fixed templates, and what monthly model budget is acceptable for v1.2? | v1.1 and v1.2 design, AI contracts, evals, cost | **Fixed templates for v1.1** (deterministic, no model cost); budget set before v1.2 starts |
 | Q-08 | Stack and hosting | Phase 2 | **TypeScript on Node.js**, to match the avengertech repo and share tooling; hosting after Q-05 |
 | Q-09 | Success criteria: how will we know v1 works? | Acceptance | — |
 | Q-10 | Which audits besides A-1 (D-02)? | Audit plan after v1 | **Re-audit the affected area before each scope expansion** (AI per Q-07, users beyond the PO per Q-05, a broker, or a link to `ai-trading` per Q-06); **periodic audit every N features or every quarter, PO to set N**; Mode C (runtime) only once Stark is hosted, authorised each time |
@@ -69,6 +78,7 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | D-03 | The MSAP source file lives in `AvengerTechLab/avengertech` beside the engineering standard; Stark refers to it and keeps no copy | PO | 2026-10-03 | One source of truth for platform standards |
 | D-04 | During an audit, its outputs are written outside the repository (no commit, MSAP §3). After the Stop Gate passes they are committed separately to `AUDIT/<audit-id>/` (MSAP §25 file set), documentation only | PO | 2026-10-03 | Keeps the audit read-only and the record in the repo |
 | D-05 | Claude asks the PO before starting any audit | PO ("ก่อนเริ่ม audit ถามผมอีกครั้ง") | 2026-10-03 | Starting an audit freezes the repository (MSAP §4) |
+| D-06 | (Q-01) v1 covers price tracking, rule alerts, summary reports and news analysis, delivered in stages: v1.0 price tracking and rule alerts with no AI, v1.1 summary reports, v1.2 news analysis with AI. Audit A-1 (D-02) covers v1.0 | PO (chose all four, then "ทยอยส่ง") | 2026-10-03 | Gets alerts working sooner and keeps AI cost and risk out of the first release (standard §2.3) |
 
 ## 7. Constraints
 

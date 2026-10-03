@@ -23,8 +23,8 @@ To be assessed in Phase 4, once `SPEC.md` Q-03 to Q-05 are answered.
 | Leaked provider or channel credentials (bot tokens, webhook URLs) | Always |
 | Alert spoofing or tampered alert rules | Anyone but the PO can change rules |
 | Unauthenticated access to rules, data or history | Stark exposes an API or UI (Q-05) |
-| Cost abuse of paid APIs (data provider, model) | Paid plan (Q-03) or AI (Q-07) |
-| Prompt injection from market news or other fetched text | AI reads external text (Q-07) |
+| Cost abuse of paid APIs (data provider, model) | Paid plan (Q-03) or AI (v1.2, D-06; budget Q-07) |
+| Prompt injection from market news or other fetched text | AI reads news, from v1.2 (`SPEC.md` D-06) |
 | Redistribution of licensed market data | Alerts go beyond the PO (Q-03, Q-05) |
 
 ## 3. Audit

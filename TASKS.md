@@ -14,7 +14,8 @@ Tick a task only with evidence: the commit, the file created, or the command run
 
 - [x] **S0-1. Engineering package** — `CLAUDE.md`, `SPEC.md`, `ARCHITECTURE.md`, `SECURITY.md`, `TASKS.md`, and the
   `engineering-playbook` skill with section 11 written for Stark (`.claude/skills/engineering-playbook/`).
-- [ ] **S0-2. Open questions answered** — `[!]` waiting on the PO: `SPEC.md` §5, Q-01 to Q-09.
+- [~] **S0-2. Open questions answered** — Q-01 answered (`SPEC.md` D-06), Q-07 partly. `[!]` waiting on the PO:
+  Q-02 to Q-10.
   *Done when:* every question has a row in `SPEC.md` §6.
 - [ ] **S0-3. Problem, scope, actors, success criteria** written from the answers (`SPEC.md` §2–4, §9).
 
@@ -23,7 +24,7 @@ Tick a task only with evidence: the commit, the file created, or the command run
 Detailed tasks are written when the phase becomes current. Order from the standard §2.2 and §4–10.
 
 - **Phase 2 — Architecture:** fill `ARCHITECTURE.md`; choose the stack (Q-08).
-- **Phase 3 — Contracts:** `API.md`, `DATABASE.md`, event contracts; AI contracts if Q-07 says yes.
+- **Phase 3 — Contracts:** `API.md`, `DATABASE.md`, event contracts; AI contracts before v1.2 (`SPEC.md` D-06).
 - **Phase 4 — Security:** threat model in `SECURITY.md` §2.
 - **Phase 5 — Foundation:** project skeleton, lint / typecheck / test / build commands, CI workflow, `.env.example`,
   fakes for every external system; `CLAUDE.md` §8 lists the commands.
