@@ -157,5 +157,6 @@ The 60-second stale threshold and the retry limits are proposals; they are fixed
 Before the PO picks hosting, Claude or the PO runs the same read-only checks from each candidate host: Bitkub
 `GET /api/v3/market/ticker`, Binance's public ticker, and one WebSocket connection to each, recording the HTTP status
 and response time. No API key is used and nothing is sent to any channel. Candidates: the PO's machine and one or two low-cost VPS
-providers in Asia (`SPEC.md` D-23); renting a VPS waits on the budget (Q-16). PostgreSQL (D-22) runs on the same host and
+providers in Asia (`SPEC.md` D-23); the provider is likely the one `ai-trading` uses, on a
+separate machine, and the budget is set later (D-26). PostgreSQL (D-22) runs on the same host and
 accepts no connections from the internet (D-25).

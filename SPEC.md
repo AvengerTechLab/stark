@@ -1,6 +1,6 @@
 # Stark — Specification (Phase 0: Discovery)
 
-Status: **discovery complete** (2026-10-03); Phase 2 question Q-16 (hosting budget) is open. Every decision appears in §6
+Status: **discovery complete** (2026-10-03); Phase 2 question Q-16 (hosting provider and budget) is deferred (D-26). Every decision appears in §6
 with who decided and when.
 Structure follows the Discovery outputs in `AVENGERTECH_ENGINEERING_INTEGRATION_SYSTEM_V1.md` §4.
 
@@ -86,7 +86,7 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | Q-13 | ~~How often does a rule alert while its condition stays true?~~ Answered: D-20 | — | — |
 | Q-14 | ~~How does the PO manage rules and channels?~~ Answered: D-21 | — | — |
 | Q-15 | ~~Which storage engine?~~ Answered: D-22 | — | — |
-| Q-16 | Candidates answered: D-23. Still open: what monthly hosting cost is acceptable? | Hosting choice (D-13) | **PO to name the budget** before VPS candidates are rented |
+| Q-16 | Which hosting provider, and what monthly budget? Deferred by the PO (D-26) | Hosting choice (D-13) | Decide together with `ai-trading`'s hosting; Stark's machine must still pass the test in `ARCHITECTURE.md` §8 |
 | Q-17 | ~~How is email sent?~~ Answered: D-24 | — | — |
 
 ## 6. Decisions
@@ -118,6 +118,7 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | D-23 | (Q-16, part) Hosting candidates for the test in `ARCHITECTURE.md` §8: the PO's own machine and one or two low-cost VPS providers in Asia. The budget is still open | PO | 2026-10-03 | Not stated |
 | D-24 | (Q-17) Email is sent through the SMTP server of a mailbox the PO already has, with an app password | PO (accepted the recommendation) | 2026-10-03 | No new account and no cost |
 | D-25 | v1 runs on one always-on host: web page, Telegram bot, feeds, rule engine, dispatcher, health monitor and PostgreSQL together, with the database not reachable from the internet. Vercel is not used for v1: its functions cannot hold the 24-hour price streams SC-1 needs. Feeding the AvengerTech site on Vercel stays a later release (§3) | PO (accepted the recommendation after asking whether Vercel fits) | 2026-10-03 | One place to deploy and secure for one user; avengertech already deploys on Vercel, which suits the later status feed |
+| D-26 | (Q-16) The hosting budget is set later and can change. Stark will likely use the same hosting provider as `ai-trading` but its own machine, because `ai-trading` needs Windows Server; the OS for Stark's machine is chosen with the host. Sharing a provider shares no data or calls (D-11 holds) | PO ("ปรับทีหลังได้", "อาจจะคนละเครื่องแต่ host เดียวกัน ขึ้นอยู่กับ spec os") | 2026-10-03 | `ai-trading` needs hosting anyway; one provider for both is simpler to manage |
 
 ## 7. Constraints
 
