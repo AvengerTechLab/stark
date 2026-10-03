@@ -14,8 +14,8 @@ Tick a task only with evidence: the commit, the file created, or the command run
 
 - [x] **S0-1. Engineering package** — `CLAUDE.md`, `SPEC.md`, `ARCHITECTURE.md`, `SECURITY.md`, `TASKS.md`, and the
   `engineering-playbook` skill with section 11 written for Stark (`.claude/skills/engineering-playbook/`).
-- [~] **S0-2. Open questions answered** — Q-01 answered (`SPEC.md` D-06), Q-07 partly. `[!]` waiting on the PO:
-  Q-02 to Q-10.
+- [~] **S0-2. Open questions answered** — Q-01 to Q-03 answered (`SPEC.md` D-06 to D-08), Q-07 partly. `[!]` waiting
+  on the PO: Q-04 to Q-10.
   *Done when:* every question has a row in `SPEC.md` §6.
 - [ ] **S0-3. Problem, scope, actors, success criteria** written from the answers (`SPEC.md` §2–4, §9).
 
@@ -41,6 +41,9 @@ Detailed tasks are written when the phase becomes current. Order from the standa
 - [ ] **`tdd` skill not copied.** The avengertech copy's "AvengerTech" section is specific to that repo. Copy it
   in Phase 5 with a Stark section that names this repo's commands.
 - [ ] **`.gitignore` is the generic Node template.** Review it once the stack is chosen.
+- [ ] **Read Bitkub's and Binance's terms of use** for storing market data and sending alerts (`SPEC.md` D-08, risk
+  table). Bitkub's terms were not found; Binance's developer docs were blocked by the network policy of the session
+  that collected `ARCHITECTURE.md` §2.1. Needed before Phase 2.
 - [ ] **MSAP V1.0 path in `AvengerTechLab/avengertech` not confirmed** (`SPEC.md` D-03). The PO supplied the file in
   a session on 2026-10-03; adding it to avengertech is outside this repository's scope. Once it is there,
   `CLAUDE.md` §6a names its path. Needed before gate A-1.
