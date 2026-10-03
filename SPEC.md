@@ -1,6 +1,7 @@
 # Stark — Specification (Phase 0: Discovery)
 
-Status: **discovery complete** (2026-10-03). Every decision appears in §6 with who decided and when.
+Status: **discovery complete** (2026-10-03); Phase 2 questions Q-12 to Q-17 are open. Every decision appears in §6
+with who decided and when.
 Structure follows the Discovery outputs in `AVENGERTECH_ENGINEERING_INTEGRATION_SYSTEM_V1.md` §4.
 
 ---
@@ -81,6 +82,12 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | Q-09 | ~~Success criteria~~ Answered: D-14, §9 | — | — |
 | Q-10 | ~~Which audits besides A-1?~~ Answered: D-16 | — | — |
 | Q-11 | ~~How is email sent; what if LINE's free quota runs out?~~ Answered: D-17 | — | — |
+| Q-12 | Which rule types does v1.0 need? | Rule engine, Phase 3 contracts | **Price above a level and price below a level** for v1.0; percentage-change rules later |
+| Q-13 | When a rule's condition stays true, how often does it alert? | Rule engine, SC-2 | **Alert once when the price crosses the level, then re-arm only after it crosses back**, so a price hovering at the level does not flood the channels |
+| Q-14 | How does the PO manage rules and channels? | Owner interface, security | **A small web page on the host, protected by a single owner login**; Telegram bot commands as a later addition |
+| Q-15 | Which storage engine? | Phase 3 `DATABASE.md` | **SQLite**: one file, one user, no database server to run; move to PostgreSQL only if Stark grows beyond one user |
+| Q-16 | Which hosts are candidates for the hosting test (`ARCHITECTURE.md` §8), and what monthly cost is acceptable? | Hosting choice (D-13) | The PO's own machine plus one or two low-cost VPS providers in Asia; **PO to name the budget** |
+| Q-17 | How is email sent (D-17)? | Email channel adapter | **The SMTP of an existing mailbox with an app password** to start: no new account or cost; an email-sending service only if delivery is unreliable |
 
 ## 6. Decisions
 
@@ -117,7 +124,7 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | Risk | Why it matters | Mitigation |
 |---|---|---|
 | Scope overlaps with `ai-trading` | Two systems doing the same job, diverging data | Kept fully separate in v1 (D-11); any later link needs a contract and a re-audit first |
-| Data provider terms forbid redistribution or storage | Legal exposure; may block alerts to others | Read Bitkub's and Binance's terms before Phase 2 (`TASKS.md` Discovered Work) |
+| Data provider terms forbid redistribution or storage | Legal exposure; may block alerts to others | Read Bitkub's and Binance's terms in Phase 2 (`TASKS.md` S2-6) |
 | LINE's free monthly message quota runs out | LINE alerts stop, or sending more costs money | Count LINE sends and stop at the free quota, then tell the PO (D-17) |
 | Binance refuses requests from the hosting region (HTTP 451) | No USDT prices, so USDT alerts fail | Hosting is picked only after Bitkub and Binance are reached from each candidate host (D-13) |
 | An alert is read as investment advice | Legal and trust risk | Wording decided by the PO; disclaimer if the audience is beyond the PO |

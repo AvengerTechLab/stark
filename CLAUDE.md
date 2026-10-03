@@ -15,10 +15,11 @@ Load these skills (`.claude/skills/`) before the matching work:
 
 ---
 
-## 1. Current phase: Discovery (Phase 0)
+## 1. Current phase: Architecture (Phase 2)
 
-The standard says no module starts with "start coding" (§2.2). Stark is in Phase 0: the problem, scope, actors and
-constraints are being defined in `SPEC.md`. Until the product owner (PO) closes the open questions there:
+The standard says no module starts with "start coding" (§2.2). Phase 0 discovery is complete (`SPEC.md` D-18). Stark
+is in Phase 2: the architecture is being designed in `ARCHITECTURE.md`. Code starts in Phase 5 (`TASKS.md`). Until
+then:
 
 - Do not add application code, a framework, a package manager or dependencies.
 - The stack, data providers and alert channels are decided (`SPEC.md` D-08, D-09, D-13). Do not change them, and do
