@@ -56,7 +56,7 @@ Sources: Bitkub `bitkub/bitkub-official-api-docs` (`rest-v3.md`, `websocket-publ
 | Rate limit | `ticker`, `symbols`, `trades`: 100 req/sec; `depth`: 10 req/sec; over the limit blocks for 30 s with HTTP 429 (verified) | 6,000 request weight per minute, counted per IP, not per API key (unchanged since 2023-08-25). HTTP 429 when exceeded; continuing after 429 brings an automatic IP ban (HTTP 418) of 2 minutes up to 3 days; `Retry-After` gives the wait. HTTP 403 means a WAF block (verified) |
 | Streaming | Public WebSocket, no auth (verified). The `market.trade` stream closed permanently on 2026-05-18 | A connection lasts at most 24 hours, then is closed; server pings every 20 s and expects a pong; at most 5 incoming messages per second per connection, 1,024 streams per connection, 300 connections per 5 minutes per IP (verified) |
 | Region | — | Reported to refuse US and many cloud IP ranges with HTTP 451, public endpoints included (web search, several user reports; not in the API docs) |
-| Terms of use | Bitkub User Agreement, last updated 2024-08-28 (copy supplied by the PO, 2026-10-03). Clause 4.2.1: prices of digital assets are the Company's Content. 4.2.2: the user may view, download, duplicate, transmit or display Content solely for personal investment or education. 4.2.3: storing, copying or sending Content for commercial purposes or other returns needs prior written consent. 4.1.4: the Public API must not be used in a way that slows or crashes the platform; the Company may limit its use. Stark for the PO alone (`SPEC.md` D-10) fits 4.2.2 | Binance Terms of Use, effective 2026-07-21 (copy supplied by the PO, 2026-10-03; the ADGM Binance entities). Clause 27: licence to use Binance IP only for non-commercial personal or internal business use. Clause 2.1(f): users must not be located in or resident of a jurisdiction where use is illegal or that is on Binance's List of Prohibited Countries; that list is a separate document, not read. Clause 33.11: third-party market data comes with no warranty. Stark for the PO alone fits clause 27; whether Thailand is on the list is open (`SPEC.md` Q-18) |
+| Terms of use | Bitkub User Agreement, last updated 2024-08-28 (copy supplied by the PO, 2026-10-03). Clause 4.2.1: prices of digital assets are the Company's Content. 4.2.2: the user may view, download, duplicate, transmit or display Content solely for personal investment or education. 4.2.3: storing, copying or sending Content for commercial purposes or other returns needs prior written consent. 4.1.4: the Public API must not be used in a way that slows or crashes the platform; the Company may limit its use. Stark for the PO alone (`SPEC.md` D-10) fits 4.2.2 | Binance Terms of Use, effective 2026-07-21 (copy supplied by the PO, 2026-10-03; the ADGM Binance entities). Clause 27: licence to use Binance IP only for non-commercial personal or internal business use. Clause 2.1(f): users must not be located in or resident of a jurisdiction where use is illegal or that is on Binance's List of Prohibited Countries; that list is a separate document, not read. Clause 33.11: third-party market data comes with no warranty. Stark for the PO alone fits clause 27; the PO checked that Thailand is not on the list (`SPEC.md` D-27) |
 
 Design notes from the verified facts: reconnect the Binance stream before its 24-hour limit; on any 429 stop and wait
 `Retry-After`, never retry blindly (an IP ban would break SC-1 and SC-3); stay on the market-data-only hosts.
@@ -66,7 +66,8 @@ Design notes from the verified facts: reconnect the Binance stream before its 24
 Collected 2026-10-03. Each channel sits behind one channel interface so that switching it on or off, retries and
 test fakes are the same for all four (`CLAUDE.md` §5).
 
-Sources: Telegram Bot FAQ (`core.telegram.org/bots/faq`, read 2026-10-03); LINE Messaging API pricing
+Sources: Gmail Help on sending limits and app passwords (`support.google.com/mail/answer/22839`, `185833`, read
+2026-10-03); Telegram Bot FAQ (`core.telegram.org/bots/faq`, read 2026-10-03); LINE Messaging API pricing
 (`developers.line.biz/en/docs/messaging-api/pricing/`, read 2026-10-03); Discord `discord/discord-api-docs`
 (`developers/topics/rate-limits.mdx`, commit `c43598d`, 2026-10-02).
 
@@ -75,7 +76,7 @@ Sources: Telegram Bot FAQ (`core.telegram.org/bots/faq`, read 2026-10-03); LINE 
 | Telegram | A bot token and a chat ID | In one chat, avoid more than one message per second; short bursts are allowed, then HTTP 429 (verified). One chat with the PO fits easily |
 | LINE | A LINE Official Account with Messaging API (LINE Notify is closed) | Push, multicast, broadcast and narrowcast messages count toward the monthly free quota; reply messages do not; counted per recipient. Past the limit the API returns an error and the message is not sent. The API reports the month's limit and usage (verified). Free quota in Thailand: 300 messages a month on opening an official account (verified: LINE for Business Thailand, `lineforbusiness.com/th/service/line-oa-features/broadcast-message`, read 2026-10-03) |
 | Discord | A webhook URL | Global limit 50 requests per second; per-route limits apply per webhook; HTTP 429 with `retry_after`; 10,000 invalid requests (401, 403, 429) per 10 minutes bring a temporary IP ban; a webhook answering 404 must not be used again (verified) |
-| Email | SMTP of the PO's Gmail account with an app password (`SPEC.md` D-24) | Gmail's sending limits: not read; `support.google.com` is not an allowed host. Alerts go to one recipient, the PO |
+| Email | The PO's Gmail account over SMTP, signed in with OAuth (`SPEC.md` D-28) | More than 500 recipients in one email or more than 500 emails a day hits the sending limit, which lifts within 1 to 24 hours (verified: Gmail Help, `support.google.com/mail/answer/22839`, read 2026-10-03). Alerts go to one recipient, the PO; the dispatcher counts emails per day and stops before 500, telling the PO through another channel |
 
 Design notes: Stark sends alerts as push messages, so every LINE alert counts toward the quota; the LINE adapter
 reads the month's usage from the API to stop at the limit (D-17). A Discord webhook answering 404 is marked dead and
@@ -94,7 +95,8 @@ From `SPEC.md` §9 (D-14), to be designed in Phase 2:
 ## 3. Contracts
 
 Written before implementation (standard §7): API, data and event contracts, plus AI contracts
-before v1.2 (`SPEC.md` D-06). They go in `API.md` and `DATABASE.md` when Phase 3 starts.
+before v1.2 (`SPEC.md` D-06). v1.0 contracts: `EVENTS.md` (types, events, rule evaluation), `API.md` (owner
+interface), `DATABASE.md` (storage).
 
 ## 4. Components (v1.0, proposed)
 
@@ -165,7 +167,7 @@ chosen host.
 | LINE free quota reached | Stop LINE sends; tell the PO through another channel (D-17) |
 | Process restarts | Rules and settings reload from storage; no alert decision is lost because each is stored before it is sent |
 
-The 60-second stale threshold and the retry limits are proposals; they are fixed in Phase 3 contracts.
+The stale threshold and retry limits are specified in `EVENTS.md` §2.3–2.4.
 
 ## 8. Hosting test (D-13)
 

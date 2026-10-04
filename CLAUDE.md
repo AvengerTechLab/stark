@@ -15,11 +15,11 @@ Load these skills (`.claude/skills/`) before the matching work:
 
 ---
 
-## 1. Current phase: Architecture (Phase 2)
+## 1. Current phase: Contracts (Phase 3)
 
-The standard says no module starts with "start coding" (§2.2). Phase 0 discovery is complete (`SPEC.md` D-18). Stark
-is in Phase 2: the architecture is being designed in `ARCHITECTURE.md`. Code starts in Phase 5 (`TASKS.md`). Until
-then:
+The standard says no module starts with "start coding" (§2.2). Phase 0 discovery is complete (`SPEC.md` D-18). Phase 2
+architecture is in `ARCHITECTURE.md`. Stark is in Phase 3: contracts are written in `EVENTS.md`, `API.md` and
+`DATABASE.md` before any code (standard §7). Code starts in Phase 5 (`TASKS.md`). Until then:
 
 - Do not add application code, a framework, a package manager or dependencies.
 - The stack, data providers and alert channels are decided (`SPEC.md` D-08, D-09, D-13). Do not change them, and do
@@ -84,6 +84,7 @@ remediation change that the PO authorises (MSAP §28).
 | `TASKS.md` | Current phase, its tasks with evidence, and Discovered Work |
 | `SPEC.md` | Problem, scope, non-goals, actors, open questions, decisions (who, when, why) |
 | `ARCHITECTURE.md` | Boundaries and layers; filled in as decisions land |
+| `EVENTS.md`, `API.md`, `DATABASE.md` | Contracts: domain events and rule evaluation, owner interface, database |
 | `SECURITY.md` | Threats, controls and gaps |
 | `AUDIT/<audit-id>/` | MSAP audit outputs, committed after the Stop Gate (none yet) |
 | Commit message and PR description | Why a change was made (replaces a fix log) |
