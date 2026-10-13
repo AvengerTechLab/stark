@@ -47,8 +47,7 @@ answers 404), `updated_at`.
 | `source` | `text` | `stream` or `poll` |
 
 Index on `(exchange, base, quote, exchange_time)` for the percentage-rule reference lookup (`EVENTS.md` §3.3) and the
-SC-2 replay. Partitioned by day so old days drop cheaply. Retention: **PO to confirm** (Q-23); at least 30 days for
-SC-2.
+SC-2 replay. Partitioned by day so old days drop cheaply. Retention: 35 days (`SPEC.md` D-34).
 
 ### `alert_decisions`
 

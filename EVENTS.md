@@ -28,7 +28,7 @@ Components and data flow: `ARCHITECTURE.md` §4–5. Storage: `DATABASE.md`. Own
 | `id` | `Id` | Assigned on arrival |
 | `exchange` | `Exchange` | |
 | `pair` | `Pair` | |
-| `price` | `Decimal` | Last traded price. **PO to confirm** (Q-19): last trade, not bid or ask |
+| `price` | `Decimal` | Last traded price, not bid or ask (`SPEC.md` D-30) |
 | `exchangeTime` | `Timestamp` | Time the provider gives for the price |
 | `receivedTime` | `Timestamp` | Time Stark received it |
 | `source` | `stream` or `poll` | Polling is the fallback while a stream is down (`ARCHITECTURE.md` §7) |
@@ -97,15 +97,14 @@ channel failing (SC-3), through a channel other than the failing one. Recovery i
 | `state` | `armed` or `fired` | D-20 |
 
 A rule watches one quote. Choosing "both THB and USDT" in the owner interface creates two rules, one per quote
-(proposed, **PO to confirm**, Q-25).
+(`SPEC.md` D-35).
 
 ### 3.2 Level rules
 
 - `above`: the condition is true when `price >= level`.
 - `below`: the condition is true when `price <= level`.
 
-Whether reaching the level exactly counts (`>=`, `<=`) or the price must pass it (`>`, `<`) is **PO to confirm**
-(Q-20); the proposal counts reaching it.
+Reaching the level counts (`SPEC.md` D-31).
 
 ### 3.3 Percentage rules
 
@@ -126,7 +125,7 @@ Whether reaching the level exactly counts (`>=`, `<=`) or the price must pass it
 | `fired` | false | State becomes `armed` |
 
 A new or re-enabled rule starts `armed`. If its condition is already true on its first tick, it fires at once
-(proposed, **PO to confirm**, Q-21). A disabled rule is not evaluated and keeps its state.
+(`SPEC.md` D-32). A disabled rule is not evaluated and keeps its state.
 
 ### 3.5 Worked examples (demo values, not market data)
 
@@ -136,7 +135,7 @@ A new or re-enabled rule starts `armed`. If its condition is already true on its
 | `change` BTC/USDT, 5 %, 60 min, `up`; price 60 min earlier 100 | 104 → 105 → 106 | Fires at 105 (+5.00 %); nothing at 106 |
 | `change` as above, Stark started 10 min ago | any | Nothing: no reference price yet |
 
-## 4. Alert message (proposed, **PO to confirm**, Q-22)
+## 4. Alert message (`SPEC.md` D-33)
 
 One message per alert, the same on every channel, in Thai:
 
