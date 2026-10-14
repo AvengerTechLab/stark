@@ -17,13 +17,16 @@ Tick a task only with evidence: the commit, the file created, or the command run
 - [x] **S4-2. Contracts updated for the answers** — `API.md` §1 (private network, no second factor), `SECURITY.md`
   §3–5.
 - [ ] **S4-3. Hosting carried over from S3-4** — the PO's machine passes (`ARCHITECTURE.md` §8); provider and budget
-  with `ai-trading` (D-26); each VPS candidate needs the same check. Must be settled before Phase 5.
+  with `ai-trading` (D-26); each VPS candidate needs the same check; the uptime monitor for the heartbeat (D-43) is
+  picked with it. Must be settled before Phase 5.
 
-- [ ] **S4-4. Threat model additions** — `SECURITY.md` T-17 to T-24 from a second review: PO answers Q-30 (alert
-  cooldown) and Q-31 (outside heartbeat); then the proposed controls go into `API.md`, `EVENTS.md` and `DATABASE.md`;
-  Google's 7-day refresh token rule (T-21) is checked in Google's own documentation.
+- [x] **S4-4. Threat model additions** — `SECURITY.md` T-17 to T-24 from a second review; decisions D-42 (send
+  cooldown) and D-43 (outside heartbeat); controls written into `EVENTS.md` §2.3–2.4, §3.5, `API.md` §1.1, §2,
+  `DATABASE.md` `owner_actions` and `ARCHITECTURE.md` §7.
+- [ ] **S4-5. Check Google's 7-day refresh token rule** for OAuth apps left in "Testing" (`SECURITY.md` T-21) in
+  Google's own documentation; it could not be reached from the cloud session on 2026-10-14.
 
-*Phase done when:* S4-3 hosting is settled and S4-4 is done.
+*Phase done when:* S4-3 hosting is settled (it includes picking the uptime monitor, D-43) and S4-5 is checked.
 
 ## Next Phases (not started)
 
