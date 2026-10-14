@@ -113,7 +113,7 @@ boundaries below are module boundaries inside that process, so they can be split
 | Alert dispatcher | Take each alert decision, store it, send to the channels switched on for the whole system and for that rule (D-09), record each delivery result | Channel interface, storage | Provider APIs |
 | Channel adapters (Telegram, LINE, Discord, email) | One interface: `send(alert) → delivered / failed(reason)`. LINE counts sends and refuses past the free quota (D-17) | Channel APIs | Rules, feeds |
 | Health monitor | Watch feed freshness and delivery failures; tell the PO through a working channel within 15 minutes (SC-3) | Feeds' last-tick times, dispatcher results, channel interface | Rule engine |
-| Owner interface | Lets the PO view prices, manage rules and switch channels; only the PO can use it (D-10). Two forms from v1.0 (`SPEC.md` D-21): a web page with a single owner login, and Telegram bot commands accepted only from the PO's chat | Rule store, channel settings, price log | Provider and channel APIs directly |
+| Owner interface | Lets the PO view prices, manage rules and switch channels; only the PO can use it (D-10). Two forms from v1.0 (`SPEC.md` D-21): a web page with a single owner login, and Telegram bot commands accepted only from the PO's chat, fetched by long polling so no inbound port is needed (`SECURITY.md` B2) | Rule store, channel settings, price log | Provider and channel APIs directly |
 | Storage | Rules, channel settings, price log, alert decisions, delivery results, in PostgreSQL (`SPEC.md` D-22) | — | — |
 
 Dependency direction: interface and adapters → application (dispatcher, monitor) → domain (rule engine and types).

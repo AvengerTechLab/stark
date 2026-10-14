@@ -1,7 +1,9 @@
-# Stark — Security Baseline
+# Stark — Security
 
-Status: **no code, no attack surface yet.** This file records the rules that apply from the start and the threats
-to design for once the scope is known (standard §8). Each control will name the file that implements it.
+Status: **Phase 4 threat model** (2026-10-14). There is still no code. This file lists what Stark protects, where an
+attacker could get in, each threat with its controls, and the gaps. Every control names the contract that specifies
+it; Phase 5 and 6 add the file that implements it. Choices not in `SPEC.md` §6 are marked **PO to confirm** and listed
+in `SPEC.md` §5. The design reviewed is `ARCHITECTURE.md`, `EVENTS.md`, `API.md` and `DATABASE.md`.
 
 ---
 
@@ -14,26 +16,71 @@ to design for once the scope is known (standard §8). Each control will name the
 | No order placement without written PO approval and a human approval step | `CLAUDE.md` §4, standard §21 |
 | Sending a real alert or spending paid API credits needs the PO's go-ahead | `CLAUDE.md` §6 |
 
-## 2. Threats to design for
+## 2. Assets
 
-To be assessed in Phase 4. v1 has one user, the PO (`SPEC.md` D-10).
-
-| Threat | Applies when |
+| Asset | Why it matters |
 |---|---|
-| Leaked provider or channel credentials (Telegram bot token, LINE channel token, Discord webhook URL, Gmail OAuth client secret and refresh token, PostgreSQL password) | Always; four channels in v1.0 (D-09) |
-| Alert spoofing or tampered alert rules | Anyone but the PO reaches Stark's interface (v1 must allow only the PO, D-10) |
-| Telegram bot commands from someone other than the PO | The bot accepts commands (D-21); it must check the sender's chat ID |
-| Unauthenticated access to rules, data or history | Stark exposes an API or UI; v1 needs single-owner authentication (D-10) |
-| Cost abuse of paid APIs (data provider, model) | Paid data plan (D-08: free first) or AI (v1.2; budget set before v1.2, D-12) |
-| Alert flood exhausting a channel's quota or rate limit | Always; LINE's free quota is small; LINE stops at the quota (D-17) |
-| Prompt injection from market news or other fetched text | AI reads news, from v1.2 (`SPEC.md` D-06) |
-| Redistribution of licensed market data | Alerts go beyond the PO (not in v1, D-10). Both terms allow personal, non-commercial use only (`ARCHITECTURE.md` §2.1) |
+| Channel credentials: Telegram bot token, LINE channel access token, Discord webhook URL, Gmail OAuth client secret and refresh token | Anyone holding one can send messages as Stark, or read the PO's Gmail if the OAuth scope is too wide |
+| Owner password hash and session cookies | Control of rules and channels |
+| PostgreSQL password and data (rules, price log, alert history) | Rules reveal the PO's price levels; the logs are SC-2's evidence |
+| Correct alerts | A missed, late or false alert is the core failure (SC-1, SC-2) |
+| The host's IP standing with Binance and Bitkub | An IP ban stops price data (`ARCHITECTURE.md` §2.1) |
 
-## 3. Audit
+## 3. Trust boundaries and entry points
+
+| # | Boundary | Direction | Entry point |
+|---|---|---|---|
+| B1 | Internet → owner web page | Inbound | HTTPS `/api/v1/*` and the page itself (`API.md` §1) |
+| B2 | Telegram → bot | Inbound data, outbound connection | Commands in chat. Stark fetches updates by long polling, so no inbound port is needed (proposed) |
+| B3 | Bitkub, Binance → feed adapters | Inbound data, outbound connection | Price messages over WebSocket and REST |
+| B4 | Stark → Telegram, LINE, Discord, Gmail | Outbound | Alert sends |
+| B5 | Stark → PostgreSQL | Local only | Database connection on the same host (D-25) |
+| B6 | Host operating system | — | SSH or other administration access |
+| B7 | Build → host | — | npm dependencies and the deploy path (Phase 5) |
+
+Only B1 needs an inbound port, and only if the web page is reachable from the internet (Q-26).
+
+## 4. Threats and controls
+
+Likelihood and impact are design judgements for one user and one host, not measurements.
+
+| ID | Threat | Entry | Impact | Controls | Spec |
+|---|---|---|---|---|---|
+| T-01 | Channel or database credential leaks through code, logs, error messages or backups | B7, logs | High | Secrets only in environment variables read at start; never logged (structured logger with a redaction list); `.env` ignored; error responses carry no internals (`INTERNAL` only); backups encrypted (Q-28) | `CLAUDE.md` §5, `API.md` §1.4 |
+| T-02 | Someone guesses or steals the owner password | B1 | High | Argon2id hash only; 5 failures in 15 minutes lock logins for 15 minutes and tell the PO on Telegram; web page not on the public internet (Q-26) | `API.md` §1.1 |
+| T-03 | Session cookie stolen or forged | B1 | High | Random session IDs stored hashed; `HttpOnly`, `Secure`, `SameSite=Strict`; 7-day expiry; logout deletes the session | `API.md` §1.1, `DATABASE.md` |
+| T-04 | Cross-site request forgery changes rules | B1 | Medium | `SameSite=Strict`; state-changing requests also require a matching `Origin` header (proposed) | `API.md` §1.1 |
+| T-05 | Script injection on the web page through a pair name, error text or provider data | B1, B3 | Medium | All text rendered escaped; strict Content-Security-Policy with no inline script (proposed); pair names checked against the provider's symbol list | `API.md` §1.3 |
+| T-06 | Someone other than the PO sends Telegram commands | B2 | High | Bot acts only on the PO's chat ID; others get no reply and are logged `telegram.command_rejected`; commands are parsed by fixed code, never by a model | `API.md` §2 |
+| T-07 | A wrong or manipulated price from a provider fires a false alert | B3 | Medium | Only the two official market-data endpoints over TLS; decimal parsing rejects malformed values; every tick stored, so any alert can be traced to its tick. A real but erroneous provider price is accepted as a risk: Stark reports what the exchange published | `EVENTS.md` §1–2, `ARCHITECTURE.md` §2.1 |
+| T-08 | Stark gets its IP banned by Binance or Bitkub | B3 | High (stops alerts) | Stop and wait on every `429` until `Retry-After`; never retry blindly; health monitor reports the stale feed within 15 minutes | `ARCHITECTURE.md` §2.1, `EVENTS.md` §2.3–2.4 |
+| T-09 | Alert flood exhausts LINE's quota or Gmail's daily limit, or trips Discord's ban | B4 | Medium | One alert per crossing (D-20); usage counters stop LINE at its quota and Gmail before 500 a day; dead Discord webhook not retried | `DATABASE.md` `channel_usage`, `ARCHITECTURE.md` §2.2 |
+| T-10 | Gmail OAuth grant allows more than sending | B4 | High | Request only the send scope (proposed, Q-29); refresh token stored as a secret | `SPEC.md` D-28 |
+| T-11 | Database reached from outside | B5 | High | PostgreSQL listens on the local host only; its own user with access to Stark's database only; firewall closes its port | `SPEC.md` D-25 |
+| T-12 | Host taken over | B6 | High | No inbound ports except B1 (or none, Q-26); SSH by key only; Stark runs as a non-root user; operating system updates applied | Phase 5 host setup |
+| T-13 | Malicious or vulnerable npm dependency | B7 | High | Lockfile committed; dependency audit in CI; few, well-known dependencies | Phase 5 CI |
+| T-14 | Host clock drifts, so percentage rules use the wrong reference price and SC-1 timing is wrong | — | Medium | Time synchronised with NTP; ticks keep both exchange and received time | `EVENTS.md` §2.1, §3.3 |
+| T-15 | Prompt injection through news text | — | Not in v1.0 | No model in v1.0 or v1.1 (D-06, D-12); designed before v1.2 behind the AI orchestrator shape | `ARCHITECTURE.md` §1 |
+| T-16 | Market data redistributed against provider terms | B4 | Low in v1 | Alerts go only to the PO (D-10); any wider use needs Bitkub's written consent and a new review of Binance's terms | `ARCHITECTURE.md` §2.1 |
+
+## 5. Decisions needed from the PO
+
+| ID | Question | Recommendation |
+|---|---|---|
+| Q-26 | Is the web page reachable from the public internet, or only through a private network? | **Private only**, through a private network tool such as Tailscale or an SSH tunnel: the host then needs no open inbound port at all, which removes most of T-02 to T-05 and T-12's exposure. Telegram commands work from anywhere either way |
+| Q-27 | Does the web login need a second factor? | **Not for v1.0 if Q-26 is private only**; add a one-time code (TOTP) if the page is ever public |
+| Q-28 | Database backups: how often, kept where? | **Daily, encrypted, kept off the host**, 35 days to match the price log (D-34); the storage place is decided with hosting (D-26) |
+| Q-29 | Gmail OAuth scope | **Send only**: Stark cannot read the PO's mail |
+
+## 6. Audit
 
 The first security review of the built system is MSAP audit A-1 (`SPEC.md` D-02), MSAP §16, before the first real
-alert. Phase 4 threat modelling is a design review, not an MSAP audit.
+alert. This threat model is a design review, not an MSAP audit; A-1 checks the controls above against the code.
 
-## 4. Gaps
+## 7. Gaps
 
-All controls beyond §1 are open until the scope is decided.
+| Gap | Closed by |
+|---|---|
+| No control is implemented yet | Phase 5 (secrets, logging, CI, host) and Phase 6 (interface and feeds), with tests |
+| Q-26 to Q-29 open | The PO |
+| Host hardening steps depend on the host | S3-4 hosting choice |

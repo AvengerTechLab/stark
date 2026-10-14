@@ -1,7 +1,7 @@
 # Stark — Specification (Phase 0: Discovery)
 
-Status: **discovery complete** (2026-10-03). Q-16 (hosting provider and budget) is deferred (D-26); Phase 3 questions
-are answered. Every decision appears in §6
+Status: **discovery complete** (2026-10-03). Q-16 (hosting provider and budget) is deferred (D-26); Phase 4 questions
+Q-26 to Q-29 are open. Every decision appears in §6
 with who decided and when.
 Structure follows the Discovery outputs in `AVENGERTECH_ENGINEERING_INTEGRATION_SYSTEM_V1.md` §4.
 
@@ -97,6 +97,10 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | Q-23 | ~~How long are stored prices kept?~~ Answered: D-34 | — | — |
 | Q-24 | ~~About how many pairs?~~ Answered: D-36 | — | — |
 | Q-25 | ~~THB and USDT as two rules?~~ Answered: D-35 | — | — |
+| Q-26 | Is the owner web page reachable from the public internet, or only through a private network? | Host exposure, `SECURITY.md` T-02 to T-05, T-12 | **Private only** (for example Tailscale or an SSH tunnel), so the host opens no inbound port |
+| Q-27 | Does the web login need a second factor? | `API.md` §1.1 | **Not for v1.0 if Q-26 is private only**; add TOTP if the page ever becomes public |
+| Q-28 | Database backups: how often, kept where? | `SECURITY.md` T-01, recovery | **Daily, encrypted, off the host, kept 35 days**; place decided with hosting (D-26) |
+| Q-29 | Which Gmail OAuth scope? | `SECURITY.md` T-10 | **Send only** |
 
 ## 6. Decisions
 
@@ -138,6 +142,7 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | D-34 | (Q-23) Stored prices are kept 35 days | PO ("ตามคำแนะนำ ทั้งหมด ทีเดียว"; accepted the recommendations for Q-19 to Q-23 and Q-25) | 2026-10-13 | Covers SC-2's 30-day window with margin |
 | D-35 | (Q-25) An alert on both THB and USDT is two rules, one per quote | PO ("ตามคำแนะนำ ทั้งหมด ทีเดียว"; accepted the recommendations for Q-19 to Q-23 and Q-25) | 2026-10-13 | Each quote has its own price, state and history |
 | D-36 | (Q-24) The PO expects to watch about 10 pairs (a pair is one coin in one quote, so BTC/THB and BTC/USDT are two). Used for sizing only; the PO can add or remove pairs at any time | PO ("ประมาณ 10 คู่") | 2026-10-14 | Sizes the database: about 30 million price rows over 35 days |
+| D-37 | Start Phase 4 (security threat model) with hosting (S3-4) still open; it must be settled before Phase 5 | PO ("เริ่ม Phase 4 ได้เลย") | 2026-10-14 | The threat model does not depend on the host, except host hardening |
 
 ## 7. Constraints
 
