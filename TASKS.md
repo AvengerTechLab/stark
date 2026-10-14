@@ -8,27 +8,24 @@ Tick a task only with evidence: the commit, the file created, or the command run
 
 ---
 
-## Current Phase — Phase 3: Contracts
+## Current Phase — Phase 4: Security
 
-> Started 2026-10-03 on the PO's instruction (`SPEC.md` D-29).
+> Started 2026-10-14 on the PO's instruction (`SPEC.md` D-37).
 
-- [x] **S3-1. Domain and event contracts** — `EVENTS.md`: types, events, rule evaluation, alert message; matches
-  `SPEC.md` D-30 to D-33, D-35.
-- [x] **S3-2. Owner interface contracts** — `API.md`: HTTP API with owner login, validation and error codes; Telegram
-  bot commands.
-- [~] **S3-3. Database contract** — `DATABASE.md`: tables, constraints, indexes; retention 35 days (D-34).
-  `[!]` waiting on the PO for the number of pairs (Q-24), which only sets the size estimate.
-- [ ] **S3-4. Hosting carried over from Phase 2** — the PO runs the read-only checks from their machine and sends the
-  results; provider and budget with `ai-trading` (D-26). Must be settled before Phase 5.
+- [x] **S4-1. Threat model** — `SECURITY.md` §2–4: assets, trust boundaries, 16 threats with controls mapped to the
+  contracts; decisions D-38 to D-41.
+- [x] **S4-2. Contracts updated for the answers** — `API.md` §1 (private network, no second factor), `SECURITY.md`
+  §3–5.
+- [ ] **S4-3. Hosting carried over from S3-4** — the PO's machine passes (`ARCHITECTURE.md` §8); provider and budget
+  with `ai-trading` (D-26); each VPS candidate needs the same check. Must be settled before Phase 5.
 
-*Phase done when:* Q-24 is answered and the three contracts match every answer.
+*Phase done when:* S4-3 hosting is settled. Everything else in Phase 4 is done.
 
 ## Next Phases (not started)
 
 Detailed tasks are written when the phase becomes current. Order from the standard §2.2 and §4–10.
 
 - **AI contracts** before v1.2 (`SPEC.md` D-06).
-- **Phase 4 — Security:** threat model in `SECURITY.md` §2.
 - **Phase 5 — Foundation:** project skeleton, lint / typecheck / test / build commands, CI workflow, `.env.example`,
   fakes for every external system; `CLAUDE.md` §8 lists the commands.
 - **Phase 6 — First feature**, test-first.
@@ -53,6 +50,22 @@ Detailed tasks are written when the phase becomes current. Order from the standa
 ---
 
 ## Done
+
+### Phase 3: Contracts (2026-10-03 to 2026-10-14)
+
+> Started 2026-10-03 on the PO's instruction (`SPEC.md` D-29).
+
+- [x] **S3-1. Domain and event contracts** — `EVENTS.md`: types, events, rule evaluation, alert message; matches
+  `SPEC.md` D-30 to D-33, D-35.
+- [x] **S3-2. Owner interface contracts** — `API.md`: HTTP API with owner login, validation and error codes; Telegram
+  bot commands.
+- [x] **S3-3. Database contract** — `DATABASE.md`: tables, constraints, indexes; retention 35 days (D-34); sized for
+  about 10 pairs (D-36).
+- [→] **S3-4. Hosting** (carried to S4-3) — the PO's machine passes (`ARCHITECTURE.md` §8). Provider and
+  budget still go with `ai-trading` (D-26), and each VPS candidate must pass the same checks. Must be settled before
+  Phase 5.
+
+Contracts match every answer (D-30 to D-36).
 
 ### Phase 2: Architecture (2026-10-03, closed by `SPEC.md` D-29)
 

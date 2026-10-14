@@ -113,7 +113,7 @@ boundaries below are module boundaries inside that process, so they can be split
 | Alert dispatcher | Take each alert decision, store it, send to the channels switched on for the whole system and for that rule (D-09), record each delivery result | Channel interface, storage | Provider APIs |
 | Channel adapters (Telegram, LINE, Discord, email) | One interface: `send(alert) → delivered / failed(reason)`. LINE counts sends and refuses past the free quota (D-17) | Channel APIs | Rules, feeds |
 | Health monitor | Watch feed freshness and delivery failures; tell the PO through a working channel within 15 minutes (SC-3) | Feeds' last-tick times, dispatcher results, channel interface | Rule engine |
-| Owner interface | Lets the PO view prices, manage rules and switch channels; only the PO can use it (D-10). Two forms from v1.0 (`SPEC.md` D-21): a web page with a single owner login, and Telegram bot commands accepted only from the PO's chat | Rule store, channel settings, price log | Provider and channel APIs directly |
+| Owner interface | Lets the PO view prices, manage rules and switch channels; only the PO can use it (D-10). Two forms from v1.0 (`SPEC.md` D-21): a web page with a single owner login, and Telegram bot commands accepted only from the PO's chat, fetched by long polling so no inbound port is needed (`SECURITY.md` B2) | Rule store, channel settings, price log | Provider and channel APIs directly |
 | Storage | Rules, channel settings, price log, alert decisions, delivery results, in PostgreSQL (`SPEC.md` D-22) | — | — |
 
 Dependency direction: interface and adapters → application (dispatcher, monitor) → domain (rule engine and types).
@@ -175,5 +175,14 @@ Before the PO picks hosting, Claude or the PO runs the same read-only checks fro
 `GET /api/v3/market/ticker`, Binance's public ticker, and one WebSocket connection to each, recording the HTTP status
 and response time. No API key is used and nothing is sent to any channel. Candidates: the PO's machine and one or two low-cost VPS
 providers in Asia (`SPEC.md` D-23); the provider is likely the one `ai-trading` uses, on a
-separate machine, and the budget is set later (D-26). PostgreSQL (D-22) runs on the same host and
-accepts no connections from the internet (D-25).
+separate machine, and the budget is set later (D-26). PostgreSQL (D-22) runs on the same host and accepts no
+connections from the internet (D-25).
+
+Results:
+
+| Host | Date | Bitkub ticker | Binance market-data host | Binance main API | Who ran it |
+|---|---|---|---|---|---|
+| PO's machine (Thailand), run 1 | 2026-10-14 | `200`, 0.34 s | `200`, 0.91 s | `200`, 0.30 s | PO, curl over HTTPS |
+| PO's machine (Thailand), run 2 | 2026-10-14 | `200`, 0.28 s | `200`, 0.63 s | `200`, 0.23 s | PO, curl over HTTPS |
+
+The PO's machine reaches all three, so Binance does not block it (no `451`). WebSocket connections were not tested.
