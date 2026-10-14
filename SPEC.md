@@ -101,6 +101,8 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | Q-27 | ~~Second login factor?~~ Answered: D-39 | — | — |
 | Q-28 | ~~Database backups?~~ Answered: D-40 | — | — |
 | Q-29 | ~~Gmail OAuth scope?~~ Answered: D-41 | — | — |
+| Q-30 | ~~Alert send cooldown?~~ Answered: D-42 | — | — |
+| Q-31 | ~~Who reports Stark itself down?~~ Answered: D-43 | — | — |
 
 ## 6. Decisions
 
@@ -147,6 +149,8 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | D-39 | (Q-27) No second login factor in v1.0, because the page is private (D-38). If the page ever becomes public, TOTP is added first | PO ("ตามคำแนะนำทั้งหมด ทีเดียว"; accepted the recommendations for Q-26 to Q-29) | 2026-10-14 | A password plus lockout is enough behind a private network |
 | D-40 | (Q-28) PostgreSQL is backed up daily, encrypted, to storage off the host, and each backup is kept 35 days; where it is stored is decided with hosting (D-26) | PO ("ตามคำแนะนำทั้งหมด ทีเดียว"; accepted the recommendations for Q-26 to Q-29) | 2026-10-14 | Recovery without exposing data; matches the price log retention (D-34) |
 | D-41 | (Q-29) The Gmail OAuth grant uses the send-only scope | PO ("ตามคำแนะนำทั้งหมด ทีเดียว"; accepted the recommendations for Q-26 to Q-29) | 2026-10-14 | Stark can send alerts but cannot read the PO's mail |
+| D-42 | (Q-30) Rule decisions stay as in D-20, but each rule sends at most once per channel per 5 minutes. A decision inside the cooldown is still stored, and its sends are recorded as skipped (`EVENTS.md` §2.3) | PO ("ทำตามที่คุณแนะนำ"; accepted the recommendations for Q-30 and Q-31) | 2026-10-14 | A price hovering at a level would otherwise use LINE's 300 messages a month in minutes (`SECURITY.md` T-18); SC-2 still sees every decision |
+| D-43 | (Q-31) Stark sends a heartbeat to a free uptime monitor outside its host, which tells the PO when heartbeats stop. Which service is chosen with hosting (D-26) | PO ("ทำตามที่คุณแนะนำ"; accepted the recommendations for Q-30 and Q-31) | 2026-10-14 | The health monitor runs inside the process it watches, so it cannot report Stark itself being down (SC-3, `SECURITY.md` T-17) |
 
 ## 7. Constraints
 

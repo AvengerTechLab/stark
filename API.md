@@ -18,7 +18,8 @@ through a private network (`SPEC.md` D-38).
 - One owner password. The host stores only its hash (Argon2id) in an environment variable; the password itself is
   never stored or logged (`CLAUDE.md` §5).
 - `POST /api/v1/session` with the password returns a session cookie: `HttpOnly`, `Secure`, `SameSite=Strict`,
-  expiring after 7 days or on `DELETE /api/v1/session`.
+  expiring after 7 days or on `DELETE /api/v1/session`. Each login gets a new random session ID of at least 128 bits,
+  and the PO is told on Telegram of every successful login (`SECURITY.md` T-22).
 - No second factor in v1.0 (D-39); TOTP is added before the page is ever made public.
 - After 5 wrong passwords in 15 minutes, logins are refused for 15 minutes and the PO is told on Telegram.
 - Every other endpoint except `GET /healthz` returns `401` without a valid session.
@@ -69,8 +70,9 @@ rounded silently; an invalid value is a `400` with its code (playbook §6, item 
 
 ## 2. Telegram bot commands
 
-The bot acts only on messages from the PO's chat ID, set in an environment variable. Messages from any other chat get
-no reply and are logged as `telegram.command_rejected` (`SECURITY.md` §2).
+The bot fetches updates by long polling, so it needs no inbound port (D-38). It acts only on messages from a private
+chat whose ID is the PO's chat ID, set in an environment variable. Messages from any other chat get
+no reply and are logged as `telegram.command_rejected` (`SECURITY.md` T-06).
 
 | Command | Example | Effect |
 |---|---|---|
@@ -80,11 +82,12 @@ no reply and are logged as `telegram.command_rejected` (`SECURITY.md` §2).
 | `/below` | `/below BTC/USDT 60000` | New `below` rule |
 | `/change` | `/change BTC/USDT 5 60 up` | New `change` rule: percent, minutes, `up`, `down` or `either` |
 | `/off`, `/on` | `/off 3f2a` | Disable or enable a rule by short ID |
-| `/delete` | `/delete 3f2a` | Delete a rule, after a yes/no confirmation |
+| `/delete` | `/delete 3f2a` | Delete a rule, after a yes/no confirmation; a yes counts only for the last question and only within 60 s |
 | `/channel` | `/channel line off` | Switch a channel system-wide |
 | `/status` | `/status` | Feed and channel health, LINE quota, Gmail count |
 
-Commands use the same validation and error codes as the HTTP API (§1.3), answered as a short Thai message. Choosing
+Commands use the same validation and error codes as the HTTP API (§1.3), answered as a short Thai message that repeats
+what changed. Choosing
 channels per rule is done on the web page (proposed).
 
 The demo prices in the examples are not market data.

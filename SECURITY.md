@@ -1,8 +1,8 @@
 # Stark — Security
 
-Status: **Phase 4 threat model** (2026-10-14). There is still no code. This file lists what Stark protects, where an
+Status: **Phase 4 threat model** (2026-10-14; T-17 to T-24 added from a second review). There is still no code. This file lists what Stark protects, where an
 attacker could get in, each threat with its controls, and the gaps. Every control names the contract that specifies
-it; Phase 5 and 6 add the file that implements it. Security choices are decided in `SPEC.md` D-38 to D-41. The design reviewed is `ARCHITECTURE.md`, `EVENTS.md`, `API.md` and `DATABASE.md`.
+it; Phase 5 and 6 add the file that implements it. Security choices are decided in `SPEC.md` D-38 to D-43. The design reviewed is `ARCHITECTURE.md`, `EVENTS.md`, `API.md` and `DATABASE.md`.
 
 ---
 
@@ -61,6 +61,14 @@ Likelihood and impact are design judgements for one user and one host, not measu
 | T-14 | Host clock drifts, so percentage rules use the wrong reference price and SC-1 timing is wrong | — | Medium | Time synchronised with NTP; ticks keep both exchange and received time | `EVENTS.md` §2.1, §3.3 |
 | T-15 | Prompt injection through news text | — | Not in v1.0 | No model in v1.0 or v1.1 (D-06, D-12); designed before v1.2 behind the AI orchestrator shape | `ARCHITECTURE.md` §1 |
 | T-16 | Market data redistributed against provider terms | B4 | Low in v1 | Alerts go only to the PO (D-10); any wider use needs Bitkub's written consent and a new review of Binance's terms | `ARCHITECTURE.md` §2.1 |
+| T-17 | Stark itself stops (process crash, host down) and nobody is told, because the health monitor runs inside the same process (SC-3) | — | High | A process supervisor restarts Stark on crash (proposed); a heartbeat every 5 minutes to an uptime monitor outside the host, which tells the PO after 15 minutes without one (D-43) | `EVENTS.md` §2.4, `ARCHITECTURE.md` §7 |
+| T-18 | A price hovering at a level crosses it again and again: D-20 re-arms on every uncrossing, so at one tick a second a rule can alert every 2 seconds and use LINE's 300 messages a month in minutes | B4 | Medium | Usage counters stop LINE and Gmail at their limits (T-09); each rule sends at most once per channel per 5 minutes; decisions inside the cooldown are still stored for SC-2 (D-42) | `EVENTS.md` §2.3, §3.5 |
+| T-19 | A secret leaks through a logged URL: Telegram's bot token is part of its API path and the Discord webhook URL is itself the secret, and HTTP client errors often log the full URL | Logs | High | HTTP errors are logged without their URL; the logger's redaction list covers the token and webhook patterns; a Phase 5 test forces a send failure and checks the log holds no secret (proposed) | `CLAUDE.md` §5 |
+| T-20 | Injection into an alert message: Telegram markup, a Discord `@everyone` mention, or a line break in an email header | B4 | Medium | Telegram sent without a parse mode; Discord with `allowed_mentions` set to none; the message and email subject built only from typed, validated values (pair checked against the provider's symbol list) | `EVENTS.md` §2.3 |
+| T-21 | The Gmail refresh token stops working (revoked by the PO or Google), so email alerts stop | B4 | Medium | A failed token refresh is a `channel_failing` health event, reported through another channel (SC-3); the OAuth consent screen is set to "In production", because Google says refresh tokens of an app left in "Testing" expire after 7 days (**not yet read from Google's own documentation**, S4-5) | `EVENTS.md` §2.4, `SPEC.md` D-28 |
+| T-22 | A stolen session changes rules or switches channels off, and nothing shows who did it | B1 | Medium | A new session ID on every login; a Telegram notice on each successful login; each rule and channel change logged with time and source (web or bot) in `owner_actions` | `API.md` §1.1, `DATABASE.md` `owner_actions` |
+| T-23 | The disk fills (about 30 million price rows over 35 days for 10 pairs, `DATABASE.md` §2), writes stop and alerts with them | B5 | Medium | Daily partitions dropped after 35 days; the health monitor raises `disk_low` when free disk falls below 20 % | `DATABASE.md` §1, `EVENTS.md` §2.4 |
+| T-24 | A bot command from a group chat that includes the PO, or a `/delete` confirmation answered long after it was asked | B2 | Low | Commands accepted only from a private chat whose ID is the PO's; a yes counts only for the last question and only within 60 s | `API.md` §2 |
 
 ## 5. Decisions
 
@@ -70,6 +78,8 @@ Likelihood and impact are design judgements for one user and one host, not measu
 | D-39 | No second login factor in v1.0; TOTP first if the page ever becomes public |
 | D-40 | Daily encrypted off-host database backups, kept 35 days |
 | D-41 | Gmail OAuth with the send-only scope |
+| D-42 | Each rule sends at most once per channel per 5 minutes; decisions are still stored |
+| D-43 | Heartbeat to an uptime monitor outside the host |
 
 ## 6. Audit
 
@@ -82,3 +92,6 @@ alert. This threat model is a design review, not an MSAP audit; A-1 checks the c
 |---|---|
 | No control is implemented yet | Phase 5 (secrets, logging, CI, host) and Phase 6 (interface and feeds), with tests |
 | Host hardening steps depend on the host | S3-4 hosting choice |
+| Which uptime monitor receives the heartbeat (D-43) | Chosen with hosting, S4-3 |
+| The URL redaction test for T-19 | Phase 5 logger and its tests |
+| Google's 7-day refresh token rule for apps in "Testing" (T-21) is not read from the primary source | S4-5 |
