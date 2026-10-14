@@ -101,6 +101,8 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | Q-27 | ~~Second login factor?~~ Answered: D-39 | — | — |
 | Q-28 | ~~Database backups?~~ Answered: D-40 | — | — |
 | Q-29 | ~~Gmail OAuth scope?~~ Answered: D-41 | — | — |
+| Q-30 | A price hovering at a level can alert every few seconds under D-20 and use LINE's monthly quota in minutes. Add a cooldown? (`SECURITY.md` T-18) | Phase 5 dispatcher | **Keep D-20's decisions, and send each rule at most once per channel per 5 minutes; every decision is still stored for SC-2**; or no cooldown |
+| Q-31 | Who tells the PO when Stark itself is down? Its health monitor runs in the same process (`SECURITY.md` T-17) | SC-3; adds an outside service | **A heartbeat from Stark to a free uptime monitor outside the host, which alerts the PO when heartbeats stop**; or accept the gap |
 
 ## 6. Decisions
 

@@ -19,7 +19,11 @@ Tick a task only with evidence: the commit, the file created, or the command run
 - [ ] **S4-3. Hosting carried over from S3-4** — the PO's machine passes (`ARCHITECTURE.md` §8); provider and budget
   with `ai-trading` (D-26); each VPS candidate needs the same check. Must be settled before Phase 5.
 
-*Phase done when:* S4-3 hosting is settled. Everything else in Phase 4 is done.
+- [ ] **S4-4. Threat model additions** — `SECURITY.md` T-17 to T-24 from a second review: PO answers Q-30 (alert
+  cooldown) and Q-31 (outside heartbeat); then the proposed controls go into `API.md`, `EVENTS.md` and `DATABASE.md`;
+  Google's 7-day refresh token rule (T-21) is checked in Google's own documentation.
+
+*Phase done when:* S4-3 hosting is settled and S4-4 is done.
 
 ## Next Phases (not started)
 

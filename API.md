@@ -70,7 +70,7 @@ rounded silently; an invalid value is a `400` with its code (playbook §6, item 
 ## 2. Telegram bot commands
 
 The bot acts only on messages from the PO's chat ID, set in an environment variable. Messages from any other chat get
-no reply and are logged as `telegram.command_rejected` (`SECURITY.md` §2).
+no reply and are logged as `telegram.command_rejected` (`SECURITY.md` T-06).
 
 | Command | Example | Effect |
 |---|---|---|
