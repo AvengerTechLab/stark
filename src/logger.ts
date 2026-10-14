@@ -25,13 +25,24 @@ const EVENT_NAME = /^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$/;
 const SENSITIVE_KEY = /token|secret|password|passwd|hash|webhook|authorization|cookie|refresh|api_?key/i;
 export const REDACTED = "[REDACTED]";
 
+// Credentials that can appear in URLs the logger was never told about (SECURITY.md T-19).
+const SECRET_PATTERNS: readonly [RegExp, string][] = [
+  // Telegram Bot API path: /bot<id>:<token>/
+  [/(\/bot)\d+:[A-Za-z0-9_-]+/g, `$1${REDACTED}`],
+  // Discord webhook URL: the id and token after /webhooks/ are the secret.
+  [/(discord(?:app)?\.com\/api\/(?:v\d+\/)?webhooks\/)[^\s"'?]+/g, `$1${REDACTED}`],
+];
+
 export function createLogger(options: LoggerOptions): Logger {
   const secrets = (options.secrets ?? []).filter((s) => s.length >= 4);
   const write = options.write ?? ((line: string) => process.stdout.write(line + "\n"));
   const now = options.now ?? (() => new Date());
 
   const scrubString = (text: string): string =>
-    secrets.reduce((out, secret) => out.split(secret).join(REDACTED), text);
+    SECRET_PATTERNS.reduce(
+      (out, [pattern, replacement]) => out.replace(pattern, replacement),
+      secrets.reduce((out, secret) => out.split(secret).join(REDACTED), text),
+    );
 
   const scrub = (input: unknown, depth: number): unknown => {
     if (depth > 8) return "[TRUNCATED]";

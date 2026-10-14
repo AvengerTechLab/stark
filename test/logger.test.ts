@@ -65,4 +65,19 @@ describe("createLogger", () => {
     logger.error("app.start_failed", { error: new TypeError("boom") });
     expect(parsed()[0]?.["error"]).toEqual({ name: "TypeError", message: "boom" });
   });
+
+  // SECURITY.md T-19: an HTTP error can carry a credential the logger was never told about.
+  it("redacts Telegram bot tokens and Discord webhook URLs by pattern, even when not in the secret list", () => {
+    const { logger, lines } = capture();
+    const fakeBotToken = "123456789:AAFakeTokenForTestsOnly_abcdefghijklmn";
+    const fakeWebhook = "https://discord.com/api/webhooks/123456789012345678/FakeWebhookToken-abc_DEF";
+    logger.error("channel.send_failed", {
+      reason: `request to https://api.telegram.org/bot${fakeBotToken}/sendMessage failed`,
+      error: new Error(`POST ${fakeWebhook} returned 404`),
+    });
+    expect(lines[0]).not.toContain(fakeBotToken);
+    expect(lines[0]).not.toContain("FakeWebhookToken");
+    expect(lines[0]).toContain("api.telegram.org/bot[REDACTED]/sendMessage");
+    expect(lines[0]).toContain("discord.com/api/webhooks/[REDACTED]");
+  });
 });

@@ -7,6 +7,8 @@ export interface Config {
   readonly databaseUrl: string;
   readonly ownerPasswordHash: string;
   readonly logLevel: LogLevel;
+  /** Uptime monitor ping URL (SPEC.md D-43); a secret like a channel credential. */
+  readonly heartbeatUrl?: string;
   readonly telegram: { readonly botToken: string; readonly ownerChatId: string };
   readonly line?: { readonly channelAccessToken: string; readonly ownerUserId: string };
   readonly discord?: { readonly webhookUrl: string };
@@ -102,12 +104,16 @@ export function loadConfig(env: Env): Config {
 
   if (discord?.[0] !== undefined && !discord[0].startsWith("https://")) invalid.push("DISCORD_WEBHOOK_URL");
 
+  const heartbeatUrl = value(env, "HEARTBEAT_URL");
+  if (heartbeatUrl !== undefined && !heartbeatUrl.startsWith("https://")) invalid.push("HEARTBEAT_URL");
+
   if (missing.length > 0 || invalid.length > 0) throw new ConfigError(missing, invalid);
 
   return {
     databaseUrl,
     ownerPasswordHash,
     logLevel,
+    ...(heartbeatUrl !== undefined && { heartbeatUrl }),
     telegram: { botToken, ownerChatId },
     ...(line && { line: { channelAccessToken: line[0] ?? "", ownerUserId: line[1] ?? "" } }),
     ...(discord && { discord: { webhookUrl: discord[0] ?? "" } }),
@@ -131,6 +137,7 @@ export function secretValues(config: Config): string[] {
     config.telegram.botToken,
     config.line?.channelAccessToken,
     config.discord?.webhookUrl,
+    config.heartbeatUrl,
     config.gmail?.clientSecret,
     config.gmail?.refreshToken,
   ].filter((v): v is string => v !== undefined && v !== "");

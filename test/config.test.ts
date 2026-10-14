@@ -85,6 +85,14 @@ describe("loadConfig", () => {
     ]);
   });
 
+  it("treats the heartbeat URL as an optional HTTPS secret", () => {
+    const url = "https://uptime.example/ping/fake-heartbeat-id";
+    expect(loadConfig({ ...BASE, HEARTBEAT_URL: url }).heartbeatUrl).toBe(url);
+    expect(secretValues(loadConfig({ ...BASE, HEARTBEAT_URL: url }))).toContain(url);
+    expect(loadConfig(BASE).heartbeatUrl).toBeUndefined();
+    expect(configError({ ...BASE, HEARTBEAT_URL: "http://uptime.example/x" }).invalid).toEqual(["HEARTBEAT_URL"]);
+  });
+
   it("rejects a Discord webhook that is not HTTPS", () => {
     expect(configError({ ...BASE, DISCORD_WEBHOOK_URL: "http://discord.example/x" }).invalid).toEqual([
       "DISCORD_WEBHOOK_URL",

@@ -13,13 +13,14 @@ Tick a task only with evidence: the commit, the file created, or the command run
 > Started 2026-10-14 on the PO's instruction (`SPEC.md` D-44), before hosting is chosen.
 
 - [x] **S5-1. Project skeleton and commands** — `package.json`, `tsconfig.json`, `eslint.config.js`,
-  `vitest.config.ts`; tooling in `SPEC.md` D-45. Evidence: `npm run check` green (lint, typecheck, 20 tests, build).
+  `vitest.config.ts`; tooling in `SPEC.md` D-45. Evidence: `npm run check` green (lint, typecheck, 22 tests, build).
 - [~] **S5-2. CI workflow** — `.github/workflows/ci.yml`: `npm ci` → audit → lint → typecheck → test → build.
   *Done when:* it passes on the first pull request.
 - [x] **S5-3. `.env.example`** — names only, required and optional channel groups.
 - [x] **S5-4. Configuration and logging** — `src/config.ts` (fail-fast, all-or-none channel groups, errors name
-  variables only), `src/logger.ts` (JSON, `domain.action_result`, secret redaction). Control run: removing the
-  redaction makes 2 logger tests fail.
+  variables only), `src/logger.ts` (JSON, `domain.action_result`, secret redaction by value and by pattern for Telegram bot tokens
+  and Discord webhook URLs, `SECURITY.md` T-19); optional `HEARTBEAT_URL` (D-43). Control run: removing the
+  redaction makes 2 logger tests fail; the T-19 and heartbeat tests failed before their code was written.
 - [x] **S5-5. Interfaces and fakes** — `src/ports/channel.ts`, `src/ports/feed.ts`; `test/fakes/` for all four channels
   and both providers.
 - [ ] **S5-6. Hosting carried over from S4-3** — the PO's machine passes (`ARCHITECTURE.md` §8); candidates are a
