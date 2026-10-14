@@ -8,7 +8,23 @@ Tick a task only with evidence: the commit, the file created, or the command run
 
 ---
 
-## Current Phase — Phase 3: Contracts
+## Current Phase — Phase 4: Security
+
+> Started 2026-10-14 when the PO started the threat-model work. Phase 3's last task, S3-4 hosting, stays open below
+> and must be settled before Phase 5.
+
+- [~] **S4-1. Threat model** — `SECURITY.md`: assets, actors, trust boundaries, STRIDE threats T-01 to T-35, controls
+  C-1.1 to C-8.3 tied to the contracts, gaps. Draft written; waits on the PO's review.
+- [ ] **S4-2. PO answers Q-26 to Q-29** (`SPEC.md` §5): Gmail scope, alert flood cap, public web page, outside
+  heartbeat.
+- [ ] **S4-3. Apply the contract changes** in `SECURITY.md` §7 to `EVENTS.md`, `API.md`, `DATABASE.md` and
+  `ARCHITECTURE.md`, with the answers to S4-2.
+- [ ] **S4-4. Verify the two Google facts** in `SECURITY.md` C-4.7 and C-4.8 (SMTP scope, 7-day refresh tokens in
+  "Testing") from Google's own documentation.
+
+*Phase done when:* the PO accepts the threat model, Q-26 to Q-29 are answered and the contracts carry every control.
+
+## Phase 3: Contracts (open only for S3-4)
 
 > Started 2026-10-03 on the PO's instruction (`SPEC.md` D-29).
 
@@ -30,7 +46,6 @@ must be settled before Phase 5.
 Detailed tasks are written when the phase becomes current. Order from the standard §2.2 and §4–10.
 
 - **AI contracts** before v1.2 (`SPEC.md` D-06).
-- **Phase 4 — Security:** threat model in `SECURITY.md` §2.
 - **Phase 5 — Foundation:** project skeleton, lint / typecheck / test / build commands, CI workflow, `.env.example`,
   fakes for every external system; `CLAUDE.md` §8 lists the commands.
 - **Phase 6 — First feature**, test-first.

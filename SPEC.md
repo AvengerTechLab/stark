@@ -1,7 +1,7 @@
 # Stark — Specification (Phase 0: Discovery)
 
 Status: **discovery complete** (2026-10-03). Q-16 (hosting provider and budget) is deferred (D-26); Phase 3 questions
-are answered. Every decision appears in §6
+are answered; Q-26 to Q-29 come from the Phase 4 threat model. Every decision appears in §6
 with who decided and when.
 Structure follows the Discovery outputs in `AVENGERTECH_ENGINEERING_INTEGRATION_SYSTEM_V1.md` §4.
 
@@ -97,6 +97,10 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | Q-23 | ~~How long are stored prices kept?~~ Answered: D-34 | — | — |
 | Q-24 | ~~About how many pairs?~~ Answered: D-36 | — | — |
 | Q-25 | ~~THB and USDT as two rules?~~ Answered: D-35 | — | — |
+| Q-26 | Gmail over SMTP needs a token that can read and delete the whole mailbox. Send through the Gmail API with the send-only scope instead? (`SECURITY.md` C-4.7) | Phase 5 email adapter; changes D-28's method, not the account or OAuth | **Gmail API, `gmail.send` scope only**; or keep SMTP and accept the full-mailbox token |
+| Q-27 | A price hovering at a level can alert every few seconds under D-20. Cap it? (`SECURITY.md` T-20) | Phase 5 dispatcher; LINE's 300 a month and Gmail's 500 a day | **Keep D-20, and cap each rule at one alert per channel per 5 minutes; a capped alert is still stored**; or a per-channel hourly cap; or no cap |
+| Q-28 | Is the web page reachable from the public internet? (`SECURITY.md` C-1.11) | Hosting (S3-4), firewall | **Not public: the PO reaches it through a private connection to the host (for example an SSH tunnel or a private network), and uses the Telegram bot on the go**; or public HTTPS with the login in `API.md` §1.1 |
+| Q-29 | Who tells the PO when Stark itself is down? (`SECURITY.md` C-6.2) | SC-3; adds an outside service | **A heartbeat from Stark to a free uptime monitor outside the host that alerts the PO when it stops**; or accept the gap |
 
 ## 6. Decisions
 

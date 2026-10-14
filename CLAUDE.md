@@ -26,7 +26,8 @@ architecture is in `ARCHITECTURE.md`. Stark is in Phase 3: contracts are written
   not choose hosting, a broker or another exchange. These are PO decisions.
 - Documents may describe options and recommend one; they must mark it **PO to confirm**.
 
-The phase order after discovery is in `TASKS.md`.
+Phase 4 (security threat model, `SECURITY.md`) started on 2026-10-14 while Phase 3's hosting task is still open;
+the same rules apply. The phase order after discovery is in `TASKS.md`.
 
 ## 2. Instruction priority
 
