@@ -175,5 +175,13 @@ Before the PO picks hosting, Claude or the PO runs the same read-only checks fro
 `GET /api/v3/market/ticker`, Binance's public ticker, and one WebSocket connection to each, recording the HTTP status
 and response time. No API key is used and nothing is sent to any channel. Candidates: the PO's machine and one or two low-cost VPS
 providers in Asia (`SPEC.md` D-23); the provider is likely the one `ai-trading` uses, on a
-separate machine, and the budget is set later (D-26). PostgreSQL (D-22) runs on the same host and
-accepts no connections from the internet (D-25).
+separate machine, and the budget is set later (D-26). PostgreSQL (D-22) runs on the same host and accepts no
+connections from the internet (D-25).
+
+Results:
+
+| Host | Date | Bitkub ticker | Binance market-data host | Binance main API | Who ran it |
+|---|---|---|---|---|---|
+| PO's machine (Thailand) | 2026-10-14 | `200`, 0.34 s | `200`, 0.91 s | `200`, 0.30 s | PO, one run, curl over HTTPS |
+
+The PO's machine reaches all three, so Binance does not block it (no `451`). WebSocket connections were not tested.

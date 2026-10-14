@@ -18,8 +18,9 @@ Tick a task only with evidence: the commit, the file created, or the command run
   bot commands.
 - [~] **S3-3. Database contract** — `DATABASE.md`: tables, constraints, indexes; retention 35 days (D-34).
   `[!]` waiting on the PO for the number of pairs (Q-24), which only sets the size estimate.
-- [ ] **S3-4. Hosting carried over from Phase 2** — the PO runs the read-only checks from their machine and sends the
-  results; provider and budget with `ai-trading` (D-26). Must be settled before Phase 5.
+- [~] **S3-4. Hosting carried over from Phase 2** — the PO's machine passes (`ARCHITECTURE.md` §8). Provider and
+  budget still go with `ai-trading` (D-26), and each VPS candidate must pass the same checks. Must be settled before
+  Phase 5.
 
 *Phase done when:* Q-24 is answered and the three contracts match every answer.
 
