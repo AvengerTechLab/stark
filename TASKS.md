@@ -12,15 +12,16 @@ Tick a task only with evidence: the commit, the file created, or the command run
 
 > Started 2026-10-03 on the PO's instruction (`SPEC.md` D-29).
 
-- [~] **S3-1. Domain and event contracts** — `EVENTS.md`: types, events, rule evaluation, alert message.
-  `[!]` waiting on the PO: `SPEC.md` Q-19 to Q-22, Q-25.
-- [~] **S3-2. Owner interface contracts** — `API.md`: HTTP API with owner login, validation and error codes; Telegram
+- [x] **S3-1. Domain and event contracts** — `EVENTS.md`: types, events, rule evaluation, alert message; matches
+  `SPEC.md` D-30 to D-33, D-35.
+- [x] **S3-2. Owner interface contracts** — `API.md`: HTTP API with owner login, validation and error codes; Telegram
   bot commands.
-- [~] **S3-3. Database contract** — `DATABASE.md`: tables, constraints, indexes. `[!]` waiting on the PO: Q-23, Q-24.
+- [~] **S3-3. Database contract** — `DATABASE.md`: tables, constraints, indexes; retention 35 days (D-34).
+  `[!]` waiting on the PO for the number of pairs (Q-24), which only sets the size estimate.
 - [ ] **S3-4. Hosting carried over from Phase 2** — the PO runs the read-only checks from their machine and sends the
   results; provider and budget with `ai-trading` (D-26). Must be settled before Phase 5.
 
-*Phase done when:* Q-19 to Q-25 are answered and the three contracts match the answers.
+*Phase done when:* Q-24 is answered and the three contracts match every answer.
 
 ## Next Phases (not started)
 
