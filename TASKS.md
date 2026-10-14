@@ -8,26 +8,31 @@ Tick a task only with evidence: the commit, the file created, or the command run
 
 ---
 
-## Current Phase — Phase 4: Security
+## Current Phase — Phase 5: Foundation
 
-> Started 2026-10-14 on the PO's instruction (`SPEC.md` D-37).
+> Started 2026-10-14 on the PO's instruction (`SPEC.md` D-42), before hosting is chosen.
 
-- [x] **S4-1. Threat model** — `SECURITY.md` §2–4: assets, trust boundaries, 16 threats with controls mapped to the
-  contracts; decisions D-38 to D-41.
-- [x] **S4-2. Contracts updated for the answers** — `API.md` §1 (private network, no second factor), `SECURITY.md`
-  §3–5.
-- [ ] **S4-3. Hosting carried over from S3-4** — the PO's machine passes (`ARCHITECTURE.md` §8); provider and budget
-  with `ai-trading` (D-26); each VPS candidate needs the same check. Must be settled before Phase 5.
+- [x] **S5-1. Project skeleton and commands** — `package.json`, `tsconfig.json`, `eslint.config.js`,
+  `vitest.config.ts`; tooling in `SPEC.md` D-43. Evidence: `npm run check` green (lint, typecheck, 20 tests, build).
+- [~] **S5-2. CI workflow** — `.github/workflows/ci.yml`: `npm ci` → audit → lint → typecheck → test → build.
+  *Done when:* it passes on the first pull request.
+- [x] **S5-3. `.env.example`** — names only, required and optional channel groups.
+- [x] **S5-4. Configuration and logging** — `src/config.ts` (fail-fast, all-or-none channel groups, errors name
+  variables only), `src/logger.ts` (JSON, `domain.action_result`, secret redaction). Control run: removing the
+  redaction makes 2 logger tests fail.
+- [x] **S5-5. Interfaces and fakes** — `src/ports/channel.ts`, `src/ports/feed.ts`; `test/fakes/` for all four channels
+  and both providers.
+- [ ] **S5-6. Hosting carried over from S4-3** — the PO's machine passes (`ARCHITECTURE.md` §8); candidates are a
+  Linux VPS or Railway (`ai-trading`'s dashboard host); each must pass the same check. Must be settled before the
+  first deploy, not before Phase 6.
 
-*Phase done when:* S4-3 hosting is settled. Everything else in Phase 4 is done.
+*Phase done when:* CI passes on a pull request.
 
 ## Next Phases (not started)
 
 Detailed tasks are written when the phase becomes current. Order from the standard §2.2 and §4–10.
 
 - **AI contracts** before v1.2 (`SPEC.md` D-06).
-- **Phase 5 — Foundation:** project skeleton, lint / typecheck / test / build commands, CI workflow, `.env.example`,
-  fakes for every external system; `CLAUDE.md` §8 lists the commands.
 - **Phase 6 — First feature**, test-first.
 - **Gate A-1 — MSAP audit** (`SPEC.md` D-02): Modes A + B once Phase 6 works end to end on fakes. Ask the PO
   before starting (D-05). No real alert is sent until A-1 passes its Stop Gate; findings are fixed only in a
@@ -39,10 +44,8 @@ Detailed tasks are written when the phase becomes current. Order from the standa
 
 ## Discovered Work
 
-- [ ] **No CI yet.** There is nothing to check until Phase 5. Add the workflow with the first code.
-- [ ] **`tdd` skill not copied.** The avengertech copy's "AvengerTech" section is specific to that repo. Copy it
-  in Phase 5 with a Stark section that names this repo's commands.
-- [ ] **`.gitignore` is the generic Node template.** Review it in Phase 5 (stack: `SPEC.md` D-13).
+- [ ] **`tdd` skill not copied.** The avengertech copy's "AvengerTech" section is specific to that repo. Copying it
+  means reading avengertech, which the PO asked this session not to touch; the PO decides when.
 - [ ] **MSAP V1.0 path in `AvengerTechLab/avengertech` not confirmed** (`SPEC.md` D-03). The PO supplied the file in
   a session on 2026-10-03; adding it to avengertech is outside this repository's scope. Once it is there,
   `CLAUDE.md` §6a names its path. Needed before gate A-1.
@@ -50,6 +53,19 @@ Detailed tasks are written when the phase becomes current. Order from the standa
 ---
 
 ## Done
+
+### Phase 4: Security (2026-10-14)
+
+> Started 2026-10-14 on the PO's instruction (`SPEC.md` D-37).
+
+- [x] **S4-1. Threat model** — `SECURITY.md` §2–4: assets, trust boundaries, 16 threats with controls mapped to the
+  contracts; decisions D-38 to D-41.
+- [x] **S4-2. Contracts updated for the answers** — `API.md` §1 (private network, no second factor), `SECURITY.md`
+  §3–5.
+- [→] **S4-3. Hosting** (carried to S5-6) — the PO's machine passes (`ARCHITECTURE.md` §8); provider and budget
+  with `ai-trading` (D-26); each VPS candidate needs the same check. Must be settled before Phase 5.
+
+Threat model and decisions D-38 to D-41 done.
 
 ### Phase 3: Contracts (2026-10-03 to 2026-10-14)
 

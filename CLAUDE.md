@@ -15,13 +15,14 @@ Load these skills (`.claude/skills/`) before the matching work:
 
 ---
 
-## 1. Current phase: Security (Phase 4)
+## 1. Current phase: Foundation (Phase 5)
 
-The standard says no module starts with "start coding" (§2.2). Phase 0 discovery is complete (`SPEC.md` D-18). Phase
-2 architecture is in `ARCHITECTURE.md`. Phase 3 contracts are in `EVENTS.md`, `API.md` and `DATABASE.md`. Stark is in
-Phase 4: the threat model is in `SECURITY.md`. Code starts in Phase 5 (`TASKS.md`). Until then:
+The standard says no module starts with "start coding" (§2.2). Discovery, architecture, contracts and the threat model
+are done (`SPEC.md`, `ARCHITECTURE.md`, `EVENTS.md`, `API.md`, `DATABASE.md`, `SECURITY.md`). Stark is in Phase 5:
+the project skeleton, checks, CI and fakes. Features start in Phase 6 (`TASKS.md`). Until then:
 
-- Do not add application code, a framework, a package manager or dependencies.
+- Add only foundation code: configuration, logging, interfaces and fakes. Features wait for Phase 6, test-first.
+- Keep dependencies few and well known (`SECURITY.md` T-13); add one only with a reason in the commit message.
 - The stack, data providers and alert channels are decided (`SPEC.md` D-08, D-09, D-13). Do not change them, and do
   not choose hosting, a broker or another exchange. These are PO decisions.
 - Documents may describe options and recommend one; they must mark it **PO to confirm**.
@@ -93,10 +94,19 @@ Update the matching record in the same change. Tick a task only with evidence.
 
 ## 8. Commands
 
-None yet: there is no code. The stack is TypeScript on Node.js (`SPEC.md` D-13); Phase 5 adds lint, typecheck, test and
-build commands and a CI workflow, and lists them here in CI order.
+Node.js 22 and npm. In CI order (`.github/workflows/ci.yml`):
 
-For a documentation-only change, the report says which checks were skipped and why.
+| Step | Command |
+|---|---|
+| Install | `npm ci` |
+| Dependency audit (CI) | `npm audit --audit-level=high` |
+| Lint | `npm run lint` |
+| Typecheck | `npm run typecheck` |
+| Test | `npm run test` |
+| Build | `npm run build` |
+
+`npm run check` runs lint, typecheck, test and build in that order; it must be green before every commit. For a
+documentation-only change, the report says which checks were skipped and why.
 
 ## 9. Reports
 

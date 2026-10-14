@@ -147,6 +147,8 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | D-39 | (Q-27) No second login factor in v1.0, because the page is private (D-38). If the page ever becomes public, TOTP is added first | PO ("ตามคำแนะนำทั้งหมด ทีเดียว"; accepted the recommendations for Q-26 to Q-29) | 2026-10-14 | A password plus lockout is enough behind a private network |
 | D-40 | (Q-28) PostgreSQL is backed up daily, encrypted, to storage off the host, and each backup is kept 35 days; where it is stored is decided with hosting (D-26) | PO ("ตามคำแนะนำทั้งหมด ทีเดียว"; accepted the recommendations for Q-26 to Q-29) | 2026-10-14 | Recovery without exposing data; matches the price log retention (D-34) |
 | D-41 | (Q-29) The Gmail OAuth grant uses the send-only scope | PO ("ตามคำแนะนำทั้งหมด ทีเดียว"; accepted the recommendations for Q-26 to Q-29) | 2026-10-14 | Stark can send alerts but cannot read the PO's mail |
+| D-42 | Start Phase 5 before hosting is chosen; hosting must be settled before the first deploy | PO ("เริ่ม Phase 5 ได้เลย", after the recommendation that skeleton, checks and CI do not depend on the host) | 2026-10-14 | Replaces the earlier rule that hosting comes before Phase 5 (D-29, D-37) |
+| D-43 | Tooling: Node.js 22, npm, TypeScript strict, ESLint with typescript-eslint, Vitest, GitHub Actions; no runtime dependencies yet | Claude (developer choice within D-13), **PO to confirm** | 2026-10-14 | Few, widely used tools (`SECURITY.md` T-13); npm ships with Node; Node 22 is the runtime installed and an LTS line |
 
 ## 7. Constraints
 

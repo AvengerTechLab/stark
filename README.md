@@ -3,8 +3,9 @@ Market Intelligence &amp; Alerting Platform
 
 Stark is the AvengerTech Lab for market intelligence and alerting.
 
-**Status: Phase 4, security.** There is no application code yet; code starts in Phase 5. Scope, market, data
-providers, alert channels and stack are decided in `SPEC.md` §6; the remaining questions are in `SPEC.md` §5.
+**Status: Phase 5, foundation.** The project skeleton, checks and CI are in place; features start in Phase 6. Scope,
+market, data providers, alert channels and stack are decided in `SPEC.md` §6; the remaining questions are in
+`SPEC.md` §5.
 
 | Document | Contents |
 |---|---|
@@ -16,3 +17,6 @@ providers, alert channels and stack are decided in `SPEC.md` §6; the remaining 
 | [`CLAUDE.md`](CLAUDE.md) | Rules for AI agents working in this repository |
 
 Engineering standard: `AVENGERTECH_ENGINEERING_INTEGRATION_SYSTEM_V1.md` in `AvengerTechLab/avengertech`.
+
+Development: Node.js 22. `npm ci`, then `npm run check` (lint, typecheck, test, build). Commands are listed in
+`CLAUDE.md` §8.

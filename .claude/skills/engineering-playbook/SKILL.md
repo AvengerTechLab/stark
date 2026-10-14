@@ -219,10 +219,18 @@ description: กฎเหล็กและหลักการทำงาน�
 
 ### 11.1 Full check
 
-ยังไม่มี: ยังไม่มีโค้ด stack คือ TypeScript + Node.js (`SPEC.md` D-13) คำสั่งจะเพิ่มใน Phase 5
+`npm run check` รันครบตามลำดับเดียวกับ CI (`.github/workflows/ci.yml`):
 
-- งานแก้เอกสารล้วนตอนนี้: อ่าน diff ทวนอีกรอบ ตรวจลิงก์และชื่อไฟล์ที่อ้างถึง แล้วบอกในรายงานว่าไม่มีคำสั่งให้รัน
-- Phase 5 ต้องเพิ่ม lint → typecheck → test → build และ CI workflow ลำดับเดียวกัน แล้วเขียนตารางคำสั่งลงหมวดนี้และ `CLAUDE.md` §8
+| ลำดับ | คำสั่ง | ตรวจอะไร |
+|---|---|---|
+| 1 | `npm ci` | ติดตั้งตาม lockfile |
+| 2 | `npm audit --audit-level=high` | dependency ที่มีช่องโหว่ระดับ high ขึ้นไป (CI เท่านั้น) |
+| 3 | `npm run lint` | ESLint |
+| 4 | `npm run typecheck` | `tsc --noEmit` แบบ strict |
+| 5 | `npm run test` | Vitest |
+| 6 | `npm run build` | `tsc` ออก `dist/` |
+
+- งานแก้เอกสารล้วน: อ่าน diff ทวน ตรวจลิงก์และชื่อไฟล์ และรัน `git diff --check`
 
 ### 11.2 เอกสารบันทึก
 
@@ -249,8 +257,9 @@ description: กฎเหล็กและหลักการทำงาน�
 
 ### 11.5 Fake ของระบบภายนอก
 
-รอ PO: สร้างใน Phase 5 สำหรับทุกระบบที่เลือก (data provider, ช่องทางแจ้งเตือน, model ถ้ามี)
-ห้ามเรียก service จริงในเทส
+อยู่ใน `test/fakes/`: `FakeChannel` (ใช้แทนทั้ง 4 ช่องทาง กำหนดผลล่วงหน้าได้ เช่น 429 หรือ webhook ตาย) และ
+`FakePriceFeed` (ใช้แทน Bitkub และ Binance ส่ง tick ด้วยมือ) ห้ามเรียก service จริงในเทส
+PostgreSQL ทดสอบกับฐานข้อมูลจริงใน container เมื่อมีโค้ดฐานข้อมูล (Phase 6)
 
 ### 11.6 หมวดที่ใช้ต่างจากต้นฉบับ
 
@@ -258,15 +267,15 @@ description: กฎเหล็กและหลักการทำงาน�
 |---|---|
 | 2 synthetic ID / concurrency / invariant | ใช้เมื่อมี storage (Phase 3) |
 | 6 Money path | ใช้ทั้งหมดถ้า PO อนุมัติงานที่เกี่ยวกับคำสั่งซื้อขายหรือเงิน (`CLAUDE.md` §4); ถ้าไม่มี ยังใช้ข้อ 1–4 กับราคาและตัวเลขในเงื่อนไขแจ้งเตือน |
-| 7 Logging | เลือก logger และรูปแบบใน Phase 2 (stack: `SPEC.md` D-13) |
+| 7 Logging | `src/logger.ts`: JSON บรรทัดละ event, ชื่อ `domain.action_result`, ปิดบัง secret อัตโนมัติ; ESLint ห้าม `console` |
 | 8 Layer / DB / whitelabel | layer ตาม `ARCHITECTURE.md` §1 |
 | 10 การสื่อสาร | ใช้ตามเดิม รายงานใช้รูปแบบ `CLAUDE.md` §9 |
 
 ### 11.7 Checklist การปรับใช้
 
-- [ ] กำหนดคำสั่ง full check (11.1) — Phase 5
+- [x] กำหนดคำสั่ง full check (11.1)
 - [x] กำหนดเอกสารบันทึก (11.2)
 - [x] ระบุ scope (11.3)
 - [x] ระบุ branch policy (11.4); ไม่มี repo ที่ต้อง port (D-11)
-- [ ] fake ของระบบภายนอก (11.5) — Phase 5
+- [x] fake ของระบบภายนอก (11.5); fake ของ PostgreSQL ไม่ใช้ ใช้ฐานข้อมูลจริงใน container แทน
 - [x] `CLAUDE.md` สั่งใช้สกิลนี้ก่อนงานโค้ดทุกครั้ง
