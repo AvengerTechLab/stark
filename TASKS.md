@@ -14,8 +14,8 @@ Tick a task only with evidence: the commit, the file created, or the command run
 
 - [x] **S5-1. Project skeleton and commands** — `package.json`, `tsconfig.json`, `eslint.config.js`,
   `vitest.config.ts`; tooling in `SPEC.md` D-45. Evidence: `npm run check` green (lint, typecheck, 22 tests, build).
-- [~] **S5-2. CI workflow** — `.github/workflows/ci.yml`: `npm ci` → audit → lint → typecheck → test → build.
-  *Done when:* it passes on the first pull request.
+- [x] **S5-2. CI workflow** — `.github/workflows/ci.yml`: `npm ci` → audit → lint → typecheck → test → build.
+  First run green on AvengerTechLab/stark#10 at `bd4dc62` (Actions run 38580660498, 2026-10-14).
 - [x] **S5-3. `.env.example`** — names only, required and optional channel groups.
 - [x] **S5-4. Configuration and logging** — `src/config.ts` (fail-fast, all-or-none channel groups, errors name
   variables only), `src/logger.ts` (JSON, `domain.action_result`, secret redaction by value and by pattern for Telegram bot tokens
@@ -29,7 +29,7 @@ Tick a task only with evidence: the commit, the file created, or the command run
 - [ ] **S5-7. Check Google's 7-day refresh token rule** (carried over from S4-5) for OAuth apps left in "Testing"
   (`SECURITY.md` T-21), in Google's own documentation.
 
-*Phase done when:* CI passes on a pull request.
+*Phase done when:* CI passes on a pull request (done). S5-6 and S5-7 must be settled before the first deploy.
 
 ## Next Phases (not started)
 
