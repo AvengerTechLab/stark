@@ -10,7 +10,8 @@ Types (`Pair`, `Decimal`, `Rule`, …) are defined in `EVENTS.md`.
 
 ## 1. HTTP API
 
-Base path `/api/v1`, JSON in and out, served by the Stark process on its host over HTTPS only.
+Base path `/api/v1`, JSON in and out, served by the Stark process on its host over HTTPS only, and reachable only
+through a private network (`SPEC.md` D-38).
 
 ### 1.1 Authentication (proposed)
 
@@ -18,6 +19,7 @@ Base path `/api/v1`, JSON in and out, served by the Stark process on its host ov
   never stored or logged (`CLAUDE.md` §5).
 - `POST /api/v1/session` with the password returns a session cookie: `HttpOnly`, `Secure`, `SameSite=Strict`,
   expiring after 7 days or on `DELETE /api/v1/session`.
+- No second factor in v1.0 (D-39); TOTP is added before the page is ever made public.
 - After 5 wrong passwords in 15 minutes, logins are refused for 15 minutes and the PO is told on Telegram.
 - Every other endpoint except `GET /healthz` returns `401` without a valid session.
 
@@ -68,7 +70,7 @@ rounded silently; an invalid value is a `400` with its code (playbook §6, item 
 ## 2. Telegram bot commands
 
 The bot acts only on messages from the PO's chat ID, set in an environment variable. Messages from any other chat get
-no reply and are logged as `telegram.command_rejected` (`SECURITY.md` C-3.1).
+no reply and are logged as `telegram.command_rejected` (`SECURITY.md` §2).
 
 | Command | Example | Effect |
 |---|---|---|

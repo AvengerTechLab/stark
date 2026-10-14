@@ -10,36 +10,16 @@ Tick a task only with evidence: the commit, the file created, or the command run
 
 ## Current Phase — Phase 4: Security
 
-> Started 2026-10-14 when the PO started the threat-model work. Phase 3's last task, S3-4 hosting, stays open below
-> and must be settled before Phase 5.
+> Started 2026-10-14 on the PO's instruction (`SPEC.md` D-37).
 
-- [~] **S4-1. Threat model** — `SECURITY.md`: assets, actors, trust boundaries, STRIDE threats T-01 to T-35, controls
-  C-1.1 to C-8.3 tied to the contracts, gaps. Draft written; waits on the PO's review.
-- [ ] **S4-2. PO answers Q-26 to Q-29** (`SPEC.md` §5): Gmail scope, alert flood cap, public web page, outside
-  heartbeat.
-- [ ] **S4-3. Apply the contract changes** in `SECURITY.md` §7 to `EVENTS.md`, `API.md`, `DATABASE.md` and
-  `ARCHITECTURE.md`, with the answers to S4-2.
-- [ ] **S4-4. Verify the two Google facts** in `SECURITY.md` C-4.7 and C-4.8 (SMTP scope, 7-day refresh tokens in
-  "Testing") from Google's own documentation.
+- [x] **S4-1. Threat model** — `SECURITY.md` §2–4: assets, trust boundaries, 16 threats with controls mapped to the
+  contracts; decisions D-38 to D-41.
+- [x] **S4-2. Contracts updated for the answers** — `API.md` §1 (private network, no second factor), `SECURITY.md`
+  §3–5.
+- [ ] **S4-3. Hosting carried over from S3-4** — the PO's machine passes (`ARCHITECTURE.md` §8); provider and budget
+  with `ai-trading` (D-26); each VPS candidate needs the same check. Must be settled before Phase 5.
 
-*Phase done when:* the PO accepts the threat model, Q-26 to Q-29 are answered and the contracts carry every control.
-
-## Phase 3: Contracts (open only for S3-4)
-
-> Started 2026-10-03 on the PO's instruction (`SPEC.md` D-29).
-
-- [x] **S3-1. Domain and event contracts** — `EVENTS.md`: types, events, rule evaluation, alert message; matches
-  `SPEC.md` D-30 to D-33, D-35.
-- [x] **S3-2. Owner interface contracts** — `API.md`: HTTP API with owner login, validation and error codes; Telegram
-  bot commands.
-- [x] **S3-3. Database contract** — `DATABASE.md`: tables, constraints, indexes; retention 35 days (D-34); sized for
-  about 10 pairs (D-36).
-- [~] **S3-4. Hosting carried over from Phase 2** — the PO's machine passes (`ARCHITECTURE.md` §8). Provider and
-  budget still go with `ai-trading` (D-26), and each VPS candidate must pass the same checks. Must be settled before
-  Phase 5.
-
-*Phase done when:* the three contracts match every answer (done: D-30 to D-36). Only S3-4, hosting, remains; it
-must be settled before Phase 5.
+*Phase done when:* S4-3 hosting is settled. Everything else in Phase 4 is done.
 
 ## Next Phases (not started)
 
@@ -70,6 +50,22 @@ Detailed tasks are written when the phase becomes current. Order from the standa
 ---
 
 ## Done
+
+### Phase 3: Contracts (2026-10-03 to 2026-10-14)
+
+> Started 2026-10-03 on the PO's instruction (`SPEC.md` D-29).
+
+- [x] **S3-1. Domain and event contracts** — `EVENTS.md`: types, events, rule evaluation, alert message; matches
+  `SPEC.md` D-30 to D-33, D-35.
+- [x] **S3-2. Owner interface contracts** — `API.md`: HTTP API with owner login, validation and error codes; Telegram
+  bot commands.
+- [x] **S3-3. Database contract** — `DATABASE.md`: tables, constraints, indexes; retention 35 days (D-34); sized for
+  about 10 pairs (D-36).
+- [→] **S3-4. Hosting** (carried to S4-3) — the PO's machine passes (`ARCHITECTURE.md` §8). Provider and
+  budget still go with `ai-trading` (D-26), and each VPS candidate must pass the same checks. Must be settled before
+  Phase 5.
+
+Contracts match every answer (D-30 to D-36).
 
 ### Phase 2: Architecture (2026-10-03, closed by `SPEC.md` D-29)
 

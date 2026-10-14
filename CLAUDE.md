@@ -15,19 +15,18 @@ Load these skills (`.claude/skills/`) before the matching work:
 
 ---
 
-## 1. Current phase: Contracts (Phase 3)
+## 1. Current phase: Security (Phase 4)
 
-The standard says no module starts with "start coding" (§2.2). Phase 0 discovery is complete (`SPEC.md` D-18). Phase 2
-architecture is in `ARCHITECTURE.md`. Stark is in Phase 3: contracts are written in `EVENTS.md`, `API.md` and
-`DATABASE.md` before any code (standard §7). Code starts in Phase 5 (`TASKS.md`). Until then:
+The standard says no module starts with "start coding" (§2.2). Phase 0 discovery is complete (`SPEC.md` D-18). Phase
+2 architecture is in `ARCHITECTURE.md`. Phase 3 contracts are in `EVENTS.md`, `API.md` and `DATABASE.md`. Stark is in
+Phase 4: the threat model is in `SECURITY.md`. Code starts in Phase 5 (`TASKS.md`). Until then:
 
 - Do not add application code, a framework, a package manager or dependencies.
 - The stack, data providers and alert channels are decided (`SPEC.md` D-08, D-09, D-13). Do not change them, and do
   not choose hosting, a broker or another exchange. These are PO decisions.
 - Documents may describe options and recommend one; they must mark it **PO to confirm**.
 
-Phase 4 (security threat model, `SECURITY.md`) started on 2026-10-14 while Phase 3's hosting task is still open;
-the same rules apply. The phase order after discovery is in `TASKS.md`.
+The phase order after discovery is in `TASKS.md`.
 
 ## 2. Instruction priority
 
