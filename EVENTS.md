@@ -62,22 +62,35 @@ The decision is stored before any send, so a restart never loses it (`ARCHITECTU
 | `channel` | `telegram`, `line`, `discord` or `email` | |
 | `attempt` | integer, from 1 | |
 | `status` | `delivered`, `failed` or `skipped` | `delivered` means the channel's API accepted the message (SC-1, D-15) |
-| `reason` | string or null | For `failed`: the channel's error. For `skipped`: `channel_off`, `quota_reached` or `channel_dead` |
+| `reason` | string or null | For `failed`: the channel's error. For `skipped`: `channel_off`, `quota_reached`, `channel_dead` or `cooldown` |
 | `at` | `Timestamp` | |
 
 Retries (proposed): up to 3 attempts per channel, 1 s then 2 s apart, all with the same `alertId`. A `429` waits for
 the channel's `Retry-After` even past the SC-1 budget; it never retries early (`ARCHITECTURE.md` §2.1–2.2).
 
+Cooldown (`SPEC.md` D-42): a rule sends at most once per channel per 5 minutes, counted from that rule's last
+`delivered` attempt on that channel. A decision inside the cooldown is still stored, and each of its channels gets one
+`skipped` attempt with reason `cooldown`. SC-2 compares decisions, so a cooldown never counts as a missed alert.
+
+Sending (`SECURITY.md` T-20): the message is plain text built only from typed, validated values. Telegram is sent
+without a parse mode; Discord with `allowed_mentions` set to none; the email subject is the message's first line and
+must hold no line break.
+
 ### 2.4 `HealthEvent` (health monitor → PO)
 
 | Field | Type | Note |
 |---|---|---|
-| `kind` | `feed_stale`, `feed_recovered`, `channel_failing`, `channel_recovered`, `quota_reached` | |
+| `kind` | `feed_stale`, `feed_recovered`, `channel_failing`, `channel_recovered`, `quota_reached`, `disk_low`, `disk_recovered` | A failed Gmail token refresh is `channel_failing` for `email` (`SECURITY.md` T-21) |
 | `subject` | exchange or channel name | |
 | `since` | `Timestamp` | When the condition started |
 
 A feed is stale after 60 s with no tick (proposed). The PO is told within 15 minutes of a feed staying stale or a
-channel failing (SC-3), through a channel other than the failing one. Recovery is reported once.
+channel failing (SC-3), through a channel other than the failing one. Recovery is reported once. `disk_low` is raised
+when free disk on the host falls below 20 % (proposed, `SECURITY.md` T-23).
+
+Heartbeat (`SPEC.md` D-43): every 5 minutes, while the process runs, Stark sends a heartbeat to an uptime monitor
+outside the host. The monitor tells the PO when no heartbeat arrives for 15 minutes (SC-3). The heartbeat carries no
+data, and its URL is a secret like a channel credential (proposed timings).
 
 ## 3. Rule evaluation
 
@@ -131,7 +144,7 @@ A new or re-enabled rule starts `armed`. If its condition is already true on its
 
 | Rule | Ticks | Decisions |
 |---|---|---|
-| `above` BTC/THB, level 100 | 99 → 100 → 101 → 99 → 100 | Fires at the first 100; re-arms at 99; fires again at the second 100 |
+| `above` BTC/THB, level 100 | 99 → 100 → 101 → 99 → 100 | Fires at the first 100; re-arms at 99; fires again at the second 100. If the second 100 comes within 5 minutes of the first send, it is stored but its sends are skipped (`cooldown`, D-42) |
 | `change` BTC/USDT, 5 %, 60 min, `up`; price 60 min earlier 100 | 104 → 105 → 106 | Fires at 105 (+5.00 %); nothing at 106 |
 | `change` as above, Stark started 10 min ago | any | Nothing: no reference price yet |
 

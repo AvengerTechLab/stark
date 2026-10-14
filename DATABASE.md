@@ -70,6 +70,12 @@ before sending (D-17, Gmail's 500 a day).
 
 `id`, `kind`, `subject`, `since`, `reported_at` (`timestamptz`, null until the PO has been told).
 
+### `owner_actions`
+
+`id` (`uuid`), `at` (`timestamptz`), `source` (`text`: `web` or `telegram`), `action` (`text`, for example
+`rule.created`, `rule.disabled`, `channel.switched_off`), `subject` (`text`: rule ID or channel), `detail` (`jsonb`: the
+changed fields, never a secret). Written in the same transaction as the change it records (`SECURITY.md` T-22).
+
 ### `owner_sessions` and `login_attempts`
 
 Session ID hashes with expiry, and failed login times for the lockout in `API.md` §1.1. No password is stored here.

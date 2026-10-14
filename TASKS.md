@@ -10,10 +10,10 @@ Tick a task only with evidence: the commit, the file created, or the command run
 
 ## Current Phase — Phase 5: Foundation
 
-> Started 2026-10-14 on the PO's instruction (`SPEC.md` D-42), before hosting is chosen.
+> Started 2026-10-14 on the PO's instruction (`SPEC.md` D-44), before hosting is chosen.
 
 - [x] **S5-1. Project skeleton and commands** — `package.json`, `tsconfig.json`, `eslint.config.js`,
-  `vitest.config.ts`; tooling in `SPEC.md` D-43. Evidence: `npm run check` green (lint, typecheck, 20 tests, build).
+  `vitest.config.ts`; tooling in `SPEC.md` D-45. Evidence: `npm run check` green (lint, typecheck, 20 tests, build).
 - [~] **S5-2. CI workflow** — `.github/workflows/ci.yml`: `npm ci` → audit → lint → typecheck → test → build.
   *Done when:* it passes on the first pull request.
 - [x] **S5-3. `.env.example`** — names only, required and optional channel groups.
@@ -23,8 +23,10 @@ Tick a task only with evidence: the commit, the file created, or the command run
 - [x] **S5-5. Interfaces and fakes** — `src/ports/channel.ts`, `src/ports/feed.ts`; `test/fakes/` for all four channels
   and both providers.
 - [ ] **S5-6. Hosting carried over from S4-3** — the PO's machine passes (`ARCHITECTURE.md` §8); candidates are a
-  Linux VPS or Railway (`ai-trading`'s dashboard host); each must pass the same check. Must be settled before the
-  first deploy, not before Phase 6.
+  Linux VPS or Railway (`ai-trading`'s dashboard host); each must pass the same check. The uptime monitor for the
+  heartbeat (`SPEC.md` D-43) is picked with it. Must be settled before the first deploy, not before Phase 6 (D-44).
+- [ ] **S5-7. Check Google's 7-day refresh token rule** (carried over from S4-5) for OAuth apps left in "Testing"
+  (`SECURITY.md` T-21), in Google's own documentation.
 
 *Phase done when:* CI passes on a pull request.
 
@@ -63,9 +65,13 @@ Detailed tasks are written when the phase becomes current. Order from the standa
 - [x] **S4-2. Contracts updated for the answers** — `API.md` §1 (private network, no second factor), `SECURITY.md`
   §3–5.
 - [→] **S4-3. Hosting** (carried to S5-6) — the PO's machine passes (`ARCHITECTURE.md` §8); provider and budget
-  with `ai-trading` (D-26); each VPS candidate needs the same check. Must be settled before Phase 5.
+  with `ai-trading` (D-26); each VPS candidate needs the same check; the uptime monitor (D-43) is picked with it.
+- [x] **S4-4. Threat model additions** — `SECURITY.md` T-17 to T-24 from a second review; decisions D-42 (send
+  cooldown) and D-43 (outside heartbeat); controls written into `EVENTS.md` §2.3–2.4, §3.5, `API.md` §1.1, §2,
+  `DATABASE.md` `owner_actions` and `ARCHITECTURE.md` §7.
+- [→] **S4-5. Check Google's 7-day refresh token rule** (carried to S5-7).
 
-Threat model and decisions D-38 to D-41 done.
+Threat model and decisions D-38 to D-43 done.
 
 ### Phase 3: Contracts (2026-10-03 to 2026-10-14)
 
