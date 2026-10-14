@@ -76,6 +76,6 @@ Session ID hashes with expiry, and failed login times for the lockout in `API.md
 
 ## 2. Size estimate
 
-Rows in `price_ticks` ≈ watched pairs × 86,400 per day (at most one tick per pair per second, `EVENTS.md` §2.1). For
-example, 10 pairs kept 35 days is about 30 million rows. The real number depends on how many pairs the PO watches
-(Q-24).
+Rows in `price_ticks` ≈ watched pairs × 86,400 per day (at most one tick per pair per second, `EVENTS.md` §2.1). The PO
+expects about 10 pairs (`SPEC.md` D-36): about 30 million rows over 35 days, roughly 4–6 GB with indexes. That disk
+figure is an estimate, not a measurement; Phase 5 measures it.
