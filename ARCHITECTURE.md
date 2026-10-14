@@ -182,6 +182,7 @@ Results:
 
 | Host | Date | Bitkub ticker | Binance market-data host | Binance main API | Who ran it |
 |---|---|---|---|---|---|
-| PO's machine (Thailand) | 2026-10-14 | `200`, 0.34 s | `200`, 0.91 s | `200`, 0.30 s | PO, one run, curl over HTTPS |
+| PO's machine (Thailand), run 1 | 2026-10-14 | `200`, 0.34 s | `200`, 0.91 s | `200`, 0.30 s | PO, curl over HTTPS |
+| PO's machine (Thailand), run 2 | 2026-10-14 | `200`, 0.28 s | `200`, 0.63 s | `200`, 0.23 s | PO, curl over HTTPS |
 
 The PO's machine reaches all three, so Binance does not block it (no `451`). WebSocket connections were not tested.
