@@ -12,13 +12,14 @@ Tick a task only with evidence: the commit, the file created, or the command run
 
 > Started 2026-10-14 on the PO's instruction (`SPEC.md` D-37).
 
-- [~] **S4-1. Threat model** — `SECURITY.md` §2–4: assets, trust boundaries, 16 threats with controls mapped to the
-  contracts. `[!]` waiting on the PO: `SPEC.md` Q-26 to Q-29.
-- [ ] **S4-2. Contracts updated for the answers** — for example `API.md` §1.1 if a second factor is chosen (Q-27).
+- [x] **S4-1. Threat model** — `SECURITY.md` §2–4: assets, trust boundaries, 16 threats with controls mapped to the
+  contracts; decisions D-38 to D-41.
+- [x] **S4-2. Contracts updated for the answers** — `API.md` §1 (private network, no second factor), `SECURITY.md`
+  §3–5.
 - [ ] **S4-3. Hosting carried over from S3-4** — the PO's machine passes (`ARCHITECTURE.md` §8); provider and budget
   with `ai-trading` (D-26); each VPS candidate needs the same check. Must be settled before Phase 5.
 
-*Phase done when:* Q-26 to Q-29 are answered and `SECURITY.md` and the contracts match the answers.
+*Phase done when:* S4-3 hosting is settled. Everything else in Phase 4 is done.
 
 ## Next Phases (not started)
 
