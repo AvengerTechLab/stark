@@ -22,7 +22,7 @@ export interface Quota {
 /**
  * Sends Stark may make per period before it stops a channel (D-17). LINE: Thailand's free tier of 300
  * messages a month. Gmail: 400 a day, leaving 100 of Gmail's 500 for the PO's own mail. Both are
- * counted on the Thai calendar (UTC+7). The Gmail figure and the time zone are PO to confirm (Q-32).
+ * counted on the Thai calendar (UTC+7) (SPEC.md D-47).
  */
 export const DEFAULT_QUOTAS: Readonly<Partial<Record<ChannelName, Quota>>> = {
   line: { per: "month", limit: 300 },

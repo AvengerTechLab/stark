@@ -1,7 +1,14 @@
 # Stark — Database Contract (v1.0)
 
-Status: **Phase 3 draft** (2026-10-03). PostgreSQL (`SPEC.md` D-22) on the same host as Stark, not reachable from
-the internet (D-25). Types follow `EVENTS.md`. The migration tool is chosen in Phase 5.
+Status: **built in S6-6** (2026-10-16). PostgreSQL (`SPEC.md` D-22) on the same host as Stark, not reachable from
+the internet (D-25). Types follow `EVENTS.md`. Implemented in `src/storage/` with `pg` (D-49):
+
+- **Migrations:** plain SQL in `src/storage/migrations.ts`. Each is applied once, in its own transaction, under an
+  advisory lock, and recorded in `schema_migrations`. A merged migration is never edited; a change is a new one.
+- **Checks:** the tables enforce the contract as well as the code: kinds and their fields, the THB/Bitkub and
+  USDT/Binance pairing, and channel names. Every value is a query parameter.
+- **Tests:** they run against a real PostgreSQL named by `STARK_TEST_DATABASE_URL`, each test file in its own
+  throwaway schema. CI starts a PostgreSQL 16 service and fails if the variable is missing.
 
 Conventions: `snake_case` names; table and column names live in one constants module in code (playbook §8); every
 timestamp is `timestamptz` in UTC; every price and percentage is `numeric` (exact), never `float`.
@@ -47,7 +54,10 @@ answers 404), `updated_at`.
 | `source` | `text` | `stream` or `poll` |
 
 Index on `(exchange, base, quote, exchange_time)` for the percentage-rule reference lookup (`EVENTS.md` §3.3) and the
-SC-2 replay. Partitioned by day so old days drop cheaply. Retention: 35 days (`SPEC.md` D-34).
+SC-2 replay. Partitioned by day so old days drop cheaply: one partition per UTC day, named `price_ticks_YYYYMMDD`.
+The first tick of a day with no partition creates it (`PgPriceLog.append`), so no tick is refused for want of one.
+Retention: 35 days (`SPEC.md` D-34). `dropExpiredPartitions` drops every day that ended more than 35 days ago; the
+daily timer that calls it is S6-11.
 
 ### `alert_decisions`
 

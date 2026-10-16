@@ -39,14 +39,30 @@ Tick a task only with evidence: the commit, the file created, or the command run
   `AlertDecision.message`; the dispatcher sends that text. Thai time is in `src/domain/thai-time.ts`.
   Evidence: 11 new tests, 124 in all. Control runs: a UTC clock fails 6 tests; dropping decimals fails 4; no pair
   check fails 1; taking the direction from the rule instead of the change fails 1.
-- [ ] **S6-6. Storage** — PostgreSQL schema and migrations from `DATABASE.md`; tests against a real PostgreSQL in CI.
+- [x] **S6-6. Storage** — `src/storage/`: the schema from `DATABASE.md` as migration `001_initial`, and the
+  PostgreSQL implementations of every storage port. It uses `pg` 8.23.1 (D-49). The tests run against a real
+  PostgreSQL: locally when `STARK_TEST_DATABASE_URL` is set, and always in CI (a PostgreSQL 16 service; CI fails
+  without it). They include the pipeline and the dispatcher end to end on PostgreSQL.
+  Evidence: 12 tests. Control runs, each failing at least 1 test:
+  - state and decision saved outside one transaction
+  - failed sends counted toward usage
+  - no partition created on demand (3 tests fail)
+  - the cooldown counting failed attempts
+  - one day too many kept
+  - no rule check on an attempt (2 tests fail)
+
+  The cooldown and retention tests at first passed their control runs; both were tightened.
 - [ ] **S6-7. Feed adapters** — Bitkub and Binance parsing, reconnects, 429 handling, from recorded fixtures.
 - [ ] **S6-8. Channel adapters** — Telegram, LINE, Discord, Gmail, against fakes of their HTTP APIs.
 - [ ] **S6-9. Health monitor and heartbeat** — EVENTS.md §2.4, D-43.
 - [ ] **S6-10. Owner interface** — HTTP API with login (`API.md` §1) and Telegram commands (§2).
 - [ ] **S6-11. End to end on fakes** — the whole flow with every external system faked; then ask the PO to start
-  gate A-1 (D-05). Includes wiring found in S6-3 and S6-4: the pipeline's flush timer, and at start a sweep that
-  hands every stored decision not yet finished on all its channels to the dispatcher (ARCHITECTURE.md §7).
+  gate A-1 (D-05). Includes wiring found in S6-3 to S6-6:
+  - the pipeline's flush timer
+  - at start, a sweep that hands every stored decision not yet finished on all its channels to the dispatcher
+    (ARCHITECTURE.md §7)
+  - `migrate` at start
+  - a daily timer for `ensurePartitions` and `dropExpiredPartitions` (D-34)
 - [ ] **S6-12. Hosting** (carried over from S5-6) — must be settled before the first deploy.
 - [ ] **S6-13. Google's 7-day refresh token rule** (carried over from S5-7, `SECURITY.md` T-21).
 

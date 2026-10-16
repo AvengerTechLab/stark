@@ -90,7 +90,7 @@ Idempotency: a channel that already has a `delivered` or `skipped` attempt for a
 sent that alert again. After a restart, attempts continue from the last recorded number. Each channel sends one alert
 at a time, so the cooldown and the usage counters always see the sends before. Channels run in parallel.
 
-Usage limits (D-17, proposed, **PO to confirm**, `SPEC.md` Q-32): LINE stops at 300 sends a month, Gmail at 400 a day,
+Usage limits (D-17, `SPEC.md` D-47): LINE stops at 300 sends a month, Gmail at 400 a day,
 both counted on the Thai calendar (UTC+7). The count rises in the same transaction as the `delivered` attempt.
 
 Cooldown (`SPEC.md` D-42): a rule sends at most once per channel per 5 minutes, counted from that rule's last
@@ -188,7 +188,7 @@ One message per alert, the same on every channel, in Thai:
 Numbers in the message are formatted for reading only; stored values keep full precision. The example's numbers are
 demo values.
 
-The other kinds (proposed, **PO to confirm** the wording; D-33 approved the level message above):
+The other kinds (wording approved in `SPEC.md` D-48, in the style of the D-33 level message above):
 
 ```text
 [Stark] BTC/USDT ต่ำกว่า 60,000 แล้ว

@@ -109,6 +109,10 @@ Node.js 22 and npm. In CI order (`.github/workflows/ci.yml`):
 `npm run check` runs lint, typecheck, test and build in that order; it must be green before every commit. For a
 documentation-only change, the report says which checks were skipped and why.
 
+The storage tests need a throwaway PostgreSQL named by `STARK_TEST_DATABASE_URL`, never a real Stark database.
+Without the variable they are skipped locally. CI always sets it, and a CI run without it fails. A commit that
+touches `src/storage/` runs them locally first.
+
 ## 9. Reports
 
 Use the avengertech format: **Blocked on me** (when anything waits on the PO), **Changed**, **Verification**
