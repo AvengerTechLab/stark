@@ -63,7 +63,8 @@ same channel impossible to record twice.
 
 ### `channel_usage`
 
-`channel` (`text`), `period` (`date`: first day of the month for LINE, the day for Gmail), `sent` (`integer`);
+`channel` (`text`), `period` (`date` on the Thai calendar, UTC+7: first day of the month for LINE, the day for Gmail;
+`SPEC.md` Q-32), `sent` (`integer`);
 primary key `(channel, period)`. Incremented in the same transaction as a `delivered` attempt; the dispatcher checks it
 before sending (D-17, Gmail's 500 a day).
 

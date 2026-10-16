@@ -103,6 +103,7 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | Q-29 | ~~Gmail OAuth scope?~~ Answered: D-41 | — | — |
 | Q-30 | ~~Alert send cooldown?~~ Answered: D-42 | — | — |
 | Q-31 | ~~Who reports Stark itself down?~~ Answered: D-43 | — | — |
+| Q-32 | Where does Stark stop Gmail, and on which calendar are LINE's month and Gmail's day counted? Google's 500 a day also counts the PO's own mail from that account, and Google counts a rolling 24 hours | First real alert (gate A-1) | **Stop at 400 a day, leaving 100 for the PO's own mail; count both on the Thai calendar (UTC+7); the LINE adapter also reads LINE's own usage figure (S6-8)**, or stop at 499, or another figure. Built as the recommendation in `src/app/dispatcher.ts` (`DEFAULT_QUOTAS`), one constant to change |
 
 ## 6. Decisions
 

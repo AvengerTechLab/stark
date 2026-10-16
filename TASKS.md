@@ -27,8 +27,12 @@ Tick a task only with evidence: the commit, the file created, or the command run
   §2.1–2.2). Evidence: 16 tests (including storage failures and storage answering out of order); control runs:
   keeping the first tick of a second fails 1 test, dispatching before storing fails 2, no late check fails 1, no
   one-at-a-time processing fails 3.
-- [ ] **S6-4. Dispatcher** — channels on/off (D-09), cooldown (D-42), retries and `Retry-After`, LINE and Gmail
-  counters (D-17), dead webhooks, idempotency by alert ID (EVENTS.md §2.3).
+- [x] **S6-4. Dispatcher** — `src/app/dispatcher.ts` on the `DeliveryLog` port: channels on/off (D-09), cooldown
+  (D-42), retries and `Retry-After`, LINE and Gmail counters (D-17; limits are `SPEC.md` Q-32, PO to confirm), dead
+  webhooks, idempotency by alert ID, channels in parallel and one send at a time per channel (EVENTS.md §2.3).
+  Evidence: 17 tests; control runs: no cooldown fails 2, ignoring `Retry-After` 1, no idempotency check 2, no
+  per-channel queue 2, UTC instead of the Thai calendar 2, never marking dead 1. Telling the PO about a failing,
+  dead or exhausted channel is S6-9.
 - [ ] **S6-5. Alert message** — Thai text (D-33), plain text only (`SECURITY.md` T-20).
 - [ ] **S6-6. Storage** — PostgreSQL schema and migrations from `DATABASE.md`; tests against a real PostgreSQL in CI.
 - [ ] **S6-7. Feed adapters** — Bitkub and Binance parsing, reconnects, 429 handling, from recorded fixtures.

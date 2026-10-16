@@ -75,12 +75,27 @@ slow send never delays the next tick. Implemented in `src/app/pipeline.ts`.
 | `reason` | string or null | For `failed`: the channel's error. For `skipped`: `channel_off`, `quota_reached`, `channel_dead` or `cooldown` |
 | `at` | `Timestamp` | |
 
-Retries (proposed): up to 3 attempts per channel, 1 s then 2 s apart, all with the same `alertId`. A `429` waits for
-the channel's `Retry-After` even past the SC-1 budget; it never retries early (`ARCHITECTURE.md` §2.1–2.2).
+Retries (proposed): up to 3 attempts per channel, 1 s then 2 s apart, all with the same `alertId`. A `429` counts as a
+failed attempt and the next one waits for the channel's `Retry-After` when that is longer, even past the SC-1 budget;
+it never retries early (`ARCHITECTURE.md` §2.1–2.2). A send that throws is a failed attempt with reason `send_error`.
+A channel that answers it will never accept sends again (a Discord webhook's `404`) gets one `failed` attempt, is
+marked dead (`DATABASE.md` `channel_settings.dead_since`) and is not retried.
+
+Before the first attempt the dispatcher checks, in this order, and records one `skipped` attempt for the first that
+holds: `channel_off` (switched off system-wide since the decision, or not configured), `channel_dead`, `cooldown`,
+`quota_reached`.
+
+Idempotency: a channel that already has a `delivered` or `skipped` attempt for an alert, or 3 attempts, is never
+sent that alert again. After a restart, attempts continue from the last recorded number. Each channel sends one alert
+at a time, so the cooldown and the usage counters always see the sends before. Channels run in parallel.
+
+Usage limits (D-17, proposed, **PO to confirm**, `SPEC.md` Q-32): LINE stops at 300 sends a month, Gmail at 400 a day,
+both counted on the Thai calendar (UTC+7). The count rises in the same transaction as the `delivered` attempt.
 
 Cooldown (`SPEC.md` D-42): a rule sends at most once per channel per 5 minutes, counted from that rule's last
-`delivered` attempt on that channel. A decision inside the cooldown is still stored, and each of its channels gets one
-`skipped` attempt with reason `cooldown`. SC-2 compares decisions, so a cooldown never counts as a missed alert.
+`delivered` attempt on that channel; at exactly 5 minutes it sends again. A decision inside the cooldown is still
+stored, and each of its channels gets one `skipped` attempt with reason `cooldown`. SC-2 compares decisions, so a
+cooldown never counts as a missed alert. Implemented in `src/app/dispatcher.ts`.
 
 Sending (`SECURITY.md` T-20): the message is plain text built only from typed, validated values. Telegram is sent
 without a parse mode; Discord with `allowed_mentions` set to none; the email subject is the message's first line and

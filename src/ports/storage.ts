@@ -38,4 +38,32 @@ export interface RuleStore {
 export interface ChannelSettings {
   /** Channels switched on system-wide right now (D-09). */
   switchedOn(): Promise<ReadonlySet<ChannelName>>;
+  /** True once a channel has answered that it will never accept sends again, e.g. a Discord 404. */
+  isDead(channel: ChannelName): Promise<boolean>;
+  markDead(channel: ChannelName, at: Date): Promise<void>;
+}
+
+/** One send attempt, or one skip, of one alert on one channel (EVENTS.md §2.3). */
+export interface DeliveryAttempt {
+  readonly alertId: string;
+  readonly channel: ChannelName;
+  /** From 1; (alertId, channel, attempt) is unique. */
+  readonly attempt: number;
+  readonly status: "delivered" | "failed" | "skipped";
+  readonly reason: string | null;
+  readonly at: Date;
+}
+
+export interface DeliveryLog {
+  /** Attempts already recorded for this alert on this channel, oldest first. */
+  attempts(alertId: string, channel: ChannelName): Promise<readonly DeliveryAttempt[]>;
+  /** Time of this rule's last delivered attempt on this channel, for the cooldown (D-42). */
+  lastDelivered(ruleId: string, channel: ChannelName): Promise<Date | undefined>;
+  /** Sends counted for a channel in a usage period (DATABASE.md `channel_usage`). */
+  usage(channel: ChannelName, period: string): Promise<number>;
+  /**
+   * Records an attempt for a decision of `ruleId`. A delivered attempt with a usage period also
+   * adds one to that period's count, in the same transaction.
+   */
+  record(attempt: DeliveryAttempt, ruleId: string, usagePeriod: string | null): Promise<void>;
 }
