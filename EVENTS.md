@@ -123,7 +123,8 @@ Reaching the level counts (`SPEC.md` D-31).
 
 1. The reference price is the price of the last stored tick for the same exchange and pair whose `exchangeTime` is at
    or before `tick.exchangeTime − windowMinutes`.
-2. If no such tick exists (Stark has not been running that long, or there is a gap), the condition is false.
+2. If no such tick exists (Stark has not been running that long, or there is a gap), or its price is 0, the condition
+   is false.
 3. `changePercent = (price − referencePrice) ÷ referencePrice × 100`, computed exactly.
 4. `up`: true when `changePercent >= percent`. `down`: true when `changePercent <= −percent`. `either`: true when
    either holds.

@@ -3,9 +3,8 @@ Market Intelligence &amp; Alerting Platform
 
 Stark is the AvengerTech Lab for market intelligence and alerting.
 
-**Status: Phase 5, foundation.** The project skeleton, checks and CI are in place; features start in Phase 6. Scope,
-market, data providers, alert channels and stack are decided in `SPEC.md` §6; the remaining questions are in
-`SPEC.md` §5.
+**Status: Phase 6, first feature.** The rule engine is built; the rest of v1.0 follows test-first. Scope, market,
+data providers, alert channels and stack are decided in `SPEC.md` §6; the remaining questions are in `SPEC.md` §5.
 
 | Document | Contents |
 |---|---|

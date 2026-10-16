@@ -153,6 +153,7 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | D-43 | (Q-31) Stark sends a heartbeat to a free uptime monitor outside its host, which tells the PO when heartbeats stop. Which service is chosen with hosting (D-26) | PO ("ทำตามที่คุณแนะนำ"; accepted the recommendations for Q-30 and Q-31) | 2026-10-14 | The health monitor runs inside the process it watches, so it cannot report Stark itself being down (SC-3, `SECURITY.md` T-17) |
 | D-44 | Start Phase 5 before hosting is chosen; hosting, and the uptime monitor that goes with it (D-43), must be settled before the first deploy | PO ("เริ่ม Phase 5 ได้เลย", after the recommendation that skeleton, checks and CI do not depend on the host) | 2026-10-14 | Replaces the earlier rule that hosting comes before Phase 5 (D-29, D-37, `TASKS.md` S4-3) |
 | D-45 | Tooling: Node.js 22, npm, TypeScript strict, ESLint with typescript-eslint, Vitest, GitHub Actions; no runtime dependencies yet | Claude (developer choice within D-13), **PO to confirm** | 2026-10-14 | Few, widely used tools (`SECURITY.md` T-13); npm ships with Node; Node 22 is the runtime installed and an LTS line |
+| D-46 | Start Phase 6 (first feature) with PR #10 not yet merged; build v1.0 test-first until it works end to end on fakes | PO ("เริ่ม Phase 6 ได้เลย") | 2026-10-16 | Foundation is in place and CI is green |
 
 ## 7. Constraints
 

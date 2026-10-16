@@ -8,35 +8,36 @@ Tick a task only with evidence: the commit, the file created, or the command run
 
 ---
 
-## Current Phase — Phase 5: Foundation
+## Current Phase — Phase 6: First feature (v1.0 end to end on fakes)
 
-> Started 2026-10-14 on the PO's instruction (`SPEC.md` D-44), before hosting is chosen.
+> Started 2026-10-16 on the PO's instruction (`SPEC.md` D-46). Every task is test-first: the test fails on the code
+> before the change, then passes. *Phase done when:* v1.0 works end to end on fakes, which opens gate A-1.
 
-- [x] **S5-1. Project skeleton and commands** — `package.json`, `tsconfig.json`, `eslint.config.js`,
-  `vitest.config.ts`; tooling in `SPEC.md` D-45. Evidence: `npm run check` green (lint, typecheck, 22 tests, build).
-- [x] **S5-2. CI workflow** — `.github/workflows/ci.yml`: `npm ci` → audit → lint → typecheck → test → build.
-  First run green on AvengerTechLab/stark#10 at `bd4dc62` (Actions run 38580660498, 2026-10-14).
-- [x] **S5-3. `.env.example`** — names only, required and optional channel groups.
-- [x] **S5-4. Configuration and logging** — `src/config.ts` (fail-fast, all-or-none channel groups, errors name
-  variables only), `src/logger.ts` (JSON, `domain.action_result`, secret redaction by value and by pattern for Telegram bot tokens
-  and Discord webhook URLs, `SECURITY.md` T-19); optional `HEARTBEAT_URL` (D-43). Control run: removing the
-  redaction makes 2 logger tests fail; the T-19 and heartbeat tests failed before their code was written.
-- [x] **S5-5. Interfaces and fakes** — `src/ports/channel.ts`, `src/ports/feed.ts`; `test/fakes/` for all four channels
-  and both providers.
-- [ ] **S5-6. Hosting carried over from S4-3** — the PO's machine passes (`ARCHITECTURE.md` §8); candidates are a
-  Linux VPS or Railway (`ai-trading`'s dashboard host); each must pass the same check. The uptime monitor for the
-  heartbeat (`SPEC.md` D-43) is picked with it. Must be settled before the first deploy, not before Phase 6 (D-44).
-- [ ] **S5-7. Check Google's 7-day refresh token rule** (carried over from S4-5) for OAuth apps left in "Testing"
-  (`SECURITY.md` T-21), in Google's own documentation.
-
-*Phase done when:* CI passes on a pull request (done). S5-6 and S5-7 must be settled before the first deploy.
+- [x] **S6-1. Rule engine** — `src/domain/rules.ts` (EVENTS.md §3: level and percentage rules, crossing and re-arm,
+  D-19, D-20, D-31, D-32) on `src/domain/decimal.ts` (exact bigint decimals; comparisons need no division).
+  Evidence: 42 domain tests, including every §3.5 example; control runs: `>` for `>=` and "never re-arm" each fail
+  2 tests.
+- [ ] **S6-2. Rule validation** — `API.md` §1.3 codes, shared by the web API and Telegram commands.
+- [ ] **S6-3. Decision pipeline** — tick → one tick per pair per second, late ticks stored not evaluated →
+  reference lookup → engine → decision stored before sending (EVENTS.md §2.1–2.2).
+- [ ] **S6-4. Dispatcher** — channels on/off (D-09), cooldown (D-42), retries and `Retry-After`, LINE and Gmail
+  counters (D-17), dead webhooks, idempotency by alert ID (EVENTS.md §2.3).
+- [ ] **S6-5. Alert message** — Thai text (D-33), plain text only (`SECURITY.md` T-20).
+- [ ] **S6-6. Storage** — PostgreSQL schema and migrations from `DATABASE.md`; tests against a real PostgreSQL in CI.
+- [ ] **S6-7. Feed adapters** — Bitkub and Binance parsing, reconnects, 429 handling, from recorded fixtures.
+- [ ] **S6-8. Channel adapters** — Telegram, LINE, Discord, Gmail, against fakes of their HTTP APIs.
+- [ ] **S6-9. Health monitor and heartbeat** — EVENTS.md §2.4, D-43.
+- [ ] **S6-10. Owner interface** — HTTP API with login (`API.md` §1) and Telegram commands (§2).
+- [ ] **S6-11. End to end on fakes** — the whole flow with every external system faked; then ask the PO to start
+  gate A-1 (D-05).
+- [ ] **S6-12. Hosting** (carried over from S5-6) — must be settled before the first deploy.
+- [ ] **S6-13. Google's 7-day refresh token rule** (carried over from S5-7, `SECURITY.md` T-21).
 
 ## Next Phases (not started)
 
 Detailed tasks are written when the phase becomes current. Order from the standard §2.2 and §4–10.
 
 - **AI contracts** before v1.2 (`SPEC.md` D-06).
-- **Phase 6 — First feature**, test-first.
 - **Gate A-1 — MSAP audit** (`SPEC.md` D-02): Modes A + B once Phase 6 works end to end on fakes. Ask the PO
   before starting (D-05). No real alert is sent until A-1 passes its Stop Gate; findings are fixed only in a
   separate, PO-authorised remediation change, then re-audited (MSAP §28–29).
@@ -56,6 +57,29 @@ Detailed tasks are written when the phase becomes current. Order from the standa
 ---
 
 ## Done
+
+### Phase 5: Foundation (2026-10-14)
+
+> Started 2026-10-14 on the PO's instruction (`SPEC.md` D-44), before hosting is chosen.
+
+- [x] **S5-1. Project skeleton and commands** — `package.json`, `tsconfig.json`, `eslint.config.js`,
+  `vitest.config.ts`; tooling in `SPEC.md` D-45. Evidence: `npm run check` green (lint, typecheck, 22 tests, build).
+- [x] **S5-2. CI workflow** — `.github/workflows/ci.yml`: `npm ci` → audit → lint → typecheck → test → build.
+  First run green on AvengerTechLab/stark#10 at `bd4dc62` (Actions run 38580660498, 2026-10-14).
+- [x] **S5-3. `.env.example`** — names only, required and optional channel groups.
+- [x] **S5-4. Configuration and logging** — `src/config.ts` (fail-fast, all-or-none channel groups, errors name
+  variables only), `src/logger.ts` (JSON, `domain.action_result`, secret redaction by value and by pattern for Telegram bot tokens
+  and Discord webhook URLs, `SECURITY.md` T-19); optional `HEARTBEAT_URL` (D-43). Control run: removing the
+  redaction makes 2 logger tests fail; the T-19 and heartbeat tests failed before their code was written.
+- [x] **S5-5. Interfaces and fakes** — `src/ports/channel.ts`, `src/ports/feed.ts`; `test/fakes/` for all four channels
+  and both providers.
+- [→] **S5-6. Hosting** (carried to S6-12) — the PO's machine passes (`ARCHITECTURE.md` §8); candidates are a
+  Linux VPS or Railway (`ai-trading`'s dashboard host); each must pass the same check. The uptime monitor for the
+  heartbeat (`SPEC.md` D-43) is picked with it. Must be settled before the first deploy, not before Phase 6 (D-44).
+- [→] **S5-7. Google's 7-day refresh token rule** (carried to S6-13) (carried over from S4-5) for OAuth apps left in "Testing"
+  (`SECURITY.md` T-21), in Google's own documentation.
+
+CI green on AvengerTechLab/stark#10.
 
 ### Phase 4: Security (2026-10-14)
 

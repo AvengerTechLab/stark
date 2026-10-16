@@ -15,13 +15,14 @@ Load these skills (`.claude/skills/`) before the matching work:
 
 ---
 
-## 1. Current phase: Foundation (Phase 5)
+## 1. Current phase: First feature (Phase 6)
 
-The standard says no module starts with "start coding" (§2.2). Discovery, architecture, contracts and the threat model
-are done (`SPEC.md`, `ARCHITECTURE.md`, `EVENTS.md`, `API.md`, `DATABASE.md`, `SECURITY.md`). Stark is in Phase 5:
-the project skeleton, checks, CI and fakes. Features start in Phase 6 (`TASKS.md`). Until then:
+The standard says no module starts with "start coding" (§2.2). Discovery, architecture, contracts, threat model and
+foundation are done (`SPEC.md`, `ARCHITECTURE.md`, `EVENTS.md`, `API.md`, `DATABASE.md`, `SECURITY.md`). Stark is in
+Phase 6: building v1.0 test-first until it works end to end on fakes (`TASKS.md`). Throughout:
 
-- Add only foundation code: configuration, logging, interfaces and fakes. Features wait for Phase 6, test-first.
+- Every change starts with a test that fails on the current code (playbook §1.3).
+- Code follows the contracts; a change to behaviour changes the contract in the same commit.
 - Keep dependencies few and well known (`SECURITY.md` T-13); add one only with a reason in the commit message.
 - The stack, data providers and alert channels are decided (`SPEC.md` D-08, D-09, D-13). Do not change them, and do
   not choose hosting, a broker or another exchange. These are PO decisions.
