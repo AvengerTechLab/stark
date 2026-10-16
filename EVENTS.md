@@ -80,7 +80,9 @@ Retries (proposed): up to 3 attempts per channel, 1 s then 2 s apart, all with t
 failed attempt and the next one waits for the channel's `Retry-After` when that is longer, even past the SC-1 budget;
 it never retries early (`ARCHITECTURE.md` §2.1–2.2). A send that throws is a failed attempt with reason `send_error`.
 A channel that answers it will never accept sends again (a Discord webhook's `404`) gets one `failed` attempt, is
-marked dead (`DATABASE.md` `channel_settings.dead_since`) and is not retried.
+marked dead (`DATABASE.md` `channel_settings.dead_since`) and is not retried. LINE's `409` for a retry key it has
+already accepted counts as `delivered`. A Gmail token that cannot be refreshed is a `failed` attempt with reason
+`token_refresh_failed` (`ARCHITECTURE.md` §2.2).
 
 Before the first attempt the dispatcher checks, in this order, and records one `skipped` attempt for the first that
 holds: `channel_off` (switched off system-wide since the decision, or not configured), `channel_dead`, `cooldown`,

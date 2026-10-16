@@ -100,11 +100,33 @@ Sources: Gmail Help on sending limits and app passwords (`support.google.com/mai
 | Telegram | A bot token and a chat ID | In one chat, avoid more than one message per second; short bursts are allowed, then HTTP 429 (verified). One chat with the PO fits easily |
 | LINE | A LINE Official Account with Messaging API (LINE Notify is closed) | Push, multicast, broadcast and narrowcast messages count toward the monthly free quota; reply messages do not; counted per recipient. Past the limit the API returns an error and the message is not sent. The API reports the month's limit and usage (verified). Free quota in Thailand: 300 messages a month on opening an official account (verified: LINE for Business Thailand, `lineforbusiness.com/th/service/line-oa-features/broadcast-message`, read 2026-10-03) |
 | Discord | A webhook URL | Global limit 50 requests per second; per-route limits apply per webhook; HTTP 429 with `retry_after`; 10,000 invalid requests (401, 403, 429) per 10 minutes bring a temporary IP ban; a webhook answering 404 must not be used again (verified) |
-| Email | The PO's Gmail account over SMTP, signed in with OAuth (`SPEC.md` D-28) | More than 500 recipients in one email or more than 500 emails a day hits the sending limit, which lifts within 1 to 24 hours (verified: Gmail Help, `support.google.com/mail/answer/22839`, read 2026-10-03). Alerts go to one recipient, the PO; the dispatcher counts emails per day and stops at 400 (`SPEC.md` D-47), telling the PO through another channel |
+| Email | The PO's Gmail account through the Gmail API, signed in with OAuth (`SPEC.md` D-28, D-50) | More than 500 recipients in one email or more than 500 emails a day hits the sending limit, which lifts within 1 to 24 hours (verified: Gmail Help, `support.google.com/mail/answer/22839`, read 2026-10-03). Alerts go to one recipient, the PO; the dispatcher counts emails per day and stops at 400 (`SPEC.md` D-47), telling the PO through another channel |
 
 Design notes: Stark sends alerts as push messages, so every LINE alert counts toward the quota; the LINE adapter
 reads the month's usage from the API to stop at the limit (D-17). A Discord webhook answering 404 is marked dead and
 reported (SC-3), not retried.
+
+Channel adapters as built (S6-8, `src/channels/`). Each sends one HTTPS POST through Node.js 22's `fetch`, with a 5 s
+time limit; no dependency is added. Sources were read on 2026-10-16:
+
+| Channel | Request | How the answer is read | Source |
+|---|---|---|---|
+| Telegram | `POST api.telegram.org/bot<token>/sendMessage`: `chat_id`, `text`, link previews off, **no `parse_mode`** | `200` with `ok: true` is delivered; `parameters.retry_after` is passed on | Bot API 10.3, `core.telegram.org/bots/api` |
+| LINE | `POST api.line.me/v2/bot/message/push`: one text message to the PO; header `X-Line-Retry-Key` is the alert ID | `200` is delivered. `409` means LINE already accepted this retry key, so it counts as delivered, not sent twice | `line/line-openapi` `messaging-api.yml` at `fa5577c`; "Retrying an API request" (developers.line.biz) |
+| Discord | `POST <webhook>?wait=true`: `content`, with **`allowed_mentions: {parse: []}`** | `200` or `204` is delivered; `404` is dead; `retry_after` from the body, else the header | `discord/discord-api-docs` at `c43598d` |
+| Email | `POST gmail.googleapis.com/gmail/v1/users/me/messages/send` with `raw`, an RFC 5322 message | `200` is delivered; `401` drops the access token so the next attempt refreshes it | Gmail API discovery document, revision 20261012 |
+
+How the adapters behave:
+
+- **Gmail access token:** the adapter takes it from `oauth2.googleapis.com/token`, the token endpoint in Google's
+  OpenID configuration, using the refresh token. It is reused until a minute before it expires. If Google refuses
+  the refresh, the attempt fails with `token_refresh_failed` (`SECURITY.md` T-21).
+- **The email itself:** the subject is the message's first line as a UTF-8 encoded word. The body is UTF-8 plain
+  text in base64. Both addresses must be one plain address each.
+- **Failures:** every failure is reported as a fixed code (`http_<status>`, `network_error` and so on), never as an
+  error's text. Telegram's token sits in its URL and the Discord webhook URL is itself a secret (`SECURITY.md`
+  T-19).
+- **Not yet tested:** sends to the real services. No real message goes out before gate A-1 (`CLAUDE.md` §6).
 
 ### 2.3 What the success criteria imply
 

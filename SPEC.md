@@ -158,6 +158,7 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | D-47 | (Q-32) Stark stops Gmail at 400 emails a day, leaving 100 of Google's 500 for the PO's own mail, and stops LINE at 300 a month; both are counted on the Thai calendar (UTC+7) | PO ("ตามคำแนะนำ") | 2026-10-16 | The PO's account shares Google's daily limit with Stark; Thai time is the PO's own day |
 | D-48 | The wording of the `below` and `change` alert messages in `EVENTS.md` §4 | PO ("ตามคำแนะนำ") | 2026-10-16 | Extends the D-33 level message in the same style |
 | D-49 | PostgreSQL is reached through `pg` (node-postgres) 8.23.1, Stark's first runtime dependency; migrations are plain SQL kept in code (`src/storage/migrations.ts`) with no migration tool | Developer choice, **PO to confirm** (the PO said to go ahead with S6-6) | 2026-10-16 | `pg` is the most widely used PostgreSQL client for Node.js and needs no native build; a migration tool would add dependencies for one small schema (`SECURITY.md` T-13) |
+| D-50 | Email alerts go through the Gmail API (`users.messages.send` over HTTPS), not SMTP. The Gmail API accepts the send-only scope `gmail.send` that D-41 chose (Gmail API discovery document, revision 20261012). The access token is refreshed from the stored refresh token (D-28) | Developer choice, **PO to confirm** (the PO said to go ahead with S6-8) | 2026-10-16 | It keeps D-41's send-only grant, uses HTTPS like the other three channels, and needs no SMTP client or new dependency |
 
 ## 7. Constraints
 

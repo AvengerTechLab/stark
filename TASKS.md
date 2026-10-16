@@ -73,7 +73,26 @@ Tick a task only with evidence: the commit, the file created, or the command run
 
   One mutation survived: no test caught a poll timer left running after reconnect. It sends no request, because a
   poll first checks the connection.
-- [ ] **S6-8. Channel adapters** — Telegram, LINE, Discord, Gmail, against fakes of their HTTP APIs.
+- [x] **S6-8. Channel adapters** — `src/channels/`: Telegram, LINE, Discord and Gmail on Node.js 22's `fetch`, with no
+  new dependency (`ARCHITECTURE.md` §2.2).
+  - Telegram sends plain text.
+  - LINE uses the alert ID as `X-Line-Retry-Key`, and its 409 counts as delivered.
+  - Discord sends with mentions off; a webhook answering 404 is dead.
+  - Gmail goes through the Gmail API with the send-only scope (D-50, PO to confirm). It refreshes its token and
+    reuses it.
+  - Failures are reported only as fixed codes (T-19).
+
+  Evidence: 21 tests against a fake HTTP client; `fetchPost` is tested on a local server; 187 tests in all with the
+  database. Control runs, each failing 1 test:
+  - Telegram parse mode on
+  - error text used as the failure reason
+  - no LINE retry key
+  - LINE 409 counted as a failure
+  - Discord mentions on
+  - Discord 404 not dead
+  - Gmail token used until the moment it expires
+  - Gmail token kept after a 401
+  - a line break allowed in the email subject
 - [ ] **S6-9. Health monitor and heartbeat** — EVENTS.md §2.4, D-43.
 - [ ] **S6-10. Owner interface** — HTTP API with login (`API.md` §1) and Telegram commands (§2).
 - [ ] **S6-11. End to end on fakes** — the whole flow with every external system faked; then ask the PO to start
@@ -85,6 +104,7 @@ Tick a task only with evidence: the commit, the file created, or the command run
   - a daily timer for `ensurePartitions` and `dropExpiredPartitions` (D-34)
   - feeds built from the pairs that have rules, rebuilt when that list changes, on `webSocketConnect`, `fetchGet` and
     `realTimers` (S6-7)
+  - channels from `createChannels(config, fetchPost, now)` (S6-8)
 - [ ] **S6-12. Hosting** (carried over from S5-6) — must be settled before the first deploy.
 - [ ] **S6-13. Google's 7-day refresh token rule** (carried over from S5-7, `SECURITY.md` T-21).
 
