@@ -159,6 +159,7 @@ describe("DecisionPipeline: decisions (EVENTS.md §2.2, §3)", () => {
         changePercent: null,
         decidedAt: at(1500),
         channels: ["line"],
+        message: "[Stark] BTC/THB สูงกว่า 100 แล้ว\nราคาล่าสุด 100 THB (Bitkub) เวลา 12:00:00 น.\nกฎ: ราคา ≥ 100",
       },
     ]);
     expect(storedWhenDispatched).toEqual([1]);
@@ -201,6 +202,7 @@ describe("DecisionPipeline: decisions (EVENTS.md §2.2, §3)", () => {
     await flushAt(3000);
     expect(dispatched).toHaveLength(1);
     expect(dispatched[0]).toMatchObject({ price: "105", referencePrice: "100", changePercent: "5.00" });
+    expect(dispatched[0]?.message.split("\n")[0]).toBe("[Stark] BTC/USDT ขึ้น +5.00% ใน 60 นาที");
   });
 
   it("does not fire a change rule without a reference price", async () => {

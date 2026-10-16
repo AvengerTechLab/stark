@@ -6,6 +6,7 @@
 import type { Logger } from "../logger.js";
 import type { AlertChannel, ChannelName, SendResult } from "../ports/channel.js";
 import type { AlertDecision, ChannelSettings, DeliveryAttempt, DeliveryLog } from "../ports/storage.js";
+import { thaiDate } from "../domain/thai-time.js";
 
 export const MAX_ATTEMPTS = 3;
 /** Wait before attempt 2 and attempt 3 (EVENTS.md §2.3). */
@@ -28,11 +29,9 @@ export const DEFAULT_QUOTAS: Readonly<Partial<Record<ChannelName, Quota>>> = {
   email: { per: "day", limit: 400 },
 };
 
-const THAI_OFFSET_MS = 7 * 60 * 60_000;
-
 /** The usage period containing `at` on the Thai calendar: "YYYY-MM-DD", the first day for a month. */
 export function usagePeriod(per: Quota["per"], at: Date): string {
-  const day = new Date(at.getTime() + THAI_OFFSET_MS).toISOString().slice(0, 10);
+  const day = thaiDate(at);
   return per === "month" ? `${day.slice(0, 7)}-01` : day;
 }
 
@@ -40,8 +39,6 @@ export interface DispatcherOptions {
   readonly channels: readonly AlertChannel[];
   readonly settings: ChannelSettings;
   readonly deliveries: DeliveryLog;
-  /** Builds the alert message (EVENTS.md §4). */
-  readonly format: (decision: AlertDecision) => string;
   readonly logger: Logger;
   readonly now: () => Date;
   readonly sleep: (ms: number) => Promise<void>;
@@ -107,7 +104,7 @@ export class Dispatcher {
     const { logger, now, settings } = this.options;
     const adapter = this.adapters.get(channel);
     if (adapter === undefined) return;
-    const alert = { alertId: decision.id, text: this.options.format(decision) };
+    const alert = { alertId: decision.id, text: decision.message };
     const where = { alertId: decision.id, ruleId: decision.ruleId, channel };
 
     for (let attempt = first; attempt <= MAX_ATTEMPTS; attempt++) {

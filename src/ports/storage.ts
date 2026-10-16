@@ -17,6 +17,8 @@ export interface AlertDecision extends RuleDecision {
   readonly decidedAt: Date;
   /** The rule's channels that were switched on system-wide at decidedAt (D-09). */
   readonly channels: readonly ChannelName[];
+  /** The alert text (EVENTS.md §4), fixed when the decision is made so every send and resend is the same. */
+  readonly message: string;
 }
 
 export interface PriceLog {

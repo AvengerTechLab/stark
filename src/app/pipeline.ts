@@ -6,6 +6,7 @@
 import type { Logger } from "../logger.js";
 import type { FeedTick } from "../ports/feed.js";
 import type { AlertDecision, ChannelSettings, PriceLog, PriceTick, RuleStore } from "../ports/storage.js";
+import { formatAlertMessage } from "../domain/message.js";
 import { evaluateRule, referenceCutoff, type Rule } from "../domain/rules.js";
 
 /** A tick received later than this after its exchange time is stored but not evaluated (EVENTS.md §2.1). */
@@ -127,6 +128,14 @@ export class DecisionPipeline {
         id: this.options.newId(),
         decidedAt: this.options.now(),
         channels: rule.channels.filter((c) => on.has(c)),
+        message: formatAlertMessage({
+          rule,
+          exchange: tick.exchange,
+          price: tick.price,
+          exchangeTime: tick.exchangeTime,
+          referencePrice: result.decision.referencePrice,
+          changePercent: result.decision.changePercent,
+        }),
       };
     }
     await this.options.rules.saveResult(rule.id, result.state, decision);

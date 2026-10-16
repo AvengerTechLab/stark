@@ -52,7 +52,8 @@ SC-2 replay. Partitioned by day so old days drop cheaply. Retention: 35 days (`S
 ### `alert_decisions`
 
 `id` (`uuid`, primary key), `rule_id` (`uuid`; kept even if the rule is deleted, so history stays complete),
-`tick_id` (`uuid`), `price`, `reference_price`, `change_percent` (`numeric`), `channels` (`text[]`), `decided_at`.
+`tick_id` (`uuid`), `price`, `reference_price`, `change_percent` (`numeric`), `channels` (`text[]`), `message`
+(`text`, the alert text sent on every channel), `decided_at`.
 Written in the same transaction as the rule's new `state` (`EVENTS.md` §2.2).
 
 ### `delivery_attempts`

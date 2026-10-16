@@ -21,6 +21,7 @@ function decision(id: string, channels: ChannelName[], ruleId = "rule-1"): Alert
     changePercent: null,
     decidedAt: at(0),
     channels,
+    message: `alert ${id}`,
   };
 }
 
@@ -40,7 +41,6 @@ function setup(options: { channels?: AlertChannel[]; on?: ChannelName[] } = {}) 
     channels,
     settings,
     deliveries,
-    format: (d) => `alert ${d.id}`,
     logger: createLogger({ level: "debug", write: (line) => lines.push(JSON.parse(line)) }),
     now: () => clock.now,
     sleep: async (ms) => {
@@ -58,7 +58,7 @@ function setup(options: { channels?: AlertChannel[]; on?: ChannelName[] } = {}) 
 }
 
 describe("Dispatcher: sending (EVENTS.md §2.3)", () => {
-  it("sends the alert text with its ID to every channel of the decision and records each delivery", async () => {
+  it("sends the decision's stored message with its ID to every channel of the decision and records each delivery", async () => {
     const { dispatcher, byName, attempts } = setup();
     await dispatcher.dispatch(decision("a1", ["telegram", "discord"]));
     expect(byName("telegram").sent).toEqual([{ alertId: "a1", text: "alert a1" }]);

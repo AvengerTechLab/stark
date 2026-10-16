@@ -58,6 +58,7 @@ Rules (proposed):
 | `changePercent` | `Decimal` (signed) or null | Percentage rules only, rounded half-up to 2 decimals for display; the comparison uses the exact value |
 | `decidedAt` | `Timestamp` | |
 | `channels` | list of channel names | The rule's channels that were switched on system-wide at `decidedAt` (D-09) |
+| `message` | string | The alert text (§4), fixed at `decidedAt`, so every send and every resend after a restart is the same even if the rule is changed later |
 
 The decision is stored before any send, so a restart never loses it (`ARCHITECTURE.md` §7). It is stored in the same
 transaction as the rule's new state: if that fails, the rule stays `armed`, nothing is sent, and a condition still
@@ -186,3 +187,30 @@ One message per alert, the same on every channel, in Thai:
 
 Numbers in the message are formatted for reading only; stored values keep full precision. The example's numbers are
 demo values.
+
+The other kinds (proposed, **PO to confirm** the wording; D-33 approved the level message above):
+
+```text
+[Stark] BTC/USDT ต่ำกว่า 60,000 แล้ว
+ราคาล่าสุด 59,999.25 USDT (Binance) เวลา 14:05:12 น.
+กฎ: ราคา ≤ 60,000
+```
+
+```text
+[Stark] BTC/USDT ขึ้น +5.00% ใน 60 นาที
+ราคาล่าสุด 105 USDT (Binance) เวลา 14:05:12 น.
+ราคาเมื่อ 60 นาทีก่อน 100 USDT
+กฎ: ขึ้น ≥ 5% ใน 60 นาที
+```
+
+Rules for the text (implemented in `src/domain/message.ts`):
+
+- The first line is also the email subject. It holds no line break.
+- An `either` rule writes ขึ้น or ลง from the sign of the change. Its rule line reads `ขึ้นหรือลง`. A `down` rule's
+  rule line reads `ลง`.
+- Prices group thousands with commas and drop trailing zeros after the point. They are never rounded:
+  `0.00001234` stays `0.00001234`.
+- The change is the decision's `changePercent`, with a `+` added when it is not negative.
+- The time is the tick's `exchangeTime` in Thai time (UTC+7).
+- The text is built only from typed values. A pair that is not `BASE/THB` or `BASE/USDT` (letters and digits only)
+  is refused, so no markup, mention or line break can enter (`SECURITY.md` T-20).

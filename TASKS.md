@@ -33,7 +33,12 @@ Tick a task only with evidence: the commit, the file created, or the command run
   Evidence: 17 tests; control runs: no cooldown fails 2, ignoring `Retry-After` 1, no idempotency check 2, no
   per-channel queue 2, UTC instead of the Thai calendar 2, never marking dead 1. Telling the PO about a failing,
   dead or exhausted channel is S6-9.
-- [ ] **S6-5. Alert message** — Thai text (D-33), plain text only (`SECURITY.md` T-20).
+- [x] **S6-5. Alert message** — `src/domain/message.ts`: Thai text for `above`, `below` and `change` (D-33; the
+  `below` and `change` wording is proposed, PO to confirm, `EVENTS.md` §4). It is plain text built from typed values
+  only (`SECURITY.md` T-20). The pipeline fixes the text when it makes the decision and stores it as
+  `AlertDecision.message`; the dispatcher sends that text. Thai time is in `src/domain/thai-time.ts`.
+  Evidence: 11 new tests, 124 in all. Control runs: a UTC clock fails 6 tests; dropping decimals fails 4; no pair
+  check fails 1; taking the direction from the rule instead of the change fails 1.
 - [ ] **S6-6. Storage** — PostgreSQL schema and migrations from `DATABASE.md`; tests against a real PostgreSQL in CI.
 - [ ] **S6-7. Feed adapters** — Bitkub and Binance parsing, reconnects, 429 handling, from recorded fixtures.
 - [ ] **S6-8. Channel adapters** — Telegram, LINE, Discord, Gmail, against fakes of their HTTP APIs.
