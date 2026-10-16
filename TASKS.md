@@ -17,7 +17,10 @@ Tick a task only with evidence: the commit, the file created, or the command run
   D-19, D-20, D-31, D-32) on `src/domain/decimal.ts` (exact bigint decimals; comparisons need no division).
   Evidence: 42 domain tests, including every §3.5 example; control runs: `>` for `>=` and "never re-arm" each fail
   2 tests.
-- [ ] **S6-2. Rule validation** — `API.md` §1.3 codes, shared by the web API and Telegram commands.
+- [x] **S6-2. Rule validation** — `src/domain/rule-input.ts`: `API.md` §1.3 codes, one function for the web API and
+  the Telegram commands; reports every problem at once; messages never repeat submitted text. Evidence: 16 tests
+  (edges 0.01/100 and 1/1,440, JSON numbers refused, wrong-kind and unknown fields); control runs: dropping the
+  `FIELD_NOT_ALLOWED` check and dropping the 2-decimal limit each fail 1 test.
 - [ ] **S6-3. Decision pipeline** — tick → one tick per pair per second, late ticks stored not evaluated →
   reference lookup → engine → decision stored before sending (EVENTS.md §2.1–2.2).
 - [ ] **S6-4. Dispatcher** — channels on/off (D-09), cooldown (D-42), retries and `Retry-After`, LINE and Gmail
