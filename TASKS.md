@@ -8,34 +8,111 @@ Tick a task only with evidence: the commit, the file created, or the command run
 
 ---
 
-## Current Phase — Phase 4: Security
+## Current Phase — Phase 6: First feature (v1.0 end to end on fakes)
 
-> Started 2026-10-14 on the PO's instruction (`SPEC.md` D-37).
+> Started 2026-10-16 on the PO's instruction (`SPEC.md` D-46). Every task is test-first: the test fails on the code
+> before the change, then passes. *Phase done when:* v1.0 works end to end on fakes, which opens gate A-1.
 
-- [x] **S4-1. Threat model** — `SECURITY.md` §2–4: assets, trust boundaries, 16 threats with controls mapped to the
-  contracts; decisions D-38 to D-41.
-- [x] **S4-2. Contracts updated for the answers** — `API.md` §1 (private network, no second factor), `SECURITY.md`
-  §3–5.
-- [ ] **S4-3. Hosting carried over from S3-4** — the PO's machine passes (`ARCHITECTURE.md` §8); provider and budget
-  with `ai-trading` (D-26); each VPS candidate needs the same check; the uptime monitor for the heartbeat (D-43) is
-  picked with it. Must be settled before Phase 5.
+- [x] **S6-1. Rule engine** — `src/domain/rules.ts` (EVENTS.md §3: level and percentage rules, crossing and re-arm,
+  D-19, D-20, D-31, D-32) on `src/domain/decimal.ts` (exact bigint decimals; comparisons need no division).
+  Evidence: 42 domain tests, including every §3.5 example; control runs: `>` for `>=` and "never re-arm" each fail
+  2 tests.
+- [x] **S6-2. Rule validation** — `src/domain/rule-input.ts`: `API.md` §1.3 codes, one function for the web API and
+  the Telegram commands; reports every problem at once; messages never repeat submitted text. Evidence: 16 tests
+  (edges 0.01/100 and 1/1,440, JSON numbers refused, wrong-kind and unknown fields); control runs: dropping the
+  `FIELD_NOT_ALLOWED` check and dropping the 2-decimal limit each fail 1 test.
+- [x] **S6-3. Decision pipeline** — `src/app/pipeline.ts` on the storage ports in `src/ports/storage.ts` (PostgreSQL in
+  S6-6; in-memory fakes in `test/fakes/fake-storage.ts`): last tick per pair per second, late ticks stored not
+  evaluated, reference lookup, engine, decision stored with the rule state before the dispatcher sees it (EVENTS.md
+  §2.1–2.2). Evidence: 16 tests (including storage failures and storage answering out of order); control runs:
+  keeping the first tick of a second fails 1 test, dispatching before storing fails 2, no late check fails 1, no
+  one-at-a-time processing fails 3.
+- [x] **S6-4. Dispatcher** — `src/app/dispatcher.ts` on the `DeliveryLog` port: channels on/off (D-09), cooldown
+  (D-42), retries and `Retry-After`, LINE and Gmail counters (D-17; limits are `SPEC.md` Q-32, PO to confirm), dead
+  webhooks, idempotency by alert ID, channels in parallel and one send at a time per channel (EVENTS.md §2.3).
+  Evidence: 17 tests; control runs: no cooldown fails 2, ignoring `Retry-After` 1, no idempotency check 2, no
+  per-channel queue 2, UTC instead of the Thai calendar 2, never marking dead 1. Telling the PO about a failing,
+  dead or exhausted channel is S6-9.
+- [x] **S6-5. Alert message** — `src/domain/message.ts`: Thai text for `above`, `below` and `change` (D-33; the
+  `below` and `change` wording is proposed, PO to confirm, `EVENTS.md` §4). It is plain text built from typed values
+  only (`SECURITY.md` T-20). The pipeline fixes the text when it makes the decision and stores it as
+  `AlertDecision.message`; the dispatcher sends that text. Thai time is in `src/domain/thai-time.ts`.
+  Evidence: 11 new tests, 124 in all. Control runs: a UTC clock fails 6 tests; dropping decimals fails 4; no pair
+  check fails 1; taking the direction from the rule instead of the change fails 1.
+- [x] **S6-6. Storage** — `src/storage/`: the schema from `DATABASE.md` as migration `001_initial`, and the
+  PostgreSQL implementations of every storage port. It uses `pg` 8.23.1 (D-49). The tests run against a real
+  PostgreSQL: locally when `STARK_TEST_DATABASE_URL` is set, and always in CI (a PostgreSQL 16 service; CI fails
+  without it). They include the pipeline and the dispatcher end to end on PostgreSQL.
+  Evidence: 12 tests. Control runs, each failing at least 1 test:
+  - state and decision saved outside one transaction
+  - failed sends counted toward usage
+  - no partition created on demand (3 tests fail)
+  - the cooldown counting failed attempts
+  - one day too many kept
+  - no rule check on an attempt (2 tests fail)
 
-- [x] **S4-4. Threat model additions** — `SECURITY.md` T-17 to T-24 from a second review; decisions D-42 (send
-  cooldown) and D-43 (outside heartbeat); controls written into `EVENTS.md` §2.3–2.4, §3.5, `API.md` §1.1, §2,
-  `DATABASE.md` `owner_actions` and `ARCHITECTURE.md` §7.
-- [ ] **S4-5. Check Google's 7-day refresh token rule** for OAuth apps left in "Testing" (`SECURITY.md` T-21) in
-  Google's own documentation; it could not be reached from the cloud session on 2026-10-14.
+  The cooldown and retention tests at first passed their control runs; both were tightened.
+- [x] **S6-7. Feed adapters** — `src/feeds/`, built on what Node.js 22 already has: no new dependency.
+  - Bitkub reads the ticker stream; Binance reads the `@trade` stream.
+  - REST polling runs while a stream is down.
+  - Reconnects back off, and a Binance connection is renewed after 23 hours.
+  - `429`, `418`, `403` and `451` are obeyed.
+  - Prices are read as exact text (`ARCHITECTURE.md` §2.1).
+  - Fixtures are the providers' own documentation examples (`test/feeds/fixtures.ts`). No test opens a real socket.
+  - Bitkub gives no price time, so its ticks are timed on arrival (`EVENTS.md` §2.1).
 
-*Phase done when:* S4-3 hosting is settled (it includes picking the uptime monitor, D-43) and S4-5 is checked.
+  Evidence: 30 tests (28 feed and 2 for the network layer on a local server), 166 in all with the database.
+  Control runs, each failing at least 1 test:
+  - ignoring `Retry-After`
+  - no 60 s cap on reconnect waits
+  - never renewing the connection
+  - polls overlapping
+  - prices passed through floats (3 tests fail)
+  - accepting a zero price (2 tests fail)
+  - no pause on `403` or `451`
+
+  One mutation survived: no test caught a poll timer left running after reconnect. It sends no request, because a
+  poll first checks the connection.
+- [x] **S6-8. Channel adapters** — `src/channels/`: Telegram, LINE, Discord and Gmail on Node.js 22's `fetch`, with no
+  new dependency (`ARCHITECTURE.md` §2.2).
+  - Telegram sends plain text.
+  - LINE uses the alert ID as `X-Line-Retry-Key`, and its 409 counts as delivered.
+  - Discord sends with mentions off; a webhook answering 404 is dead.
+  - Gmail goes through the Gmail API with the send-only scope (D-50, PO to confirm). It refreshes its token and
+    reuses it.
+  - Failures are reported only as fixed codes (T-19).
+
+  Evidence: 21 tests against a fake HTTP client; `fetchPost` is tested on a local server; 187 tests in all with the
+  database. Control runs, each failing 1 test:
+  - Telegram parse mode on
+  - error text used as the failure reason
+  - no LINE retry key
+  - LINE 409 counted as a failure
+  - Discord mentions on
+  - Discord 404 not dead
+  - Gmail token used until the moment it expires
+  - Gmail token kept after a 401
+  - a line break allowed in the email subject
+- [ ] **S6-9. Health monitor and heartbeat** — EVENTS.md §2.4, D-43.
+- [ ] **S6-10. Owner interface** — HTTP API with login (`API.md` §1) and Telegram commands (§2).
+- [ ] **S6-11. End to end on fakes** — the whole flow with every external system faked; then ask the PO to start
+  gate A-1 (D-05). Includes wiring found in S6-3 to S6-6:
+  - the pipeline's flush timer
+  - at start, a sweep that hands every stored decision not yet finished on all its channels to the dispatcher
+    (ARCHITECTURE.md §7)
+  - `migrate` at start
+  - a daily timer for `ensurePartitions` and `dropExpiredPartitions` (D-34)
+  - feeds built from the pairs that have rules, rebuilt when that list changes, on `webSocketConnect`, `fetchGet` and
+    `realTimers` (S6-7)
+  - channels from `createChannels(config, fetchPost, now)` (S6-8)
+- [ ] **S6-12. Hosting** (carried over from S5-6) — must be settled before the first deploy.
+- [ ] **S6-13. Google's 7-day refresh token rule** (carried over from S5-7, `SECURITY.md` T-21).
 
 ## Next Phases (not started)
 
 Detailed tasks are written when the phase becomes current. Order from the standard §2.2 and §4–10.
 
 - **AI contracts** before v1.2 (`SPEC.md` D-06).
-- **Phase 5 — Foundation:** project skeleton, lint / typecheck / test / build commands, CI workflow, `.env.example`,
-  fakes for every external system; `CLAUDE.md` §8 lists the commands.
-- **Phase 6 — First feature**, test-first.
 - **Gate A-1 — MSAP audit** (`SPEC.md` D-02): Modes A + B once Phase 6 works end to end on fakes. Ask the PO
   before starting (D-05). No real alert is sent until A-1 passes its Stop Gate; findings are fixed only in a
   separate, PO-authorised remediation change, then re-audited (MSAP §28–29).
@@ -46,10 +123,12 @@ Detailed tasks are written when the phase becomes current. Order from the standa
 
 ## Discovered Work
 
-- [ ] **No CI yet.** There is nothing to check until Phase 5. Add the workflow with the first code.
-- [ ] **`tdd` skill not copied.** The avengertech copy's "AvengerTech" section is specific to that repo. Copy it
-  in Phase 5 with a Stark section that names this repo's commands.
-- [ ] **`.gitignore` is the generic Node template.** Review it in Phase 5 (stack: `SPEC.md` D-13).
+- [ ] **CI actions on Node.js 20.** GitHub warns that `actions/checkout@v4` and `actions/setup-node@v4` target the
+  deprecated Node.js 20 and are forced onto Node.js 24 (seen on the S6-6 CI run, 2026-10-16). Move to their current
+  major versions in a CI change of their own.
+
+- [ ] **`tdd` skill not copied.** The avengertech copy's "AvengerTech" section is specific to that repo. Copying it
+  means reading avengertech, which the PO asked this session not to touch; the PO decides when.
 - [ ] **MSAP V1.0 path in `AvengerTechLab/avengertech` not confirmed** (`SPEC.md` D-03). The PO supplied the file in
   a session on 2026-10-03; adding it to avengertech is outside this repository's scope. Once it is there,
   `CLAUDE.md` §6a names its path. Needed before gate A-1.
@@ -57,6 +136,46 @@ Detailed tasks are written when the phase becomes current. Order from the standa
 ---
 
 ## Done
+
+### Phase 5: Foundation (2026-10-14)
+
+> Started 2026-10-14 on the PO's instruction (`SPEC.md` D-44), before hosting is chosen.
+
+- [x] **S5-1. Project skeleton and commands** — `package.json`, `tsconfig.json`, `eslint.config.js`,
+  `vitest.config.ts`; tooling in `SPEC.md` D-45. Evidence: `npm run check` green (lint, typecheck, 22 tests, build).
+- [x] **S5-2. CI workflow** — `.github/workflows/ci.yml`: `npm ci` → audit → lint → typecheck → test → build.
+  First run green on AvengerTechLab/stark#10 at `bd4dc62` (Actions run 38580660498, 2026-10-14).
+- [x] **S5-3. `.env.example`** — names only, required and optional channel groups.
+- [x] **S5-4. Configuration and logging** — `src/config.ts` (fail-fast, all-or-none channel groups, errors name
+  variables only), `src/logger.ts` (JSON, `domain.action_result`, secret redaction by value and by pattern for Telegram bot tokens
+  and Discord webhook URLs, `SECURITY.md` T-19); optional `HEARTBEAT_URL` (D-43). Control run: removing the
+  redaction makes 2 logger tests fail; the T-19 and heartbeat tests failed before their code was written.
+- [x] **S5-5. Interfaces and fakes** — `src/ports/channel.ts`, `src/ports/feed.ts`; `test/fakes/` for all four channels
+  and both providers.
+- [→] **S5-6. Hosting** (carried to S6-12) — the PO's machine passes (`ARCHITECTURE.md` §8); candidates are a
+  Linux VPS or Railway (`ai-trading`'s dashboard host); each must pass the same check. The uptime monitor for the
+  heartbeat (`SPEC.md` D-43) is picked with it. Must be settled before the first deploy, not before Phase 6 (D-44).
+- [→] **S5-7. Google's 7-day refresh token rule** (carried to S6-13) (carried over from S4-5) for OAuth apps left in "Testing"
+  (`SECURITY.md` T-21), in Google's own documentation.
+
+CI green on AvengerTechLab/stark#10.
+
+### Phase 4: Security (2026-10-14)
+
+> Started 2026-10-14 on the PO's instruction (`SPEC.md` D-37).
+
+- [x] **S4-1. Threat model** — `SECURITY.md` §2–4: assets, trust boundaries, 16 threats with controls mapped to the
+  contracts; decisions D-38 to D-41.
+- [x] **S4-2. Contracts updated for the answers** — `API.md` §1 (private network, no second factor), `SECURITY.md`
+  §3–5.
+- [→] **S4-3. Hosting** (carried to S5-6) — the PO's machine passes (`ARCHITECTURE.md` §8); provider and budget
+  with `ai-trading` (D-26); each VPS candidate needs the same check; the uptime monitor (D-43) is picked with it.
+- [x] **S4-4. Threat model additions** — `SECURITY.md` T-17 to T-24 from a second review; decisions D-42 (send
+  cooldown) and D-43 (outside heartbeat); controls written into `EVENTS.md` §2.3–2.4, §3.5, `API.md` §1.1, §2,
+  `DATABASE.md` `owner_actions` and `ARCHITECTURE.md` §7.
+- [→] **S4-5. Check Google's 7-day refresh token rule** (carried to S5-7).
+
+Threat model and decisions D-38 to D-43 done.
 
 ### Phase 3: Contracts (2026-10-03 to 2026-10-14)
 

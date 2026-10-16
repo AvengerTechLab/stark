@@ -29,15 +29,22 @@ Components and data flow: `ARCHITECTURE.md` §4–5. Storage: `DATABASE.md`. Own
 | `exchange` | `Exchange` | |
 | `pair` | `Pair` | |
 | `price` | `Decimal` | Last traded price, not bid or ask (`SPEC.md` D-30) |
-| `exchangeTime` | `Timestamp` | Time the provider gives for the price |
+| `exchangeTime` | `Timestamp` | Time the provider gives for the price. If it gives none, this is the arrival time: every Bitkub tick, and Binance polled prices (`ARCHITECTURE.md` §2.1) |
 | `receivedTime` | `Timestamp` | Time Stark received it |
 | `source` | `stream` or `poll` | Polling is the fallback while a stream is down (`ARCHITECTURE.md` §7) |
 
 Rules (proposed):
-- At most one tick per pair per second is kept and evaluated: the last one in that second. The price log and the rule
-  engine see the same ticks, so a replay (SC-2) gives the same decisions.
+- At most one tick per pair per second is kept and evaluated: the last one to arrive for that second of
+  `exchangeTime`. The price log and the rule engine see the same ticks, so a replay (SC-2) gives the same decisions.
+- A kept tick is released when Stark's clock passes the end of its second, or at once when a tick of a later second
+  arrives. Holding it adds up to 1 s (`ARCHITECTURE.md` §6). A tick for a second already released, or older than the
+  one held, is dropped and logged `pipeline.tick_out_of_order`.
+- `id` is assigned and `receivedTime` is the arrival time of the kept tick.
 - A tick that arrives more than 10 seconds after its `exchangeTime` is stored but not evaluated: it is already outside
-  SC-1's budget.
+  SC-1's budget. Exactly 10 seconds is still evaluated.
+- A tick that cannot be stored is not evaluated either (logged `pipeline.tick_failed`), so the log never lacks a tick
+  that drove a decision.
+- Ticks are evaluated one at a time, in the order they are released.
 
 ### 2.2 `AlertDecision` (rule engine → decision log → dispatcher)
 
@@ -51,8 +58,12 @@ Rules (proposed):
 | `changePercent` | `Decimal` (signed) or null | Percentage rules only, rounded half-up to 2 decimals for display; the comparison uses the exact value |
 | `decidedAt` | `Timestamp` | |
 | `channels` | list of channel names | The rule's channels that were switched on system-wide at `decidedAt` (D-09) |
+| `message` | string | The alert text (§4), fixed at `decidedAt`, so every send and every resend after a restart is the same even if the rule is changed later |
 
-The decision is stored before any send, so a restart never loses it (`ARCHITECTURE.md` §7).
+The decision is stored before any send, so a restart never loses it (`ARCHITECTURE.md` §7). It is stored in the same
+transaction as the rule's new state: if that fails, the rule stays `armed`, nothing is sent, and a condition still
+true fires on the next tick. The dispatcher is handed the decision only after it is stored, and is not awaited, so a
+slow send never delays the next tick. Implemented in `src/app/pipeline.ts`.
 
 ### 2.3 `DeliveryAttempt` (dispatcher → delivery log)
 
@@ -65,12 +76,29 @@ The decision is stored before any send, so a restart never loses it (`ARCHITECTU
 | `reason` | string or null | For `failed`: the channel's error. For `skipped`: `channel_off`, `quota_reached`, `channel_dead` or `cooldown` |
 | `at` | `Timestamp` | |
 
-Retries (proposed): up to 3 attempts per channel, 1 s then 2 s apart, all with the same `alertId`. A `429` waits for
-the channel's `Retry-After` even past the SC-1 budget; it never retries early (`ARCHITECTURE.md` §2.1–2.2).
+Retries (proposed): up to 3 attempts per channel, 1 s then 2 s apart, all with the same `alertId`. A `429` counts as a
+failed attempt and the next one waits for the channel's `Retry-After` when that is longer, even past the SC-1 budget;
+it never retries early (`ARCHITECTURE.md` §2.1–2.2). A send that throws is a failed attempt with reason `send_error`.
+A channel that answers it will never accept sends again (a Discord webhook's `404`) gets one `failed` attempt, is
+marked dead (`DATABASE.md` `channel_settings.dead_since`) and is not retried. LINE's `409` for a retry key it has
+already accepted counts as `delivered`. A Gmail token that cannot be refreshed is a `failed` attempt with reason
+`token_refresh_failed` (`ARCHITECTURE.md` §2.2).
+
+Before the first attempt the dispatcher checks, in this order, and records one `skipped` attempt for the first that
+holds: `channel_off` (switched off system-wide since the decision, or not configured), `channel_dead`, `cooldown`,
+`quota_reached`.
+
+Idempotency: a channel that already has a `delivered` or `skipped` attempt for an alert, or 3 attempts, is never
+sent that alert again. After a restart, attempts continue from the last recorded number. Each channel sends one alert
+at a time, so the cooldown and the usage counters always see the sends before. Channels run in parallel.
+
+Usage limits (D-17, `SPEC.md` D-47): LINE stops at 300 sends a month, Gmail at 400 a day,
+both counted on the Thai calendar (UTC+7). The count rises in the same transaction as the `delivered` attempt.
 
 Cooldown (`SPEC.md` D-42): a rule sends at most once per channel per 5 minutes, counted from that rule's last
-`delivered` attempt on that channel. A decision inside the cooldown is still stored, and each of its channels gets one
-`skipped` attempt with reason `cooldown`. SC-2 compares decisions, so a cooldown never counts as a missed alert.
+`delivered` attempt on that channel; at exactly 5 minutes it sends again. A decision inside the cooldown is still
+stored, and each of its channels gets one `skipped` attempt with reason `cooldown`. SC-2 compares decisions, so a
+cooldown never counts as a missed alert. Implemented in `src/app/dispatcher.ts`.
 
 Sending (`SECURITY.md` T-20): the message is plain text built only from typed, validated values. Telegram is sent
 without a parse mode; Discord with `allowed_mentions` set to none; the email subject is the message's first line and
@@ -123,7 +151,8 @@ Reaching the level counts (`SPEC.md` D-31).
 
 1. The reference price is the price of the last stored tick for the same exchange and pair whose `exchangeTime` is at
    or before `tick.exchangeTime − windowMinutes`.
-2. If no such tick exists (Stark has not been running that long, or there is a gap), the condition is false.
+2. If no such tick exists (Stark has not been running that long, or there is a gap), or its price is 0, the condition
+   is false.
 3. `changePercent = (price − referencePrice) ÷ referencePrice × 100`, computed exactly.
 4. `up`: true when `changePercent >= percent`. `down`: true when `changePercent <= −percent`. `either`: true when
    either holds.
@@ -160,3 +189,30 @@ One message per alert, the same on every channel, in Thai:
 
 Numbers in the message are formatted for reading only; stored values keep full precision. The example's numbers are
 demo values.
+
+The other kinds (wording approved in `SPEC.md` D-48, in the style of the D-33 level message above):
+
+```text
+[Stark] BTC/USDT ต่ำกว่า 60,000 แล้ว
+ราคาล่าสุด 59,999.25 USDT (Binance) เวลา 14:05:12 น.
+กฎ: ราคา ≤ 60,000
+```
+
+```text
+[Stark] BTC/USDT ขึ้น +5.00% ใน 60 นาที
+ราคาล่าสุด 105 USDT (Binance) เวลา 14:05:12 น.
+ราคาเมื่อ 60 นาทีก่อน 100 USDT
+กฎ: ขึ้น ≥ 5% ใน 60 นาที
+```
+
+Rules for the text (implemented in `src/domain/message.ts`):
+
+- The first line is also the email subject. It holds no line break.
+- An `either` rule writes ขึ้น or ลง from the sign of the change. Its rule line reads `ขึ้นหรือลง`. A `down` rule's
+  rule line reads `ลง`.
+- Prices group thousands with commas and drop trailing zeros after the point. They are never rounded:
+  `0.00001234` stays `0.00001234`.
+- The change is the decision's `changePercent`, with a `+` added when it is not negative.
+- The time is the tick's `exchangeTime` in Thai time (UTC+7).
+- The text is built only from typed values. A pair that is not `BASE/THB` or `BASE/USDT` (letters and digits only)
+  is refused, so no markup, mention or line break can enter (`SECURITY.md` T-20).

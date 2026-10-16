@@ -1,7 +1,14 @@
 # Stark — Database Contract (v1.0)
 
-Status: **Phase 3 draft** (2026-10-03). PostgreSQL (`SPEC.md` D-22) on the same host as Stark, not reachable from
-the internet (D-25). Types follow `EVENTS.md`. The migration tool is chosen in Phase 5.
+Status: **built in S6-6** (2026-10-16). PostgreSQL (`SPEC.md` D-22) on the same host as Stark, not reachable from
+the internet (D-25). Types follow `EVENTS.md`. Implemented in `src/storage/` with `pg` (D-49):
+
+- **Migrations:** plain SQL in `src/storage/migrations.ts`. Each is applied once, in its own transaction, under an
+  advisory lock, and recorded in `schema_migrations`. A merged migration is never edited; a change is a new one.
+- **Checks:** the tables enforce the contract as well as the code: kinds and their fields, the THB/Bitkub and
+  USDT/Binance pairing, and channel names. Every value is a query parameter.
+- **Tests:** they run against a real PostgreSQL named by `STARK_TEST_DATABASE_URL`, each test file in its own
+  throwaway schema. CI starts a PostgreSQL 16 service and fails if the variable is missing.
 
 Conventions: `snake_case` names; table and column names live in one constants module in code (playbook §8); every
 timestamp is `timestamptz` in UTC; every price and percentage is `numeric` (exact), never `float`.
@@ -47,12 +54,17 @@ answers 404), `updated_at`.
 | `source` | `text` | `stream` or `poll` |
 
 Index on `(exchange, base, quote, exchange_time)` for the percentage-rule reference lookup (`EVENTS.md` §3.3) and the
-SC-2 replay. Partitioned by day so old days drop cheaply. Retention: 35 days (`SPEC.md` D-34).
+SC-2 replay. Partitioned by day so old days drop cheaply: one partition per UTC day, named `price_ticks_YYYYMMDD`.
+The first tick of a day with no partition creates it (`PgPriceLog.append`), so no tick is refused for want of one.
+Retention: 35 days (`SPEC.md` D-34). `dropExpiredPartitions` drops every day that ended more than 35 days ago; the
+daily timer that calls it is S6-11.
 
 ### `alert_decisions`
 
 `id` (`uuid`, primary key), `rule_id` (`uuid`; kept even if the rule is deleted, so history stays complete),
-`tick_id` (`uuid`), `price`, `reference_price`, `change_percent` (`numeric`), `channels` (`text[]`), `decided_at`.
+`tick_id` (`uuid`), `price`, `reference_price`, `change_percent` (`numeric`), `channels` (`text[]`), `message`
+(`text`, the alert text sent on every channel), `decided_at`.
+Written in the same transaction as the rule's new `state` (`EVENTS.md` §2.2).
 
 ### `delivery_attempts`
 
@@ -62,7 +74,8 @@ same channel impossible to record twice.
 
 ### `channel_usage`
 
-`channel` (`text`), `period` (`date`: first day of the month for LINE, the day for Gmail), `sent` (`integer`);
+`channel` (`text`), `period` (`date` on the Thai calendar, UTC+7: first day of the month for LINE, the day for Gmail;
+`SPEC.md` Q-32), `sent` (`integer`);
 primary key `(channel, period)`. Incremented in the same transaction as a `delivered` attempt; the dispatcher checks it
 before sending (D-17, Gmail's 500 a day).
 

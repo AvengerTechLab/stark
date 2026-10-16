@@ -15,13 +15,15 @@ Load these skills (`.claude/skills/`) before the matching work:
 
 ---
 
-## 1. Current phase: Security (Phase 4)
+## 1. Current phase: First feature (Phase 6)
 
-The standard says no module starts with "start coding" (§2.2). Phase 0 discovery is complete (`SPEC.md` D-18). Phase
-2 architecture is in `ARCHITECTURE.md`. Phase 3 contracts are in `EVENTS.md`, `API.md` and `DATABASE.md`. Stark is in
-Phase 4: the threat model is in `SECURITY.md`. Code starts in Phase 5 (`TASKS.md`). Until then:
+The standard says no module starts with "start coding" (§2.2). Discovery, architecture, contracts, threat model and
+foundation are done (`SPEC.md`, `ARCHITECTURE.md`, `EVENTS.md`, `API.md`, `DATABASE.md`, `SECURITY.md`). Stark is in
+Phase 6: building v1.0 test-first until it works end to end on fakes (`TASKS.md`). Throughout:
 
-- Do not add application code, a framework, a package manager or dependencies.
+- Every change starts with a test that fails on the current code (playbook §1.3).
+- Code follows the contracts; a change to behaviour changes the contract in the same commit.
+- Keep dependencies few and well known (`SECURITY.md` T-13); add one only with a reason in the commit message.
 - The stack, data providers and alert channels are decided (`SPEC.md` D-08, D-09, D-13). Do not change them, and do
   not choose hosting, a broker or another exchange. These are PO decisions.
 - Documents may describe options and recommend one; they must mark it **PO to confirm**.
@@ -93,10 +95,23 @@ Update the matching record in the same change. Tick a task only with evidence.
 
 ## 8. Commands
 
-None yet: there is no code. The stack is TypeScript on Node.js (`SPEC.md` D-13); Phase 5 adds lint, typecheck, test and
-build commands and a CI workflow, and lists them here in CI order.
+Node.js 22 and npm. In CI order (`.github/workflows/ci.yml`):
 
-For a documentation-only change, the report says which checks were skipped and why.
+| Step | Command |
+|---|---|
+| Install | `npm ci` |
+| Dependency audit (CI) | `npm audit --audit-level=high` |
+| Lint | `npm run lint` |
+| Typecheck | `npm run typecheck` |
+| Test | `npm run test` |
+| Build | `npm run build` |
+
+`npm run check` runs lint, typecheck, test and build in that order; it must be green before every commit. For a
+documentation-only change, the report says which checks were skipped and why.
+
+The storage tests need a throwaway PostgreSQL named by `STARK_TEST_DATABASE_URL`, never a real Stark database.
+Without the variable they are skipped locally. CI always sets it, and a CI run without it fails. A commit that
+touches `src/storage/` runs them locally first.
 
 ## 9. Reports
 

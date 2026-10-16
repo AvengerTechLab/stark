@@ -103,6 +103,7 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | Q-29 | ~~Gmail OAuth scope?~~ Answered: D-41 | — | — |
 | Q-30 | ~~Alert send cooldown?~~ Answered: D-42 | — | — |
 | Q-31 | ~~Who reports Stark itself down?~~ Answered: D-43 | — | — |
+| Q-32 | ~~Gmail limit and the calendar for usage counts?~~ Answered: D-47 | — | — |
 
 ## 6. Decisions
 
@@ -151,6 +152,13 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | D-41 | (Q-29) The Gmail OAuth grant uses the send-only scope | PO ("ตามคำแนะนำทั้งหมด ทีเดียว"; accepted the recommendations for Q-26 to Q-29) | 2026-10-14 | Stark can send alerts but cannot read the PO's mail |
 | D-42 | (Q-30) Rule decisions stay as in D-20, but each rule sends at most once per channel per 5 minutes. A decision inside the cooldown is still stored, and its sends are recorded as skipped (`EVENTS.md` §2.3) | PO ("ทำตามที่คุณแนะนำ"; accepted the recommendations for Q-30 and Q-31) | 2026-10-14 | A price hovering at a level would otherwise use LINE's 300 messages a month in minutes (`SECURITY.md` T-18); SC-2 still sees every decision |
 | D-43 | (Q-31) Stark sends a heartbeat to a free uptime monitor outside its host, which tells the PO when heartbeats stop. Which service is chosen with hosting (D-26) | PO ("ทำตามที่คุณแนะนำ"; accepted the recommendations for Q-30 and Q-31) | 2026-10-14 | The health monitor runs inside the process it watches, so it cannot report Stark itself being down (SC-3, `SECURITY.md` T-17) |
+| D-44 | Start Phase 5 before hosting is chosen; hosting, and the uptime monitor that goes with it (D-43), must be settled before the first deploy | PO ("เริ่ม Phase 5 ได้เลย", after the recommendation that skeleton, checks and CI do not depend on the host) | 2026-10-14 | Replaces the earlier rule that hosting comes before Phase 5 (D-29, D-37, `TASKS.md` S4-3) |
+| D-45 | Tooling: Node.js 22, npm, TypeScript strict, ESLint with typescript-eslint, Vitest, GitHub Actions; no runtime dependencies yet | Claude (developer choice within D-13), **PO to confirm** | 2026-10-14 | Few, widely used tools (`SECURITY.md` T-13); npm ships with Node; Node 22 is the runtime installed and an LTS line |
+| D-46 | Start Phase 6 (first feature) with PR #10 not yet merged; build v1.0 test-first until it works end to end on fakes | PO ("เริ่ม Phase 6 ได้เลย") | 2026-10-16 | Foundation is in place and CI is green |
+| D-47 | (Q-32) Stark stops Gmail at 400 emails a day, leaving 100 of Google's 500 for the PO's own mail, and stops LINE at 300 a month; both are counted on the Thai calendar (UTC+7) | PO ("ตามคำแนะนำ") | 2026-10-16 | The PO's account shares Google's daily limit with Stark; Thai time is the PO's own day |
+| D-48 | The wording of the `below` and `change` alert messages in `EVENTS.md` §4 | PO ("ตามคำแนะนำ") | 2026-10-16 | Extends the D-33 level message in the same style |
+| D-49 | PostgreSQL is reached through `pg` (node-postgres) 8.23.1, Stark's first runtime dependency; migrations are plain SQL kept in code (`src/storage/migrations.ts`) with no migration tool | Developer choice, **PO to confirm** (the PO said to go ahead with S6-6) | 2026-10-16 | `pg` is the most widely used PostgreSQL client for Node.js and needs no native build; a migration tool would add dependencies for one small schema (`SECURITY.md` T-13) |
+| D-50 | Email alerts go through the Gmail API (`users.messages.send` over HTTPS), not SMTP. The Gmail API accepts the send-only scope `gmail.send` that D-41 chose (Gmail API discovery document, revision 20261012). The access token is refreshed from the stored refresh token (D-28) | Developer choice, **PO to confirm** (the PO said to go ahead with S6-8) | 2026-10-16 | It keeps D-41's send-only grant, uses HTTPS like the other three channels, and needs no SMTP client or new dependency |
 
 ## 7. Constraints
 

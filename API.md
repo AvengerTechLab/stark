@@ -44,15 +44,21 @@ through a private network (`SPEC.md` D-38).
 
 | Field | Rule | Error code |
 |---|---|---|
-| `pair` | Must be listed by the provider for that quote | `PAIR_UNKNOWN` |
-| `level` | `Decimal`, greater than 0 | `LEVEL_INVALID` |
+| `kind` | `above`, `below` or `change` | `BODY_INVALID` |
+| `pair` | `BASE/THB` or `BASE/USDT` (case-insensitive, stored upper case), listed by the provider for that quote | `PAIR_UNKNOWN` |
+| `level` | `Decimal`, greater than 0, at most 40 characters | `LEVEL_INVALID` |
 | `percent` | `Decimal`, greater than 0, at most 100, at most 2 decimals | `PERCENT_INVALID` |
 | `windowMinutes` | Integer 1 to 1,440 | `WINDOW_INVALID` |
-| `channels` | Non-empty; each one of `telegram`, `line`, `discord`, `email` | `CHANNELS_INVALID` |
+| `direction` | `up`, `down` or `either` | `BODY_INVALID` |
+| `channels` | Non-empty; each one of `telegram`, `line`, `discord`, `email`, none repeated | `CHANNELS_INVALID` |
 | Fields for the wrong `kind` | For example `level` on a `change` rule | `FIELD_NOT_ALLOWED` |
+| Any other field | For example `state` | `BODY_INVALID` |
+| A body that is not a JSON object | | `BODY_INVALID` (field `body`) |
 
 Numbers sent as JSON numbers are refused: prices and percentages must be strings (playbook §6, item 1). Nothing is
-rounded silently; an invalid value is a `400` with its code (playbook §6, item 4).
+rounded silently; an invalid value is a `400` with its code (playbook §6, item 4). Every problem is reported at once,
+one error per field; when `kind` is invalid, only that error is reported. Error messages are fixed text and never repeat
+the submitted value (`SECURITY.md` T-05). Implemented in `src/domain/rule-input.ts`.
 
 ### 1.4 Error model
 
