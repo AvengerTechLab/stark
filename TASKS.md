@@ -40,7 +40,8 @@ Tick a task only with evidence: the commit, the file created, or the command run
 - [ ] **S6-9. Health monitor and heartbeat** — EVENTS.md §2.4, D-43.
 - [ ] **S6-10. Owner interface** — HTTP API with login (`API.md` §1) and Telegram commands (§2).
 - [ ] **S6-11. End to end on fakes** — the whole flow with every external system faked; then ask the PO to start
-  gate A-1 (D-05).
+  gate A-1 (D-05). Includes wiring found in S6-3 and S6-4: the pipeline's flush timer, and at start a sweep that
+  hands every stored decision not yet finished on all its channels to the dispatcher (ARCHITECTURE.md §7).
 - [ ] **S6-12. Hosting** (carried over from S5-6) — must be settled before the first deploy.
 - [ ] **S6-13. Google's 7-day refresh token rule** (carried over from S5-7, `SECURITY.md` T-21).
 
