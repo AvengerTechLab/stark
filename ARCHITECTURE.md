@@ -150,8 +150,8 @@ the rule does not fire).
 | Step | Budget (proposed) | Note |
 |---|---|---|
 | Provider → Stark | ≤ 2 s | Streams first; REST polling once a second as fallback is well inside Bitkub's 100 req/s (§2.1) |
-| Rule evaluation and storage | ≤ 0.5 s | In-process |
-| Channel send until the API accepts it | ≤ 7.5 s | Sends to all channels run in parallel; one slow channel does not delay the others |
+| Rule evaluation and storage | ≤ 1.5 s | Up to 1 s holding a tick until its second ends (`EVENTS.md` §2.1), then in-process |
+| Channel send until the API accepts it | ≤ 6.5 s | Sends to all channels run in parallel; one slow channel does not delay the others |
 
 The budget is checked by measuring each step in tests with fakes and, before A-1, against the real services from the
 chosen host.

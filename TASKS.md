@@ -21,8 +21,12 @@ Tick a task only with evidence: the commit, the file created, or the command run
   the Telegram commands; reports every problem at once; messages never repeat submitted text. Evidence: 16 tests
   (edges 0.01/100 and 1/1,440, JSON numbers refused, wrong-kind and unknown fields); control runs: dropping the
   `FIELD_NOT_ALLOWED` check and dropping the 2-decimal limit each fail 1 test.
-- [ ] **S6-3. Decision pipeline** — tick → one tick per pair per second, late ticks stored not evaluated →
-  reference lookup → engine → decision stored before sending (EVENTS.md §2.1–2.2).
+- [x] **S6-3. Decision pipeline** — `src/app/pipeline.ts` on the storage ports in `src/ports/storage.ts` (PostgreSQL in
+  S6-6; in-memory fakes in `test/fakes/fake-storage.ts`): last tick per pair per second, late ticks stored not
+  evaluated, reference lookup, engine, decision stored with the rule state before the dispatcher sees it (EVENTS.md
+  §2.1–2.2). Evidence: 16 tests (including storage failures and storage answering out of order); control runs:
+  keeping the first tick of a second fails 1 test, dispatching before storing fails 2, no late check fails 1, no
+  one-at-a-time processing fails 3.
 - [ ] **S6-4. Dispatcher** — channels on/off (D-09), cooldown (D-42), retries and `Retry-After`, LINE and Gmail
   counters (D-17), dead webhooks, idempotency by alert ID (EVENTS.md §2.3).
 - [ ] **S6-5. Alert message** — Thai text (D-33), plain text only (`SECURITY.md` T-20).

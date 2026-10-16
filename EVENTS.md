@@ -34,10 +34,17 @@ Components and data flow: `ARCHITECTURE.md` §4–5. Storage: `DATABASE.md`. Own
 | `source` | `stream` or `poll` | Polling is the fallback while a stream is down (`ARCHITECTURE.md` §7) |
 
 Rules (proposed):
-- At most one tick per pair per second is kept and evaluated: the last one in that second. The price log and the rule
-  engine see the same ticks, so a replay (SC-2) gives the same decisions.
+- At most one tick per pair per second is kept and evaluated: the last one to arrive for that second of
+  `exchangeTime`. The price log and the rule engine see the same ticks, so a replay (SC-2) gives the same decisions.
+- A kept tick is released when Stark's clock passes the end of its second, or at once when a tick of a later second
+  arrives. Holding it adds up to 1 s (`ARCHITECTURE.md` §6). A tick for a second already released, or older than the
+  one held, is dropped and logged `pipeline.tick_out_of_order`.
+- `id` is assigned and `receivedTime` is the arrival time of the kept tick.
 - A tick that arrives more than 10 seconds after its `exchangeTime` is stored but not evaluated: it is already outside
-  SC-1's budget.
+  SC-1's budget. Exactly 10 seconds is still evaluated.
+- A tick that cannot be stored is not evaluated either (logged `pipeline.tick_failed`), so the log never lacks a tick
+  that drove a decision.
+- Ticks are evaluated one at a time, in the order they are released.
 
 ### 2.2 `AlertDecision` (rule engine → decision log → dispatcher)
 
@@ -52,7 +59,10 @@ Rules (proposed):
 | `decidedAt` | `Timestamp` | |
 | `channels` | list of channel names | The rule's channels that were switched on system-wide at `decidedAt` (D-09) |
 
-The decision is stored before any send, so a restart never loses it (`ARCHITECTURE.md` §7).
+The decision is stored before any send, so a restart never loses it (`ARCHITECTURE.md` §7). It is stored in the same
+transaction as the rule's new state: if that fails, the rule stays `armed`, nothing is sent, and a condition still
+true fires on the next tick. The dispatcher is handed the decision only after it is stored, and is not awaited, so a
+slow send never delays the next tick. Implemented in `src/app/pipeline.ts`.
 
 ### 2.3 `DeliveryAttempt` (dispatcher → delivery log)
 
