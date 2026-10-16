@@ -52,7 +52,27 @@ Tick a task only with evidence: the commit, the file created, or the command run
   - no rule check on an attempt (2 tests fail)
 
   The cooldown and retention tests at first passed their control runs; both were tightened.
-- [ ] **S6-7. Feed adapters** — Bitkub and Binance parsing, reconnects, 429 handling, from recorded fixtures.
+- [x] **S6-7. Feed adapters** — `src/feeds/`, built on what Node.js 22 already has: no new dependency.
+  - Bitkub reads the ticker stream; Binance reads the `@trade` stream.
+  - REST polling runs while a stream is down.
+  - Reconnects back off, and a Binance connection is renewed after 23 hours.
+  - `429`, `418`, `403` and `451` are obeyed.
+  - Prices are read as exact text (`ARCHITECTURE.md` §2.1).
+  - Fixtures are the providers' own documentation examples (`test/feeds/fixtures.ts`). No test opens a real socket.
+  - Bitkub gives no price time, so its ticks are timed on arrival (`EVENTS.md` §2.1).
+
+  Evidence: 30 tests (28 feed and 2 for the network layer on a local server), 166 in all with the database.
+  Control runs, each failing at least 1 test:
+  - ignoring `Retry-After`
+  - no 60 s cap on reconnect waits
+  - never renewing the connection
+  - polls overlapping
+  - prices passed through floats (3 tests fail)
+  - accepting a zero price (2 tests fail)
+  - no pause on `403` or `451`
+
+  One mutation survived: no test caught a poll timer left running after reconnect. It sends no request, because a
+  poll first checks the connection.
 - [ ] **S6-8. Channel adapters** — Telegram, LINE, Discord, Gmail, against fakes of their HTTP APIs.
 - [ ] **S6-9. Health monitor and heartbeat** — EVENTS.md §2.4, D-43.
 - [ ] **S6-10. Owner interface** — HTTP API with login (`API.md` §1) and Telegram commands (§2).
@@ -63,6 +83,8 @@ Tick a task only with evidence: the commit, the file created, or the command run
     (ARCHITECTURE.md §7)
   - `migrate` at start
   - a daily timer for `ensurePartitions` and `dropExpiredPartitions` (D-34)
+  - feeds built from the pairs that have rules, rebuilt when that list changes, on `webSocketConnect`, `fetchGet` and
+    `realTimers` (S6-7)
 - [ ] **S6-12. Hosting** (carried over from S5-6) — must be settled before the first deploy.
 - [ ] **S6-13. Google's 7-day refresh token rule** (carried over from S5-7, `SECURITY.md` T-21).
 
@@ -80,6 +102,10 @@ Detailed tasks are written when the phase becomes current. Order from the standa
 ---
 
 ## Discovered Work
+
+- [ ] **CI actions on Node.js 20.** GitHub warns that `actions/checkout@v4` and `actions/setup-node@v4` target the
+  deprecated Node.js 20 and are forced onto Node.js 24 (seen on the S6-6 CI run, 2026-10-16). Move to their current
+  major versions in a CI change of their own.
 
 - [ ] **`tdd` skill not copied.** The avengertech copy's "AvengerTech" section is specific to that repo. Copying it
   means reading avengertech, which the PO asked this session not to touch; the PO decides when.

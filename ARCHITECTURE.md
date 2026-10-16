@@ -61,6 +61,30 @@ Sources: Bitkub `bitkub/bitkub-official-api-docs` (`rest-v3.md`, `websocket-publ
 Design notes from the verified facts: reconnect the Binance stream before its 24-hour limit; on any 429 stop and wait
 `Retry-After`, never retry blindly (an IP ban would break SC-1 and SC-3); stay on the market-data-only hosts.
 
+Feed adapters as built (S6-7, `src/feeds/`). The docs were read again on 2026-10-16: Bitkub at `d65eafa`, Binance at
+`f0ee79c`.
+
+| | Bitkub | Binance |
+|---|---|---|
+| Stream | `market.ticker.<thb_base>` on `wss://api.bitkub.com/websocket-api/`; `last` is the latest price. The trade stream closed on 2026-05-18 | `<symbol>@trade` on `wss://data-stream.binance.vision/stream`; `p` is the traded price (D-30) at trade time `T` |
+| Price time | **None given** by the ticker stream or the REST ticker, so a Bitkub tick's `exchangeTime` is the time it arrived. The 10-second late rule (`EVENTS.md` §2.1) therefore never holds a Bitkub tick back | `T` for streamed trades; a polled price carries no time and is timed on arrival |
+| Poll while down | `GET /api/v3/market/ticker` (all symbols, one request a second; the limit is 100 a second) | `GET /api/v3/ticker/price?symbols=[...]` (weight 4 a second, so 240 of the 6,000 a minute) |
+| Numbers | Prices arrive as JSON numbers. They are read as their exact source text, never as floats | Prices arrive as strings |
+| Renewal | The provider has no time limit | A new connection after 23 hours, and at once on `serverShutdown` |
+
+Both adapters follow the same rules (`src/feeds/stream-feed.ts`):
+
+- **Reconnect:** waits 1, 2, 4 … seconds between attempts, at most 60 s. The wait starts over once connected.
+- **Polling:** once a second while the stream is down. A poll never starts while the last one is unanswered.
+- **429 or 418:** nothing is sent until `Retry-After` has passed. Without that header, Bitkub waits its documented
+  30 s and Binance waits 60 s.
+- **403 or 451:** polling stops for 60 s (proposed) and the event is logged as an error.
+- **Messages refused:** a price that is not a positive decimal (`SECURITY.md` T-07), and any pair Stark did not ask
+  for. Each is logged `feed.message_invalid` and the feed carries on.
+
+Not yet tested against the real services: the WebSocket connection itself (`src/feeds/node-network.ts`). That needs
+the hosting test in §8.
+
 ### 2.2 Alert channels (v1.0)
 
 Collected 2026-10-03. Each channel sits behind one channel interface so that switching it on or off, retries and

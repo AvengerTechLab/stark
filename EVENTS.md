@@ -29,7 +29,7 @@ Components and data flow: `ARCHITECTURE.md` §4–5. Storage: `DATABASE.md`. Own
 | `exchange` | `Exchange` | |
 | `pair` | `Pair` | |
 | `price` | `Decimal` | Last traded price, not bid or ask (`SPEC.md` D-30) |
-| `exchangeTime` | `Timestamp` | Time the provider gives for the price |
+| `exchangeTime` | `Timestamp` | Time the provider gives for the price. If it gives none, this is the arrival time: every Bitkub tick, and Binance polled prices (`ARCHITECTURE.md` §2.1) |
 | `receivedTime` | `Timestamp` | Time Stark received it |
 | `source` | `stream` or `poll` | Polling is the fallback while a stream is down (`ARCHITECTURE.md` §7) |
 
