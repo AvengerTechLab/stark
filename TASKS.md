@@ -181,7 +181,15 @@ Tick a task only with evidence: the commit, the file created, or the command run
   - health never seeing channel outcomes
 
   The last two first survived; 2 tests were added. Gate A-1 waits for the PO's go-ahead (D-05).
-- [ ] **S6-12. Hosting** (carried over from S5-6) — must be settled before the first deploy.
+- [!] **S6-12. Hosting** (carried over from S5-6) — must be settled before the first deploy. Blocked on the PO
+  (Q-16 host and budget, Q-33 private access). Prepared on 2026-10-17, without choosing a host:
+  - `scripts/hosting-check.mjs` is a read-only check to run on each candidate. It covers three REST calls and both
+    WebSocket streams.
+  - `deploy/stark.service` is a hardened systemd unit for a Linux host.
+  - `ARCHITECTURE.md` §8.1 lists the host requirements and compares a Linux VPS with Railway, with a recommendation
+    marked PO to confirm.
+  - Evidence: `node --check` on the script and lint passing. The script was not run here: it calls the providers,
+    which only the PO does on a candidate host.
 - [ ] **S6-13. Google's 7-day refresh token rule** (carried over from S5-7, `SECURITY.md` T-21).
 
 ## Next Phases (not started)

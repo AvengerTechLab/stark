@@ -104,6 +104,7 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | Q-30 | ~~Alert send cooldown?~~ Answered: D-42 | — | — |
 | Q-31 | ~~Who reports Stark itself down?~~ Answered: D-43 | — | — |
 | Q-32 | ~~Gmail limit and the calendar for usage counts?~~ Answered: D-47 | — | — |
+| Q-33 | How does the PO reach the owner web page, given it must not be public (D-38)? The same path also gives it HTTPS | First deploy (S6-12) | **An SSH tunnel from the PO's computer: no new service and no cost; on a phone the Telegram commands cover the same tasks**; or a private network such as Tailscale (a free account, an app on each device); or WireGuard set up by hand |
 
 ## 6. Decisions
 

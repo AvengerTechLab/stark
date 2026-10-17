@@ -11,4 +11,19 @@ export default tseslint.config(
       "no-console": "error",
     },
   },
+  {
+    // Plain Node.js scripts run by hand on a host (scripts/); they use Node's built-in globals.
+    files: ["scripts/**/*.mjs"],
+    languageOptions: {
+      globals: {
+        process: "readonly",
+        performance: "readonly",
+        fetch: "readonly",
+        WebSocket: "readonly",
+        AbortSignal: "readonly",
+        setTimeout: "readonly",
+        clearTimeout: "readonly",
+      },
+    },
+  },
 );

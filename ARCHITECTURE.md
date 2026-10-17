@@ -256,3 +256,43 @@ Results:
 | PO's machine (Thailand), run 2 | 2026-10-14 | `200`, 0.28 s | `200`, 0.63 s | `200`, 0.23 s | PO, curl over HTTPS |
 
 The PO's machine reaches all three, so Binance does not block it (no `451`). WebSocket connections were not tested.
+
+### 8.1 Hosting preparation (S6-12; the choice is the PO's, Q-16)
+
+**The check.** On each candidate host, run `node scripts/hosting-check.mjs`. It needs Node.js 22 and nothing else.
+
+- It is read-only: the providers' public market-data endpoints only, no key, and nothing sent to any channel.
+- It checks three REST calls and both streams, and is the first test of the WebSocket connections.
+- A host must pass all five checks.
+
+**What any host must give Stark.** These follow from decisions already made:
+
+| Need | From |
+|---|---|
+| Always on; Linux recommended for the process; Node.js 22 | D-13, D-25 |
+| PostgreSQL 16 on the same host, reachable from localhost only | D-22, D-25 |
+| Outbound HTTPS and WSS to the provider and channel hosts in §2.1–2.2 and `src/channels/`; no inbound port | D-38 |
+| A way for the PO to reach the web page privately, which also gives HTTPS (Q-33) | D-38, `API.md` §1.1 |
+| A supervisor that restarts Stark if it crashes | T-17 |
+| Time kept by NTP | T-14 |
+| Disk for about 4–6 GB of price log plus room to spare; `disk_low` warns below 20 % | `DATABASE.md` §2, T-23 |
+| Daily encrypted backups off the host, kept 35 days | D-40 |
+| A login only by SSH key; Stark running as a non-root user | T-12 |
+
+**Files ready for a Linux host:**
+
+- `deploy/stark.service`, a hardened systemd unit with restart on crash.
+- `.env.example`, the variable names.
+
+**The options** (facts about the providers not yet read from their own documentation are marked):
+
+| | Linux VPS, same provider as `ai-trading`, its own machine (D-26) | Railway |
+|---|---|---|
+| One host with PostgreSQL on localhost (D-25) | Yes | PostgreSQL runs as a separate Railway service (not verified) |
+| No public web page (D-38) | Yes: nothing listens publicly | A web service is usually given a public domain; Stark's must not be (not verified) |
+| Supervisor | systemd (`deploy/stark.service`) | Railway restarts the process (not verified) |
+| Binance reachable | Must pass the check. Cloud IP ranges can get `451` (§2.1) | Must pass the check, from the region chosen |
+| Backups (D-40) | A daily `pg_dump`, encrypted and copied off the host, still to be set up | Railway's own backups (not verified) |
+
+Recommendation, **PO to confirm**: a small Linux VPS in Asia, from the provider `ai-trading` uses, if it passes the check.
+It fits D-25 and D-38 as they are, and the systemd unit is ready for it.
