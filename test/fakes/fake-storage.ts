@@ -8,6 +8,8 @@ import type {
   ChannelSettings,
   DeliveryAttempt,
   DeliveryLog,
+  HealthLog,
+  HealthRecord,
   PriceLog,
   PriceTick,
   RuleStore,
@@ -121,5 +123,13 @@ export class FakeDeliveryLog implements DeliveryLog {
   /** Sets a period's count directly, e.g. LINE already at 299 this month. */
   setUsage(channel: ChannelName, period: string, sent: number): void {
     this.counts.set(`${channel}|${period}`, sent);
+  }
+}
+
+export class FakeHealthLog implements HealthLog {
+  readonly events: HealthRecord[] = [];
+
+  async record(event: HealthRecord): Promise<void> {
+    this.events.push(event);
   }
 }

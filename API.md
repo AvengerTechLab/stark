@@ -24,6 +24,26 @@ through a private network (`SPEC.md` D-38).
 - After 5 wrong passwords in 15 minutes, logins are refused for 15 minutes and the PO is told on Telegram.
 - Every other endpoint except `GET /healthz` returns `401` without a valid session.
 
+As built (`src/interface/http-server.ts`):
+
+- **Login** is `POST /api/v1/session` with `{"password": "..."}`. It answers `204` with the cookie
+  `stark_session=<256-bit random ID>; Path=/; Max-Age=604800; HttpOnly; Secure; SameSite=Strict`. Only the
+  ID's SHA-256 hash is stored (`owner_sessions`). Every login gets a new ID.
+- **Logout** is `DELETE /api/v1/session`. It answers `204` and clears the cookie.
+- **Lockout:** after 5 wrong passwords within 15 minutes, logins are refused until 15 minutes after the fifth.
+- **Telegram notices:** the PO is told on Telegram of every login and of every lockout.
+- **Origin check:** every `POST`, `PATCH` and `DELETE` must carry an `Origin` whose host is the request's `Host`.
+  Otherwise the answer is `403 ORIGIN_INVALID` (`SECURITY.md` T-04).
+- **Request bodies:** JSON only (`Content-Type: application/json`), at most 16 KB.
+- **Response headers** on every answer:
+  - `Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self';
+    connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'`
+  - `X-Content-Type-Options: nosniff`
+  - `Referrer-Policy: no-referrer`
+  - `Cache-Control: no-store`
+- **HTTPS:** the process serves HTTP. HTTPS comes from the private network or a reverse proxy in front of it, which
+  is chosen with hosting (S6-12, **PO to confirm**).
+
 ### 1.2 Endpoints
 
 | Method and path | Purpose | Success |
@@ -39,6 +59,22 @@ through a private network (`SPEC.md` D-38).
 | `GET /api/v1/alerts?from=&to=` | Alert decisions with their delivery attempts | `200` list |
 | `GET /api/v1/health` | Feed and channel health in detail | `200` |
 | `GET /healthz` | Liveness for the host; no details, no auth | `200` `ok` or `503` `degraded` |
+
+Shapes as built:
+
+- **Rules:** a rule is `{id, pair, kind, level | percent + windowMinutes + direction, channels, enabled, state}`.
+- **`PATCH /rules/{id}`:** takes `enabled` and any rule field. The fields are merged into the rule and the whole rule
+  is validated again. If `kind` changes, the old kind's fields are dropped. A changed or re-enabled rule starts
+  `armed`.
+- **`GET /channels`:** answers `[{name, configured, enabled, deadSince, usage}]`. `usage` is
+  `{period, sent, limit}` for LINE (the month) and Gmail (the day), and null for the others.
+- **`GET /alerts`:** takes `from` and `to` as ISO 8601 times. The default is the last 24 hours, and the range is at
+  most 31 days. It answers at most 500 decisions, newest first, each with its delivery attempts.
+- **`GET /prices`:** answers each pair's latest price and its age in seconds.
+- **`GET /health`:** answers the health monitor's snapshot: `degraded`, each feed's last tick, and the open
+  conditions.
+- **`GET /`, `/app.js`, `/app.css`:** the owner page. It has no inline script or style, and every value is written
+  as text, never as HTML (`SECURITY.md` T-05).
 
 ### 1.3 Validation
 
@@ -66,10 +102,19 @@ the submitted value (`SECURITY.md` T-05). Implemented in `src/domain/rule-input.
 { "error": { "code": "LEVEL_INVALID", "message": "level must be a decimal greater than 0" } }
 ```
 
+A rule refused for several reasons carries every one in `details`, and `code` is the first:
+
+```json
+{ "error": { "code": "LEVEL_INVALID", "message": "...", "details": [
+  { "field": "level", "code": "LEVEL_INVALID", "message": "..." },
+  { "field": "channels", "code": "CHANNELS_INVALID", "message": "..." } ] } }
+```
+
 | Status | Codes |
 |---|---|
 | `400` | The validation codes in §1.3, `BODY_INVALID` |
 | `401` | `UNAUTHENTICATED` |
+| `403` | `ORIGIN_INVALID` |
 | `404` | `NOT_FOUND` |
 | `429` | `LOGIN_LOCKED` |
 | `500` | `INTERNAL` (details only in the server log) |
@@ -95,5 +140,21 @@ no reply and are logged as `telegram.command_rejected` (`SECURITY.md` T-06).
 Commands use the same validation and error codes as the HTTP API (§1.3), answered as a short Thai message that repeats
 what changed. Choosing
 channels per rule is done on the web page (proposed).
+
+As built (`src/interface/telegram-bot.ts`):
+
+- **Polling:** updates come from `getUpdates`, a 50 s long poll. The offset is the last update ID plus one, so each
+  update is handled once. After a failure the bot waits 5 s, or Telegram's `retry_after` if that is longer.
+- **Who is obeyed:** only a private chat whose ID is `TELEGRAM_OWNER_CHAT_ID`. Anyone else gets no reply, and the
+  attempt is logged `telegram.command_rejected` with the chat type only.
+- **Rule IDs:** a rule is shown by the first 8 characters of its ID. A command accepts any prefix of 4 or more
+  characters that matches exactly one rule.
+- **New rules** from `/above`, `/below` and `/change` go to every channel that is configured, switched on and not
+  dead. If there is none, the reply is the `CHANNELS_INVALID` text.
+- **Invalid input** is answered in Thai, one line per §1.3 error. A wrong number of arguments gets a usage line.
+- **`/delete`:** a `yes` (or `ใช่`) deletes only if it answers the last question within 60 s. Any other message
+  cancels the question.
+- **Replies** are plain text, sent the way alerts are (no parse mode). A failed poll is logged without its URL,
+  which holds the token.
 
 The demo prices in the examples are not market data.

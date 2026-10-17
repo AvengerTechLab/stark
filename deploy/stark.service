@@ -1,0 +1,43 @@
+# systemd unit for Stark on a Linux host (ARCHITECTURE.md §8). Proposed for the Linux VPS option only;
+# the host itself is a PO decision (TASKS.md S6-12). Install as /etc/systemd/system/stark.service.
+#
+# Expects:
+#   - a system user "stark" with no login shell
+#   - the built app in /opt/stark (npm ci --omit=dev && npm run build)
+#   - secrets in /etc/stark/stark.env, owned by root, mode 0600, holding the names in .env.example
+#   - PostgreSQL on the same host, listening on localhost only (SPEC.md D-25)
+
+[Unit]
+Description=Stark market alerts
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=stark
+Group=stark
+WorkingDirectory=/opt/stark
+EnvironmentFile=/etc/stark/stark.env
+ExecStart=/usr/bin/node /opt/stark/dist/index.js
+# Restart on crash (SECURITY.md T-17); the outside uptime monitor covers the host itself (D-43).
+Restart=always
+RestartSec=5
+# Logs are JSON lines on stdout, kept by journald.
+StandardOutput=journal
+StandardError=journal
+# Hardening: Stark writes nothing to disk; PostgreSQL holds its data.
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+[Install]
+WantedBy=multi-user.target

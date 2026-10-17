@@ -69,3 +69,27 @@ export interface DeliveryLog {
    */
   record(attempt: DeliveryAttempt, ruleId: string, usagePeriod: string | null): Promise<void>;
 }
+
+export type HealthKind =
+  | "feed_stale"
+  | "feed_recovered"
+  | "channel_failing"
+  | "channel_recovered"
+  | "quota_reached"
+  | "disk_low"
+  | "disk_recovered";
+
+/** A health event the PO has been told about (EVENTS.md §2.4, DATABASE.md `health_events`). */
+export interface HealthRecord {
+  readonly id: string;
+  readonly kind: HealthKind;
+  /** Exchange, channel or "disk". */
+  readonly subject: string;
+  /** When the condition started. */
+  readonly since: Date;
+  readonly reportedAt: Date;
+}
+
+export interface HealthLog {
+  record(event: HealthRecord): Promise<void>;
+}

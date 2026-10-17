@@ -128,6 +128,19 @@ How the adapters behave:
   T-19).
 - **Not yet tested:** sends to the real services. No real message goes out before gate A-1 (`CLAUDE.md` §6).
 
+Google's rule for the OAuth app was read on 2026-10-17 in Google Cloud Platform Console Help, "Manage App Audience"
+(`support.google.com/cloud/answer/15549945`):
+
+- **"Testing":** authorizations by a test user expire seven days from consent, and so does the refresh token. The only
+  exception is an app that asks for name, email address and profile alone. `gmail.send` is not covered.
+- **"In production":** the app is not held to that rule. Before verification, Google shows an "Unverified app" warning
+  for sensitive or restricted scopes, and an app that shows that warning is capped at 100 new users in total.
+
+So the Google project behind Stark must be published "In production" before its refresh token is made. Otherwise email
+alerts stop after a week, and the health monitor's `token_refresh_failed` report is the only sign. The PO accepts the
+unverified warning and does not apply for verification (`SPEC.md` D-54). That page does not say whether `gmail.send` counts as
+sensitive; it was not read elsewhere.
+
 ### 2.3 What the success criteria imply
 
 From `SPEC.md` §9 (D-14), to be designed in Phase 2:
@@ -217,6 +230,28 @@ chosen host.
 
 The stale threshold and retry limits are specified in `EVENTS.md` §2.3–2.4.
 
+As built (S6-11, `src/app/stark.ts`). At start, Stark:
+
+1. Runs the migrations and creates the coming price-log partitions.
+2. Loads the pair lists.
+3. Starts one feed per exchange that has rules.
+4. Starts the timers:
+
+   | Timer | Every |
+   |---|---|
+   | Pipeline flush | 250 ms |
+   | Health check | 30 s |
+   | Pair lists | 1 hour |
+   | Storage upkeep | 1 day |
+   | Heartbeat | 5 minutes |
+
+5. Opens the owner web server and starts the Telegram bot.
+6. Hands the last 24 hours' decisions to the dispatcher. Its idempotency skips every channel that already finished,
+   so only what a restart left unsent goes out. The 24 hours match the life of LINE's retry key.
+
+A rule change rebuilds only the feed whose pairs changed. Stopping Stark stops each part it started, in reverse order.
+The 250 ms flush adds at most 250 ms after a second ends, inside the 1.5 s evaluation budget (§6).
+
 ## 8. Hosting test (D-13)
 
 Before the PO picks hosting, Claude or the PO runs the same read-only checks from each candidate host: Bitkub
@@ -234,3 +269,44 @@ Results:
 | PO's machine (Thailand), run 2 | 2026-10-14 | `200`, 0.28 s | `200`, 0.63 s | `200`, 0.23 s | PO, curl over HTTPS |
 
 The PO's machine reaches all three, so Binance does not block it (no `451`). WebSocket connections were not tested.
+
+### 8.1 Hosting (S6-12; chosen by the PO in `SPEC.md` D-52)
+
+**The check.** On each candidate host, run `node scripts/hosting-check.mjs`. It needs Node.js 22 and nothing else.
+
+- It is read-only: the providers' public market-data endpoints only, no key, and nothing sent to any channel.
+- It checks three REST calls and both streams, and is the first test of the WebSocket connections.
+- A host must pass all five checks.
+
+**What any host must give Stark.** These follow from decisions already made:
+
+| Need | From |
+|---|---|
+| Always on; Linux recommended for the process; Node.js 22 | D-13, D-25 |
+| PostgreSQL 16 on the same host, reachable from localhost only | D-22, D-25 |
+| Outbound HTTPS and WSS to the provider and channel hosts in §2.1–2.2 and `src/channels/`; no inbound port | D-38 |
+| A way for the PO to reach the web page privately, which also gives HTTPS (D-53: an SSH tunnel) | D-38, `API.md` §1.1 |
+| A supervisor that restarts Stark if it crashes | T-17 |
+| Time kept by NTP | T-14 |
+| Disk for about 4–6 GB of price log plus room to spare; `disk_low` warns below 20 % | `DATABASE.md` §2, T-23 |
+| Daily encrypted backups off the host, kept 35 days | D-40 |
+| A login only by SSH key; Stark running as a non-root user | T-12 |
+
+**Files ready for a Linux host:**
+
+- `deploy/stark.service`, a hardened systemd unit with restart on crash.
+- `.env.example`, the variable names.
+
+**The options** (facts about the providers not yet read from their own documentation are marked):
+
+| | Linux VPS, same provider as `ai-trading`, its own machine (D-26) | Railway |
+|---|---|---|
+| One host with PostgreSQL on localhost (D-25) | Yes | PostgreSQL runs as a separate Railway service (not verified) |
+| No public web page (D-38) | Yes: nothing listens publicly | A web service is usually given a public domain; Stark's must not be (not verified) |
+| Supervisor | systemd (`deploy/stark.service`) | Railway restarts the process (not verified) |
+| Binance reachable | Must pass the check. Cloud IP ranges can get `451` (§2.1) | Must pass the check, from the region chosen |
+| Backups (D-40) | A daily `pg_dump`, encrypted and copied off the host, still to be set up | Railway's own backups (not verified) |
+
+Decided (`SPEC.md` D-52): a small Linux VPS in Asia, from the provider `ai-trading` uses, on its own machine, if it passes
+the check. The PO reaches the web page through an SSH tunnel (D-53), and the Google project is published "In
+production" (D-54).

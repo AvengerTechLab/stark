@@ -81,7 +81,8 @@ before sending (D-17, Gmail's 500 a day).
 
 ### `health_events`
 
-`id`, `kind`, `subject`, `since`, `reported_at` (`timestamptz`, null until the PO has been told).
+`id`, `kind`, `subject`, `since`, `reported_at` (`timestamptz`, null until the PO has been told). The health monitor
+writes a row only once a report has been delivered, so `reported_at` is always set (`EVENTS.md` §2.4).
 
 ### `owner_actions`
 

@@ -47,10 +47,23 @@ export interface DispatcherOptions {
 
 type Skip = "channel_off" | "channel_dead" | "cooldown" | "quota_reached";
 
+/**
+ * What one alert's sends say about a channel's health, for the health monitor (EVENTS.md §2.4).
+ * A cooldown, a channel switched off or an alert already handled says nothing, so is not reported.
+ */
+export interface ChannelOutcome {
+  readonly channel: ChannelName;
+  readonly outcome: "delivered" | "failed" | "dead" | "quota_reached";
+  readonly reason: string | null;
+  readonly at: Date;
+}
+
 export class Dispatcher {
   private readonly adapters = new Map<ChannelName, AlertChannel>();
   private readonly queues = new Map<ChannelName, Promise<void>>();
   private readonly quotas: Readonly<Partial<Record<ChannelName, Quota>>>;
+  /** Called with each channel's final outcome for an alert; errors in it are logged, never thrown. */
+  onOutcome: (outcome: ChannelOutcome) => void = () => undefined;
 
   constructor(private readonly options: DispatcherOptions) {
     for (const channel of options.channels) this.adapters.set(channel.name, channel);
@@ -78,7 +91,10 @@ export class Dispatcher {
       const skip = await this.skipReason(decision, channel);
       if (skip !== null) {
         await this.record(decision, channel, done.length + 1, "skipped", skip, null);
-        if (skip === "quota_reached") this.options.logger.warn("dispatch.quota_reached", where);
+        if (skip === "quota_reached") {
+          this.options.logger.warn("dispatch.quota_reached", where);
+          this.report(channel, "quota_reached", null);
+        }
         return;
       }
       await this.send(decision, channel, done.length + 1);
@@ -119,22 +135,33 @@ export class Dispatcher {
       if (result.status === "delivered") {
         const quota = this.quotas[channel];
         await this.record(decision, channel, attempt, "delivered", null, quota && usagePeriod(quota.per, now()));
+        this.report(channel, "delivered", null);
         return;
       }
       await this.record(decision, channel, attempt, "failed", result.reason, null);
       if (result.status === "dead") {
         await settings.markDead(channel, now());
         logger.error("dispatch.channel_dead", { ...where, reason: result.reason });
+        this.report(channel, "dead", result.reason);
         return;
       }
       if (attempt === MAX_ATTEMPTS) {
         logger.error("dispatch.channel_failed", { ...where, reason: result.reason });
+        this.report(channel, "failed", result.reason);
         return;
       }
       // Never retry earlier than the channel asks (ARCHITECTURE.md §2.1–2.2).
       const wait = RETRY_WAITS_MS[attempt - 1] ?? 0;
       const asked = result.retryAfterSeconds === undefined ? 0 : result.retryAfterSeconds * 1000;
       await this.options.sleep(Math.max(wait, asked));
+    }
+  }
+
+  private report(channel: ChannelName, outcome: ChannelOutcome["outcome"], reason: string | null): void {
+    try {
+      this.onOutcome({ channel, outcome, reason, at: this.options.now() });
+    } catch (error) {
+      this.options.logger.error("dispatch.outcome_handler_failed", { channel, error });
     }
   }
 

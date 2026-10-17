@@ -93,20 +93,115 @@ Tick a task only with evidence: the commit, the file created, or the command run
   - Gmail token used until the moment it expires
   - Gmail token kept after a 401
   - a line break allowed in the email subject
-- [ ] **S6-9. Health monitor and heartbeat** — EVENTS.md §2.4, D-43.
-- [ ] **S6-10. Owner interface** — HTTP API with login (`API.md` §1) and Telegram commands (§2).
-- [ ] **S6-11. End to end on fakes** — the whole flow with every external system faked; then ask the PO to start
-  gate A-1 (D-05). Includes wiring found in S6-3 to S6-6:
-  - the pipeline's flush timer
-  - at start, a sweep that hands every stored decision not yet finished on all its channels to the dispatcher
-    (ARCHITECTURE.md §7)
-  - `migrate` at start
-  - a daily timer for `ensurePartitions` and `dropExpiredPartitions` (D-34)
-  - feeds built from the pairs that have rules, rebuilt when that list changes, on `webSocketConnect`, `fetchGet` and
-    `realTimers` (S6-7)
-  - channels from `createChannels(config, fetchPost, now)` (S6-8)
-- [ ] **S6-12. Hosting** (carried over from S5-6) — must be settled before the first deploy.
-- [ ] **S6-13. Google's 7-day refresh token rule** (carried over from S5-7, `SECURITY.md` T-21).
+- [x] **S6-9. Health monitor and heartbeat** — EVENTS.md §2.4–2.5, D-43.
+  - `src/app/health.ts` reports stale feeds, failing or dead channels, reached quotas and low disk, through a channel
+    other than the one that failed, then reports each recovery once. Timings and wording are proposed, PO to confirm.
+  - The dispatcher now reports each channel's final outcome (`onOutcome`).
+  - `src/app/heartbeat.ts` pings `HEARTBEAT_URL` every 5 minutes. `src/app/disk.ts` reads free disk.
+  - `PgHealthLog` stores each report.
+
+  Evidence: 20 new tests, 207 in all with the database. Control runs, each failing at least 1 test:
+  - a report sent through the failing channel
+  - no 5-minute wait (5 tests fail)
+  - feed recovery never reported
+  - a quota reported at every check
+  - 20 % still counted as low
+  - reports sent through dead channels
+  - the dispatcher hiding exhausted failures
+  - a heartbeat every 10 minutes (2 tests fail)
+- [x] **S6-10. Owner interface** — HTTP API with login (`API.md` §1) and Telegram commands (§2).
+  - Part 1 is done: storage, password, pairs and prices.
+    - `src/ports/owner.ts` and its PostgreSQL stores: rule admin, channel admin, sessions, failed logins and alert
+      history. Each rule or channel change is saved together with its `owner_actions` row (T-22).
+    - `verifyPassword` (Argon2id only, `hash-wasm`, D-51).
+    - `PairCatalog`, from Bitkub `market/symbols` and Binance `exchangeInfo`.
+    - `PriceBoard`.
+  - Evidence: 11 new tests, 218 in all with the database. Control runs, each failing 1 test:
+    - an update of a missing rule reported as success
+    - old channels kept on update
+    - a session still valid at its expiry
+    - a failed refresh emptying the pair list
+    - inactive Bitkub pairs listed
+    - any Argon2 variant accepted (this one first survived; it is now tested with a real Argon2i hash)
+    - an action kept for a delete of nothing
+  - Part 2 is done: the shared rule service, the HTTP API and the web page.
+    - `src/app/owner-service.ts` holds the rule and channel operations that the web page and Telegram share.
+    - `src/interface/http-server.ts` is the API with login, lockout, Origin check and security headers (`API.md` §1).
+    - `src/interface/web.ts` is the owner page.
+    - `HealthMonitor.snapshot()` serves `/health` and `/healthz`.
+  - Evidence: 27 new tests (9 service, 17 HTTP on a local server, 1 snapshot), 245 in all with the database. Control
+    runs, each failing at least 1 test:
+    - no Origin check
+    - the raw session ID stored (9 tests fail)
+    - the lock counted only over the last 15 minutes
+    - a cookie readable by script, or `Lax` (2 tests fail)
+    - no CSP
+    - no body size limit (this one first survived; the test now pads a valid rule)
+    - a changed rule keeping its state (2 tests fail)
+  - Part 3 is done: the Telegram commands.
+    - `src/interface/telegram-bot.ts` does long polling and handles every command in `API.md` §2.
+    - It obeys only the PO's private chat.
+    - `/delete` asks for confirmation, which counts within 60 s.
+    - `channelOverview` is shared with the web page.
+  - Evidence: 11 new tests, 256 in all with the database. Control runs, each failing at least 1 test:
+    - group chats obeyed
+    - a late yes accepted
+    - a yes counted after another command
+    - unconfigured channels used (2 tests fail)
+    - the poll offset never advanced
+- [x] **S6-11. End to end on fakes** — the whole flow with every external system faked.
+  - `src/app/stark.ts` (`startStark`) is the one place where every component is built and joined, and `src/index.ts`
+    gives it the real PostgreSQL, sockets, HTTP and timers.
+  - What it starts:
+    - migrations and partitions at start, and once a day after that (D-34)
+    - the pair lists, refreshed every hour
+    - one feed per exchange, for the pairs that have rules, rebuilt when the rules change
+    - the pipeline flush every 250 ms
+    - the health check every 30 s
+    - the heartbeat
+    - the web server on `OWNER_HTTP_HOST` and `OWNER_HTTP_PORT` (default 127.0.0.1:8080)
+    - the Telegram bot
+  - At start, a sweep resends the last 24 hours' decisions that a channel had not finished (ARCHITECTURE.md §7).
+  - A bug found and fixed: `GET /alerts` without `to` left out a decision made in the same millisecond.
+
+  Evidence: `test/e2e/stark.test.ts` covers, with every outside system faked and only the web API real on 127.0.0.1:
+  - a rule made on the web page fires on Telegram and LINE
+  - Telegram commands from the PO only
+  - stale-feed and failing-LINE reports
+  - the restart sweep and the heartbeat
+  - a clean stop
+  - no credential in the logs
+
+  Its 8 tests make 268 in all with the database. Control runs, each failing at least 1 test:
+  - no restart sweep
+  - feeds not rebuilt on a rule change (3 tests fail)
+  - ticks never flushed
+  - the heartbeat not stopped
+  - health never seeing ticks
+  - health never seeing channel outcomes
+
+  The last two first survived; 2 tests were added. Gate A-1 waits for the PO's go-ahead (D-05).
+- [!] **S6-12. Hosting** (carried over from S5-6) — must be settled before the first deploy.
+  - Decided on 2026-10-17:
+    - the host: a Linux VPS in Asia from `ai-trading`'s provider, on its own machine (D-52)
+    - the PO reaches the web page through an SSH tunnel (D-53)
+    - the Google project is published "In production" (D-54)
+  - Blocked on the PO: the machine itself, and a run of `scripts/hosting-check.mjs` on it. The budget stays open
+    under D-26.
+  - Prepared beforehand:
+  - `scripts/hosting-check.mjs` is a read-only check to run on each candidate. It covers three REST calls and both
+    WebSocket streams.
+  - `deploy/stark.service` is a hardened systemd unit for a Linux host.
+  - `ARCHITECTURE.md` §8.1 lists the host requirements and compares a Linux VPS with Railway, with a recommendation
+    marked PO to confirm.
+  - Evidence: `node --check` on the script and lint passing. The script was not run here: it calls the providers,
+    which only the PO does on a candidate host.
+- [x] **S6-13. Google's 7-day refresh token rule** (carried over from S5-7, `SECURITY.md` T-21).
+  - Read on 2026-10-17 in Google Cloud Platform Console Help, "Manage App Audience"
+    (`support.google.com/cloud/answer/15549945`): a test user's authorization, and its refresh token, expire seven
+    days from consent; `gmail.send` is not one of the exempt scopes.
+  - `developers.google.com` is blocked from this session; the help page is Google's own.
+  - Recorded in `ARCHITECTURE.md` §2.2 and T-21. The PO chose to publish "In production" and accept the warning (D-54).
 
 ## Next Phases (not started)
 

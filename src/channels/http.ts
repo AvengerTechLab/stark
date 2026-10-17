@@ -5,6 +5,8 @@ export interface PostRequest {
   /** Header names in lower case. */
   readonly headers: Readonly<Record<string, string>>;
   readonly body: string;
+  /** Time limit for this request; default SEND_TIMEOUT_MS. Telegram long polling needs longer. */
+  readonly timeoutMs?: number;
 }
 
 export interface PostResponse {
@@ -23,7 +25,7 @@ export const fetchPost: HttpPost = async (url, request) => {
     method: "POST",
     headers: request.headers,
     body: request.body,
-    signal: AbortSignal.timeout(SEND_TIMEOUT_MS),
+    signal: AbortSignal.timeout(request.timeoutMs ?? SEND_TIMEOUT_MS),
   });
   return { status: response.status, retryAfter: response.headers.get("retry-after"), body: await response.text() };
 };

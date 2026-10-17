@@ -7,6 +7,8 @@ export interface Config {
   readonly databaseUrl: string;
   readonly ownerPasswordHash: string;
   readonly logLevel: LogLevel;
+  /** Where the owner web page listens; HTTPS comes from the private network in front (API.md §1.1). */
+  readonly http: { readonly host: string; readonly port: number };
   /** Uptime monitor ping URL (SPEC.md D-43); a secret like a channel credential. */
   readonly heartbeatUrl?: string;
   readonly telegram: { readonly botToken: string; readonly ownerChatId: string };
@@ -104,6 +106,11 @@ export function loadConfig(env: Env): Config {
 
   if (discord?.[0] !== undefined && !discord[0].startsWith("https://")) invalid.push("DISCORD_WEBHOOK_URL");
 
+  const httpHost = value(env, "OWNER_HTTP_HOST") ?? "127.0.0.1";
+  const rawPort = value(env, "OWNER_HTTP_PORT") ?? "8080";
+  const httpPort = /^\d{1,5}$/.test(rawPort) ? Number(rawPort) : 0;
+  if (httpPort < 1 || httpPort > 65535) invalid.push("OWNER_HTTP_PORT");
+
   const heartbeatUrl = value(env, "HEARTBEAT_URL");
   if (heartbeatUrl !== undefined && !heartbeatUrl.startsWith("https://")) invalid.push("HEARTBEAT_URL");
 
@@ -113,6 +120,7 @@ export function loadConfig(env: Env): Config {
     databaseUrl,
     ownerPasswordHash,
     logLevel,
+    http: { host: httpHost, port: httpPort },
     ...(heartbeatUrl !== undefined && { heartbeatUrl }),
     telegram: { botToken, ownerChatId },
     ...(line && { line: { channelAccessToken: line[0] ?? "", ownerUserId: line[1] ?? "" } }),

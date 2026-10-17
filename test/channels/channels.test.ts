@@ -219,6 +219,7 @@ describe("createChannels", () => {
     databaseUrl: "postgres://localhost/stark",
     ownerPasswordHash: "$argon2id$test",
     logLevel: "info",
+    http: { host: "127.0.0.1", port: 8080 },
     telegram: { botToken: TOKEN, ownerChatId: "1" },
   };
 
