@@ -206,7 +206,8 @@ export function ownerHandler(deps: OwnerHttpDeps): (req: IncomingMessage, res: S
     }
     if (path === "/api/v1/alerts" && method === "GET") {
       const now = deps.now();
-      const to = parseTime(url.searchParams.get("to"), now);
+      // Without `to`, the range ends just after now, so a decision made this millisecond is included.
+      const to = parseTime(url.searchParams.get("to"), new Date(now.getTime() + 1));
       const from = parseTime(url.searchParams.get("from"), new Date(to.getTime() - 24 * 60 * 60_000));
       if (from > to || to.getTime() - from.getTime() > MAX_ALERT_RANGE_MS) {
         throw new HttpError(400, "BODY_INVALID", "from must be before to, at most 31 days apart");

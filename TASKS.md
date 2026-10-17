@@ -149,18 +149,38 @@ Tick a task only with evidence: the commit, the file created, or the command run
     - a yes counted after another command
     - unconfigured channels used (2 tests fail)
     - the poll offset never advanced
-- [ ] **S6-11. End to end on fakes** — the whole flow with every external system faked; then ask the PO to start
-  gate A-1 (D-05). Includes wiring found in S6-3 to S6-6:
-  - the pipeline's flush timer
-  - at start, a sweep that hands every stored decision not yet finished on all its channels to the dispatcher
-    (ARCHITECTURE.md §7)
-  - `migrate` at start
-  - a daily timer for `ensurePartitions` and `dropExpiredPartitions` (D-34)
-  - feeds built from the pairs that have rules, rebuilt when that list changes, on `webSocketConnect`, `fetchGet` and
-    `realTimers` (S6-7)
-  - channels from `createChannels(config, fetchPost, now)` (S6-8)
-  - the health monitor: `check` every 30 s, `tickSeen` from the feeds, `onOutcome` from the dispatcher,
-    `diskFreeShare` on the database disk, and `startHeartbeat` when `HEARTBEAT_URL` is set (S6-9)
+- [x] **S6-11. End to end on fakes** — the whole flow with every external system faked.
+  - `src/app/stark.ts` (`startStark`) is the one place where every component is built and joined, and `src/index.ts`
+    gives it the real PostgreSQL, sockets, HTTP and timers.
+  - What it starts:
+    - migrations and partitions at start, and once a day after that (D-34)
+    - the pair lists, refreshed every hour
+    - one feed per exchange, for the pairs that have rules, rebuilt when the rules change
+    - the pipeline flush every 250 ms
+    - the health check every 30 s
+    - the heartbeat
+    - the web server on `OWNER_HTTP_HOST` and `OWNER_HTTP_PORT` (default 127.0.0.1:8080)
+    - the Telegram bot
+  - At start, a sweep resends the last 24 hours' decisions that a channel had not finished (ARCHITECTURE.md §7).
+  - A bug found and fixed: `GET /alerts` without `to` left out a decision made in the same millisecond.
+
+  Evidence: `test/e2e/stark.test.ts` covers, with every outside system faked and only the web API real on 127.0.0.1:
+  - a rule made on the web page fires on Telegram and LINE
+  - Telegram commands from the PO only
+  - stale-feed and failing-LINE reports
+  - the restart sweep and the heartbeat
+  - a clean stop
+  - no credential in the logs
+
+  Its 8 tests make 268 in all with the database. Control runs, each failing at least 1 test:
+  - no restart sweep
+  - feeds not rebuilt on a rule change (3 tests fail)
+  - ticks never flushed
+  - the heartbeat not stopped
+  - health never seeing ticks
+  - health never seeing channel outcomes
+
+  The last two first survived; 2 tests were added. Gate A-1 waits for the PO's go-ahead (D-05).
 - [ ] **S6-12. Hosting** (carried over from S5-6) — must be settled before the first deploy.
 - [ ] **S6-13. Google's 7-day refresh token rule** (carried over from S5-7, `SECURITY.md` T-21).
 

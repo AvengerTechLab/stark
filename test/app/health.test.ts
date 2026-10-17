@@ -268,3 +268,24 @@ describe("HealthMonitor: snapshot for GET /health and /healthz (API.md §1.2)", 
     });
   });
 });
+
+describe("HealthMonitor: which feeds it watches", () => {
+  it("watches only the exchanges it is told to, so a feed with no rules is never called stale", async () => {
+    const { monitor, sent, checkAt } = setup();
+    monitor.setExchanges(["bitkub"]);
+    await checkAt(6 * 60_000);
+    expect(sent().map((m) => m.line)).toEqual(["[Stark] ไม่ได้รับราคาจาก Bitkub ตั้งแต่ 14:00:00 น."]);
+    expect(monitor.snapshot().feeds.map((f) => f.exchange)).toEqual(["bitkub"]);
+  });
+
+  it("counts a newly watched exchange from when it was added", async () => {
+    const { monitor, sent, checkAt, clock } = setup();
+    monitor.setExchanges([]);
+    clock.now = at(10 * 60_000);
+    monitor.setExchanges(["binance"]);
+    await checkAt(10 * 60_000 + 5 * 60_000);
+    expect(sent()).toEqual([]);
+    await checkAt(10 * 60_000 + 6 * 60_000);
+    expect(sent().map((m) => m.line)).toEqual(["[Stark] ไม่ได้รับราคาจาก Binance ตั้งแต่ 14:10:00 น."]);
+  });
+});

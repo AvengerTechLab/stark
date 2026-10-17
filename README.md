@@ -3,7 +3,7 @@ Market Intelligence &amp; Alerting Platform
 
 Stark is the AvengerTech Lab for market intelligence and alerting.
 
-**Status: Phase 6, first feature.** The rule engine, rule validation, decision pipeline, dispatcher, alert message, PostgreSQL storage, the Bitkub and Binance feeds, the four channel adapters, the health monitor and the owner interface (web page and Telegram commands) are built; the rest of v1.0 follows test-first. Scope, market,
+**Status: Phase 6, first feature.** v1.0 is built and runs end to end on fakes (`test/e2e/`). That covers the rule engine, the Bitkub and Binance feeds, the decision pipeline, the dispatcher and its four channels, PostgreSQL storage, the health monitor and heartbeat, and the owner web page and Telegram commands. Hosting and gate A-1 wait on the PO. Scope, market,
 data providers, alert channels and stack are decided in `SPEC.md` §6; the remaining questions are in `SPEC.md` §5.
 
 | Document | Contents |

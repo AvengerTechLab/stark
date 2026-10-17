@@ -217,6 +217,28 @@ chosen host.
 
 The stale threshold and retry limits are specified in `EVENTS.md` §2.3–2.4.
 
+As built (S6-11, `src/app/stark.ts`). At start, Stark:
+
+1. Runs the migrations and creates the coming price-log partitions.
+2. Loads the pair lists.
+3. Starts one feed per exchange that has rules.
+4. Starts the timers:
+
+   | Timer | Every |
+   |---|---|
+   | Pipeline flush | 250 ms |
+   | Health check | 30 s |
+   | Pair lists | 1 hour |
+   | Storage upkeep | 1 day |
+   | Heartbeat | 5 minutes |
+
+5. Opens the owner web server and starts the Telegram bot.
+6. Hands the last 24 hours' decisions to the dispatcher. Its idempotency skips every channel that already finished,
+   so only what a restart left unsent goes out. The 24 hours match the life of LINE's retry key.
+
+A rule change rebuilds only the feed whose pairs changed. Stopping Stark stops each part it started, in reverse order.
+The 250 ms flush adds at most 250 ms after a second ends, inside the 1.5 s evaluation budget (§6).
+
 ## 8. Hosting test (D-13)
 
 Before the PO picks hosting, Claude or the PO runs the same read-only checks from each candidate host: Bitkub

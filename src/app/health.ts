@@ -73,10 +73,28 @@ export class HealthMonitor {
   private readonly quotaSeen = new Map<ChannelName, string>();
   private readonly quotaReported = new Map<ChannelName, string>();
   private disk: { since: Date; reported: boolean } | undefined;
-  private readonly started: Date;
+  /** Exchanges watched, each with the time it was first watched (a feed is stale counted from then). */
+  private readonly watched = new Map<Exchange, Date>();
 
   constructor(private readonly options: HealthOptions) {
-    this.started = options.now();
+    for (const exchange of options.exchanges) this.watched.set(exchange, options.now());
+  }
+
+  /** Watches exactly these exchanges from now on, e.g. only those that have rules (S6-11). */
+  setExchanges(exchanges: readonly Exchange[]): void {
+    for (const exchange of [...this.watched.keys()]) {
+      if (exchanges.includes(exchange)) continue;
+      this.watched.delete(exchange);
+      this.feeds.delete(exchange);
+    }
+    for (const exchange of exchanges) if (!this.watched.has(exchange)) this.watched.set(exchange, this.options.now());
+  }
+
+  /** The time a feed's silence is counted from: its last tick, or when it was first watched. */
+  private lastSign(exchange: Exchange): Date {
+    const last = this.lastTick.get(exchange);
+    const since = this.watched.get(exchange) ?? this.options.now();
+    return last !== undefined && last > since ? last : since;
   }
 
   /** A tick arrived from this exchange's feed. */
@@ -120,14 +138,11 @@ export class HealthMonitor {
   /** The current state for GET /api/v1/health; `degraded` drives GET /healthz (API.md §1.2). */
   snapshot(): HealthSnapshot {
     const now = this.options.now().getTime();
-    const feeds = this.options.exchanges.map((exchange) => {
-      const last = this.lastTick.get(exchange);
-      return {
-        exchange,
-        lastTickAt: last ?? null,
-        stale: now - (last ?? this.started).getTime() >= STALE_AFTER_MS,
-      };
-    });
+    const feeds = [...this.watched.keys()].map((exchange) => ({
+      exchange,
+      lastTickAt: this.lastTick.get(exchange) ?? null,
+      stale: now - this.lastSign(exchange).getTime() >= STALE_AFTER_MS,
+    }));
     const conditions: HealthCondition[] = [
       ...[...this.feeds].map(([subject, c]) => ({ kind: "feed_stale" as const, subject, since: c.since, reported: c.reported })),
       ...[...this.failing].map(([subject, c]) => ({ kind: "channel_failing" as const, subject, since: c.since, reported: c.reported })),
@@ -146,7 +161,7 @@ export class HealthMonitor {
 
   private async checkFeeds(): Promise<void> {
     const now = this.options.now().getTime();
-    for (const exchange of this.options.exchanges) {
+    for (const exchange of [...this.watched.keys()]) {
       const name = EXCHANGE_NAMES[exchange];
       const condition = this.feeds.get(exchange);
       if (condition?.recovered !== undefined) {
@@ -154,7 +169,7 @@ export class HealthMonitor {
         if (await this.report("feed_recovered", exchange, condition.since, text, null)) this.feeds.delete(exchange);
         continue;
       }
-      const last = this.lastTick.get(exchange) ?? this.started;
+      const last = this.lastSign(exchange);
       if (now - last.getTime() < STALE_AFTER_MS) continue;
       const stale = condition ?? { since: last, reported: false };
       this.feeds.set(exchange, stale);

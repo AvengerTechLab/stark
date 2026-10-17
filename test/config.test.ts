@@ -100,6 +100,19 @@ describe("loadConfig", () => {
   });
 });
 
+describe("loadConfig: owner web page address", () => {
+  it("listens on 127.0.0.1:8080 unless told otherwise (API.md §1, SPEC.md D-38)", () => {
+    expect(loadConfig(BASE).http).toEqual({ host: "127.0.0.1", port: 8080 });
+    expect(loadConfig({ ...BASE, OWNER_HTTP_HOST: "100.64.0.7", OWNER_HTTP_PORT: "9443" }).http).toEqual({ host: "100.64.0.7", port: 9443 });
+  });
+
+  it("rejects a port that is not a whole number from 1 to 65535", () => {
+    for (const port of ["0", "65536", "80a", "-1", "8.5"]) {
+      expect(configError({ ...BASE, OWNER_HTTP_PORT: port }).invalid).toEqual(["OWNER_HTTP_PORT"]);
+    }
+  });
+});
+
 describe("secretValues", () => {
   it("returns every configured credential", () => {
     const secrets = secretValues(
