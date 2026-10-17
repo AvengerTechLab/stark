@@ -105,6 +105,7 @@ Each needs a PO answer before the phase it blocks. Answers move to §6.
 | Q-31 | ~~Who reports Stark itself down?~~ Answered: D-43 | — | — |
 | Q-32 | ~~Gmail limit and the calendar for usage counts?~~ Answered: D-47 | — | — |
 | Q-33 | How does the PO reach the owner web page, given it must not be public (D-38)? The same path also gives it HTTPS | First deploy (S6-12) | **An SSH tunnel from the PO's computer: no new service and no cost; on a phone the Telegram commands cover the same tasks**; or a private network such as Tailscale (a free account, an app on each device); or WireGuard set up by hand |
+| Q-34 | Google: publish the OAuth app "In production" and accept Google's "Unverified app" warning when the PO signs in once, or apply for Google's verification? A project left in "Testing" loses its refresh token after 7 days (`ARCHITECTURE.md` §2.2) | First deploy (S6-12) | **Publish "In production" and accept the warning: Stark has one user, and unverified apps may have up to 100**; or apply for verification (Google reviews the app; time and steps not read) |
 
 ## 6. Decisions
 

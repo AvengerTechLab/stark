@@ -128,6 +128,19 @@ How the adapters behave:
   T-19).
 - **Not yet tested:** sends to the real services. No real message goes out before gate A-1 (`CLAUDE.md` §6).
 
+Google's rule for the OAuth app was read on 2026-10-17 in Google Cloud Platform Console Help, "Manage App Audience"
+(`support.google.com/cloud/answer/15549945`):
+
+- **"Testing":** authorizations by a test user expire seven days from consent, and so does the refresh token. The only
+  exception is an app that asks for name, email address and profile alone. `gmail.send` is not covered.
+- **"In production":** the app is not held to that rule. Before verification, Google shows an "Unverified app" warning
+  for sensitive or restricted scopes, and an app that shows that warning is capped at 100 new users in total.
+
+So the Google project behind Stark must be published "In production" before its refresh token is made. Otherwise email
+alerts stop after a week, and the health monitor's `token_refresh_failed` report is the only sign. Whether to accept the
+unverified warning or apply for verification is `SPEC.md` Q-34. That page does not say whether `gmail.send` counts as
+sensitive; it was not read elsewhere.
+
 ### 2.3 What the success criteria imply
 
 From `SPEC.md` §9 (D-14), to be designed in Phase 2:

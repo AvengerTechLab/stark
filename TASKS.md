@@ -190,7 +190,12 @@ Tick a task only with evidence: the commit, the file created, or the command run
     marked PO to confirm.
   - Evidence: `node --check` on the script and lint passing. The script was not run here: it calls the providers,
     which only the PO does on a candidate host.
-- [ ] **S6-13. Google's 7-day refresh token rule** (carried over from S5-7, `SECURITY.md` T-21).
+- [x] **S6-13. Google's 7-day refresh token rule** (carried over from S5-7, `SECURITY.md` T-21).
+  - Read on 2026-10-17 in Google Cloud Platform Console Help, "Manage App Audience"
+    (`support.google.com/cloud/answer/15549945`): a test user's authorization, and its refresh token, expire seven
+    days from consent; `gmail.send` is not one of the exempt scopes.
+  - `developers.google.com` is blocked from this session; the help page is Google's own.
+  - Recorded in `ARCHITECTURE.md` §2.2 and T-21. The publishing choice is `SPEC.md` Q-34, for the PO.
 
 ## Next Phases (not started)
 
