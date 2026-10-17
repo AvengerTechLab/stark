@@ -42,6 +42,19 @@ export interface HealthOptions {
   readonly logger: Logger;
 }
 
+export interface HealthCondition {
+  readonly kind: "feed_stale" | "channel_failing" | "disk_low";
+  readonly subject: string;
+  readonly since: Date;
+  readonly reported: boolean;
+}
+
+export interface HealthSnapshot {
+  readonly degraded: boolean;
+  readonly feeds: readonly { readonly exchange: Exchange; readonly lastTickAt: Date | null; readonly stale: boolean }[];
+  readonly conditions: readonly HealthCondition[];
+}
+
 interface Condition {
   readonly since: Date;
   reported: boolean;
@@ -102,6 +115,25 @@ export class HealthMonitor {
       condition.dead = true;
       condition.reason = outcome.reason;
     }
+  }
+
+  /** The current state for GET /api/v1/health; `degraded` drives GET /healthz (API.md §1.2). */
+  snapshot(): HealthSnapshot {
+    const now = this.options.now().getTime();
+    const feeds = this.options.exchanges.map((exchange) => {
+      const last = this.lastTick.get(exchange);
+      return {
+        exchange,
+        lastTickAt: last ?? null,
+        stale: now - (last ?? this.started).getTime() >= STALE_AFTER_MS,
+      };
+    });
+    const conditions: HealthCondition[] = [
+      ...[...this.feeds].map(([subject, c]) => ({ kind: "feed_stale" as const, subject, since: c.since, reported: c.reported })),
+      ...[...this.failing].map(([subject, c]) => ({ kind: "channel_failing" as const, subject, since: c.since, reported: c.reported })),
+      ...(this.disk === undefined ? [] : [{ kind: "disk_low" as const, subject: "disk", since: this.disk.since, reported: this.disk.reported }]),
+    ];
+    return { degraded: conditions.length > 0 || feeds.some((f) => f.stale), feeds, conditions };
   }
 
   /** Looks at every condition and sends the reports that are due. */

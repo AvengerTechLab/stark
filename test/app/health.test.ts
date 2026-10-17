@@ -242,3 +242,29 @@ describe("HealthMonitor: when no channel can carry the report", () => {
     expect(sent().map((m) => m.c)).toEqual(["discord", "email"]);
   });
 });
+
+describe("HealthMonitor: snapshot for GET /health and /healthz (API.md §1.2)", () => {
+  it("lists each feed's last tick and every open condition, and says when Stark is degraded", async () => {
+    const { monitor, checkAt, ticks } = setup();
+    ticks(0);
+    await checkAt(0);
+    expect(monitor.snapshot()).toEqual({
+      degraded: false,
+      feeds: [
+        { exchange: "bitkub", lastTickAt: at(0), stale: false },
+        { exchange: "binance", lastTickAt: at(0), stale: false },
+      ],
+      conditions: [],
+    });
+    monitor.channelOutcome({ channel: "line", outcome: "failed", reason: "http_500", at: at(0) });
+    await checkAt(61 * SECOND);
+    expect(monitor.snapshot()).toMatchObject({
+      degraded: true,
+      feeds: [{ exchange: "bitkub", stale: true }, { exchange: "binance", stale: true }],
+      conditions: expect.arrayContaining([
+        { kind: "channel_failing", subject: "line", since: at(0), reported: false },
+        { kind: "feed_stale", subject: "bitkub", since: at(0), reported: false },
+      ]),
+    });
+  });
+});

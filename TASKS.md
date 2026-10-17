@@ -124,6 +124,20 @@ Tick a task only with evidence: the commit, the file created, or the command run
     - inactive Bitkub pairs listed
     - any Argon2 variant accepted (this one first survived; it is now tested with a real Argon2i hash)
     - an action kept for a delete of nothing
+  - Part 2 is done: the shared rule service, the HTTP API and the web page.
+    - `src/app/owner-service.ts` holds the rule and channel operations that the web page and Telegram share.
+    - `src/interface/http-server.ts` is the API with login, lockout, Origin check and security headers (`API.md` §1).
+    - `src/interface/web.ts` is the owner page.
+    - `HealthMonitor.snapshot()` serves `/health` and `/healthz`.
+  - Evidence: 27 new tests (9 service, 17 HTTP on a local server, 1 snapshot), 245 in all with the database. Control
+    runs, each failing at least 1 test:
+    - no Origin check
+    - the raw session ID stored (9 tests fail)
+    - the lock counted only over the last 15 minutes
+    - a cookie readable by script, or `Lax` (2 tests fail)
+    - no CSP
+    - no body size limit (this one first survived; the test now pads a valid rule)
+    - a changed rule keeping its state (2 tests fail)
 - [ ] **S6-11. End to end on fakes** — the whole flow with every external system faked; then ask the PO to start
   gate A-1 (D-05). Includes wiring found in S6-3 to S6-6:
   - the pipeline's flush timer
