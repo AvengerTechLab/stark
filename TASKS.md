@@ -109,7 +109,7 @@ Tick a task only with evidence: the commit, the file created, or the command run
   - reports sent through dead channels
   - the dispatcher hiding exhausted failures
   - a heartbeat every 10 minutes (2 tests fail)
-- [~] **S6-10. Owner interface** — HTTP API with login (`API.md` §1) and Telegram commands (§2).
+- [x] **S6-10. Owner interface** — HTTP API with login (`API.md` §1) and Telegram commands (§2).
   - Part 1 is done: storage, password, pairs and prices.
     - `src/ports/owner.ts` and its PostgreSQL stores: rule admin, channel admin, sessions, failed logins and alert
       history. Each rule or channel change is saved together with its `owner_actions` row (T-22).
@@ -138,6 +138,17 @@ Tick a task only with evidence: the commit, the file created, or the command run
     - no CSP
     - no body size limit (this one first survived; the test now pads a valid rule)
     - a changed rule keeping its state (2 tests fail)
+  - Part 3 is done: the Telegram commands.
+    - `src/interface/telegram-bot.ts` does long polling and handles every command in `API.md` §2.
+    - It obeys only the PO's private chat.
+    - `/delete` asks for confirmation, which counts within 60 s.
+    - `channelOverview` is shared with the web page.
+  - Evidence: 11 new tests, 256 in all with the database. Control runs, each failing at least 1 test:
+    - group chats obeyed
+    - a late yes accepted
+    - a yes counted after another command
+    - unconfigured channels used (2 tests fail)
+    - the poll offset never advanced
 - [ ] **S6-11. End to end on fakes** — the whole flow with every external system faked; then ask the PO to start
   gate A-1 (D-05). Includes wiring found in S6-3 to S6-6:
   - the pipeline's flush timer

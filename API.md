@@ -141,4 +141,20 @@ Commands use the same validation and error codes as the HTTP API (§1.3), answer
 what changed. Choosing
 channels per rule is done on the web page (proposed).
 
+As built (`src/interface/telegram-bot.ts`):
+
+- **Polling:** updates come from `getUpdates`, a 50 s long poll. The offset is the last update ID plus one, so each
+  update is handled once. After a failure the bot waits 5 s, or Telegram's `retry_after` if that is longer.
+- **Who is obeyed:** only a private chat whose ID is `TELEGRAM_OWNER_CHAT_ID`. Anyone else gets no reply, and the
+  attempt is logged `telegram.command_rejected` with the chat type only.
+- **Rule IDs:** a rule is shown by the first 8 characters of its ID. A command accepts any prefix of 4 or more
+  characters that matches exactly one rule.
+- **New rules** from `/above`, `/below` and `/change` go to every channel that is configured, switched on and not
+  dead. If there is none, the reply is the `CHANNELS_INVALID` text.
+- **Invalid input** is answered in Thai, one line per §1.3 error. A wrong number of arguments gets a usage line.
+- **`/delete`:** a `yes` (or `ใช่`) deletes only if it answers the last question within 60 s. Any other message
+  cancels the question.
+- **Replies** are plain text, sent the way alerts are (no parse mode). A failed poll is logged without its URL,
+  which holds the token.
+
 The demo prices in the examples are not market data.

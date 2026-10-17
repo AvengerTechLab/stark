@@ -2,6 +2,8 @@
 // validate the same way and record the same actions (API.md §1.2–1.3, §2; SECURITY.md T-22).
 
 import type { ChannelName } from "../ports/channel.js";
+import type { DeliveryLog } from "../ports/storage.js";
+import { DEFAULT_QUOTAS, usagePeriod } from "./dispatcher.js";
 import type { ChannelAdmin, OwnerAction, RuleAdmin } from "../ports/owner.js";
 import type { Rule } from "../domain/rules.js";
 import { validateRuleInput, type RuleInputError, type RuleSpec } from "../domain/rule-input.js";
@@ -120,4 +122,36 @@ export class OwnerService {
     await this.options.channels.setEnabled(channel, enabled, action);
     return true;
   }
+}
+
+export interface ChannelOverview {
+  readonly name: ChannelName;
+  readonly configured: boolean;
+  readonly enabled: boolean;
+  readonly deadSince: Date | null;
+  /** This period's sends against the limit, for LINE (month) and Gmail (day); null for the others. */
+  readonly usage: { readonly period: string; readonly sent: number; readonly limit: number } | null;
+}
+
+/** Each channel's switch, dead state and usage, for GET /channels and the /status command. */
+export async function channelOverview(
+  service: OwnerService,
+  deliveries: Pick<DeliveryLog, "usage">,
+  configured: readonly ChannelName[],
+  now: Date,
+): Promise<ChannelOverview[]> {
+  const list = await service.listChannels();
+  return Promise.all(
+    list.map(async (c) => {
+      const quota = DEFAULT_QUOTAS[c.channel];
+      const period = quota === undefined ? undefined : usagePeriod(quota.per, now);
+      return {
+        name: c.channel,
+        configured: configured.includes(c.channel),
+        enabled: c.enabled,
+        deadSince: c.deadSince,
+        usage: quota === undefined || period === undefined ? null : { period, sent: await deliveries.usage(c.channel, period), limit: quota.limit },
+      };
+    }),
+  );
 }

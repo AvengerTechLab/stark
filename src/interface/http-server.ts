@@ -9,9 +9,8 @@ import type { ChannelName } from "../ports/channel.js";
 import type { AlertQuery, SessionStore } from "../ports/owner.js";
 import type { DeliveryLog } from "../ports/storage.js";
 import type { HealthSnapshot } from "../app/health.js";
-import type { OwnerService, RuleResult } from "../app/owner-service.js";
+import { channelOverview, type OwnerService, type RuleResult } from "../app/owner-service.js";
 import type { PriceBoard } from "../app/price-board.js";
-import { DEFAULT_QUOTAS, usagePeriod } from "../app/dispatcher.js";
 import { thaiClock } from "../domain/thai-time.js";
 import { verifyPassword } from "./password.js";
 import { APP_CSS, APP_JS, INDEX_HTML } from "./web.js";
@@ -164,26 +163,7 @@ export function ownerHandler(deps: OwnerHttpDeps): (req: IncomingMessage, res: S
     send(res, 204, "", "text/plain; charset=utf-8", { "set-cookie": cookieHeader(id, SESSION_MS / 1000) });
   }
 
-  async function channels() {
-    const now = deps.now();
-    const list = await service.listChannels();
-    return Promise.all(
-      list.map(async (c) => {
-        const quota = DEFAULT_QUOTAS[c.channel];
-        const period = quota === undefined ? undefined : usagePeriod(quota.per, now);
-        return {
-          name: c.channel,
-          configured: deps.configured.includes(c.channel),
-          enabled: c.enabled,
-          deadSince: c.deadSince,
-          usage:
-            quota === undefined || period === undefined
-              ? null
-              : { period, sent: await deps.deliveries.usage(c.channel, period), limit: quota.limit },
-        };
-      }),
-    );
-  }
+  const channels = () => channelOverview(service, deps.deliveries, deps.configured, deps.now());
 
   async function api(req: IncomingMessage, res: ServerResponse, url: URL): Promise<void> {
     const method = req.method ?? "GET";
