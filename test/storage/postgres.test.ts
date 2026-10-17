@@ -12,6 +12,7 @@ import {
   migrate,
   PgChannelSettings,
   PgDeliveryLog,
+  PgHealthLog,
   PgPriceLog,
   PgRuleStore,
 } from "../../src/storage/postgres.js";
@@ -232,6 +233,15 @@ describe.skipIf(TEST_DATABASE_URL === undefined)("PostgreSQL storage", () => {
       await rules.saveResult(rule.id, "fired", decision);
       const attempt = { alertId: decision.id, channel: "line" as const, attempt: 1, status: "delivered" as const, reason: null, at: at(0) };
       await expect(new PgDeliveryLog(pool).record(attempt, randomUUID(), "2026-10-01")).rejects.toThrow();
+    });
+  });
+
+  describe("health log", () => {
+    it("stores each reported health event", async () => {
+      const id = randomUUID();
+      await new PgHealthLog(pool).record({ id, kind: "feed_stale", subject: "bitkub", since: at(0), reportedAt: at(6 * 60_000) });
+      const { rows } = await pool.query("SELECT kind, subject, since, reported_at FROM health_events WHERE id = $1", [id]);
+      expect(rows).toEqual([{ kind: "feed_stale", subject: "bitkub", since: at(0), reported_at: at(6 * 60_000) }]);
     });
   });
 

@@ -245,3 +245,32 @@ describe("Dispatcher: idempotency by alert ID (EVENTS.md §2.2–2.3)", () => {
     expect(attempts()).toEqual(["a1/telegram#1:delivered", "a2/telegram#1:skipped(cooldown)"]);
   });
 });
+
+describe("Dispatcher: outcomes for the health monitor (EVENTS.md §2.4)", () => {
+  it("reports each channel's final outcome: delivered, failed after all attempts, dead, quota reached", async () => {
+    const outcomes: string[] = [];
+    const { dispatcher, byName, deliveries } = setup();
+    dispatcher.onOutcome = (o) => outcomes.push(`${o.channel}:${o.outcome}${o.reason === null ? "" : `(${o.reason})`}`);
+    const fail = { status: "failed", reason: "http_500" } as const;
+    byName("line").willReturn(fail, fail, fail);
+    byName("discord").willReturn({ status: "dead", reason: "http_404" });
+    deliveries.setUsage("email", "2026-10-16", DEFAULT_QUOTAS.email?.limit ?? 0);
+    await dispatcher.dispatch(decision("a1", ["telegram", "line", "discord", "email"]));
+    expect(outcomes.sort()).toEqual([
+      "discord:dead(http_404)",
+      "email:quota_reached",
+      "line:failed(http_500)",
+      "telegram:delivered",
+    ]);
+  });
+
+  it("reports nothing for a cooldown or a channel switched off, which say nothing about the channel's health", async () => {
+    const outcomes: string[] = [];
+    const { dispatcher, settings } = setup();
+    dispatcher.onOutcome = (o) => outcomes.push(o.outcome);
+    settings.on.delete("line");
+    await dispatcher.dispatch(decision("a1", ["telegram", "line"]));
+    await dispatcher.dispatch(decision("a2", ["telegram"]));
+    expect(outcomes).toEqual(["delivered"]);
+  });
+});

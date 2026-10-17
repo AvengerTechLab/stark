@@ -93,7 +93,22 @@ Tick a task only with evidence: the commit, the file created, or the command run
   - Gmail token used until the moment it expires
   - Gmail token kept after a 401
   - a line break allowed in the email subject
-- [ ] **S6-9. Health monitor and heartbeat** — EVENTS.md §2.4, D-43.
+- [x] **S6-9. Health monitor and heartbeat** — EVENTS.md §2.4–2.5, D-43.
+  - `src/app/health.ts` reports stale feeds, failing or dead channels, reached quotas and low disk, through a channel
+    other than the one that failed, then reports each recovery once. Timings and wording are proposed, PO to confirm.
+  - The dispatcher now reports each channel's final outcome (`onOutcome`).
+  - `src/app/heartbeat.ts` pings `HEARTBEAT_URL` every 5 minutes. `src/app/disk.ts` reads free disk.
+  - `PgHealthLog` stores each report.
+
+  Evidence: 20 new tests, 207 in all with the database. Control runs, each failing at least 1 test:
+  - a report sent through the failing channel
+  - no 5-minute wait (5 tests fail)
+  - feed recovery never reported
+  - a quota reported at every check
+  - 20 % still counted as low
+  - reports sent through dead channels
+  - the dispatcher hiding exhausted failures
+  - a heartbeat every 10 minutes (2 tests fail)
 - [ ] **S6-10. Owner interface** — HTTP API with login (`API.md` §1) and Telegram commands (§2).
 - [ ] **S6-11. End to end on fakes** — the whole flow with every external system faked; then ask the PO to start
   gate A-1 (D-05). Includes wiring found in S6-3 to S6-6:
@@ -105,6 +120,8 @@ Tick a task only with evidence: the commit, the file created, or the command run
   - feeds built from the pairs that have rules, rebuilt when that list changes, on `webSocketConnect`, `fetchGet` and
     `realTimers` (S6-7)
   - channels from `createChannels(config, fetchPost, now)` (S6-8)
+  - the health monitor: `check` every 30 s, `tickSeen` from the feeds, `onOutcome` from the dispatcher,
+    `diskFreeShare` on the database disk, and `startHeartbeat` when `HEARTBEAT_URL` is set (S6-9)
 - [ ] **S6-12. Hosting** (carried over from S5-6) — must be settled before the first deploy.
 - [ ] **S6-13. Google's 7-day refresh token rule** (carried over from S5-7, `SECURITY.md` T-21).
 

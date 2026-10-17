@@ -10,6 +10,8 @@ import type {
   ChannelSettings,
   DeliveryAttempt,
   DeliveryLog,
+  HealthLog,
+  HealthRecord,
   PriceLog,
   PriceTick,
   RuleStore,
@@ -27,6 +29,7 @@ export const TABLES = {
   alertDecisions: "alert_decisions",
   deliveryAttempts: "delivery_attempts",
   channelUsage: "channel_usage",
+  healthEvents: "health_events",
 } as const;
 
 /** Price log retention (SPEC.md D-34). */
@@ -338,5 +341,16 @@ export class PgDeliveryLog implements DeliveryLog {
         [attempt.channel, usagePeriod],
       );
     });
+  }
+}
+
+export class PgHealthLog implements HealthLog {
+  constructor(private readonly pool: pg.Pool) {}
+
+  async record(event: HealthRecord): Promise<void> {
+    await this.pool.query(
+      `INSERT INTO ${TABLES.healthEvents} (id, kind, subject, since, reported_at) VALUES ($1, $2, $3, $4, $5)`,
+      [event.id, event.kind, event.subject, event.since, event.reportedAt],
+    );
   }
 }
