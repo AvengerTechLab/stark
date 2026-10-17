@@ -109,7 +109,21 @@ Tick a task only with evidence: the commit, the file created, or the command run
   - reports sent through dead channels
   - the dispatcher hiding exhausted failures
   - a heartbeat every 10 minutes (2 tests fail)
-- [ ] **S6-10. Owner interface** — HTTP API with login (`API.md` §1) and Telegram commands (§2).
+- [~] **S6-10. Owner interface** — HTTP API with login (`API.md` §1) and Telegram commands (§2).
+  - Part 1 is done: storage, password, pairs and prices.
+    - `src/ports/owner.ts` and its PostgreSQL stores: rule admin, channel admin, sessions, failed logins and alert
+      history. Each rule or channel change is saved together with its `owner_actions` row (T-22).
+    - `verifyPassword` (Argon2id only, `hash-wasm`, D-51).
+    - `PairCatalog`, from Bitkub `market/symbols` and Binance `exchangeInfo`.
+    - `PriceBoard`.
+  - Evidence: 11 new tests, 218 in all with the database. Control runs, each failing 1 test:
+    - an update of a missing rule reported as success
+    - old channels kept on update
+    - a session still valid at its expiry
+    - a failed refresh emptying the pair list
+    - inactive Bitkub pairs listed
+    - any Argon2 variant accepted (this one first survived; it is now tested with a real Argon2i hash)
+    - an action kept for a delete of nothing
 - [ ] **S6-11. End to end on fakes** — the whole flow with every external system faked; then ask the PO to start
   gate A-1 (D-05). Includes wiring found in S6-3 to S6-6:
   - the pipeline's flush timer

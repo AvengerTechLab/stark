@@ -17,6 +17,15 @@ import type {
   RuleStore,
 } from "../ports/storage.js";
 import type { Rule, RuleState } from "../domain/rules.js";
+import type {
+  AlertQuery,
+  ChannelAdmin,
+  ChannelState,
+  DecisionWithAttempts,
+  OwnerAction,
+  RuleAdmin,
+  SessionStore,
+} from "../ports/owner.js";
 import { MIGRATIONS } from "./migrations.js";
 
 /** Table names in one place (playbook §8). */
@@ -30,6 +39,9 @@ export const TABLES = {
   deliveryAttempts: "delivery_attempts",
   channelUsage: "channel_usage",
   healthEvents: "health_events",
+  ownerActions: "owner_actions",
+  ownerSessions: "owner_sessions",
+  loginAttempts: "login_attempts",
 } as const;
 
 /** Price log retention (SPEC.md D-34). */
@@ -55,6 +67,14 @@ async function inTransaction<T>(pool: pg.Pool, work: (client: pg.PoolClient) => 
   } finally {
     client.release();
   }
+}
+
+async function recordAction(client: pg.PoolClient, action: OwnerAction | undefined): Promise<void> {
+  if (action === undefined) return;
+  await client.query(
+    `INSERT INTO ${TABLES.ownerActions} (id, at, source, action, subject, detail) VALUES ($1, $2, $3, $4, $5, $6)`,
+    [action.id, action.at, action.source, action.action, action.subject, JSON.stringify(action.detail)],
+  );
 }
 
 function splitPair(pair: string): { base: string; quote: string } {
@@ -190,51 +210,94 @@ function toRule(row: RuleRow): Rule {
   return { ...common, kind: row.kind, level: row.level };
 }
 
-export class PgRuleStore implements RuleStore {
+const RULE_SELECT = `SELECT r.id, r.base, r.quote, r.kind, r.level, r.percent, r.window_minutes, r.direction, r.enabled,
+         r.state, coalesce(array_agg(c.channel ORDER BY array_position(${CHANNEL_ORDER}, c.channel))
+                  FILTER (WHERE c.channel IS NOT NULL), '{}') AS channels
+  FROM ${TABLES.rules} r LEFT JOIN ${TABLES.ruleChannels} c ON c.rule_id = r.id`;
+
+function ruleColumns(rule: Rule): unknown[] {
+  const { base, quote } = splitPair(rule.pair);
+  const change = rule.kind === "change" ? rule : null;
+  return [
+    rule.id,
+    EXCHANGE_OF_QUOTE[quote],
+    base,
+    quote,
+    rule.kind,
+    rule.kind === "change" ? null : rule.level,
+    change?.percent ?? null,
+    change?.windowMinutes ?? null,
+    change?.direction ?? null,
+    rule.enabled,
+    rule.state,
+  ];
+}
+
+async function writeChannels(client: pg.PoolClient, rule: Rule): Promise<void> {
+  for (const channel of rule.channels) {
+    await client.query(`INSERT INTO ${TABLES.ruleChannels} (rule_id, channel) VALUES ($1, $2)`, [rule.id, channel]);
+  }
+}
+
+export class PgRuleStore implements RuleStore, RuleAdmin {
   constructor(private readonly pool: pg.Pool) {}
 
   /** Stores a new rule with its channels. Validation is `src/domain/rule-input.ts`; the table checks again. */
-  async create(rule: Rule): Promise<void> {
-    const { base, quote } = splitPair(rule.pair);
-    const change = rule.kind === "change" ? rule : null;
+  async create(rule: Rule, action?: OwnerAction): Promise<void> {
     await inTransaction(this.pool, async (client) => {
       await client.query(
         `INSERT INTO ${TABLES.rules}
            (id, exchange, base, quote, kind, level, percent, window_minutes, direction, enabled, state)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
-        [
-          rule.id,
-          EXCHANGE_OF_QUOTE[quote],
-          base,
-          quote,
-          rule.kind,
-          rule.kind === "change" ? null : rule.level,
-          change?.percent ?? null,
-          change?.windowMinutes ?? null,
-          change?.direction ?? null,
-          rule.enabled,
-          rule.state,
-        ],
+        ruleColumns(rule),
       );
-      for (const channel of rule.channels) {
-        await client.query(`INSERT INTO ${TABLES.ruleChannels} (rule_id, channel) VALUES ($1, $2)`, [rule.id, channel]);
-      }
+      await writeChannels(client, rule);
+      await recordAction(client, action);
     });
   }
 
   async rulesFor(pair: string): Promise<readonly Rule[]> {
     const { base, quote } = splitPair(pair);
     const { rows } = await this.pool.query<RuleRow>(
-      `SELECT r.id, r.base, r.quote, r.kind, r.level, r.percent, r.window_minutes, r.direction, r.enabled, r.state,
-              coalesce(array_agg(c.channel ORDER BY array_position(${CHANNEL_ORDER}, c.channel))
-                       FILTER (WHERE c.channel IS NOT NULL), '{}') AS channels
-       FROM ${TABLES.rules} r LEFT JOIN ${TABLES.ruleChannels} c ON c.rule_id = r.id
-       WHERE r.base = $1 AND r.quote = $2
-       GROUP BY r.id
-       ORDER BY r.created_at, r.id`,
+      `${RULE_SELECT} WHERE r.base = $1 AND r.quote = $2 GROUP BY r.id ORDER BY r.created_at, r.id`,
       [base, quote],
     );
     return rows.map(toRule);
+  }
+
+  async list(): Promise<readonly Rule[]> {
+    const { rows } = await this.pool.query<RuleRow>(`${RULE_SELECT} GROUP BY r.id ORDER BY r.created_at, r.id`);
+    return rows.map(toRule);
+  }
+
+  async get(id: string): Promise<Rule | undefined> {
+    const { rows } = await this.pool.query<RuleRow>(`${RULE_SELECT} WHERE r.id = $1 GROUP BY r.id`, [id]);
+    return rows[0] === undefined ? undefined : toRule(rows[0]);
+  }
+
+  async update(rule: Rule, action: OwnerAction): Promise<boolean> {
+    return inTransaction(this.pool, async (client) => {
+      const updated = await client.query(
+        `UPDATE ${TABLES.rules} SET exchange = $2, base = $3, quote = $4, kind = $5, level = $6, percent = $7,
+           window_minutes = $8, direction = $9, enabled = $10, state = $11, updated_at = now()
+         WHERE id = $1`,
+        ruleColumns(rule),
+      );
+      if (updated.rowCount !== 1) return false;
+      await client.query(`DELETE FROM ${TABLES.ruleChannels} WHERE rule_id = $1`, [rule.id]);
+      await writeChannels(client, rule);
+      await recordAction(client, action);
+      return true;
+    });
+  }
+
+  async remove(id: string, action: OwnerAction): Promise<boolean> {
+    return inTransaction(this.pool, async (client) => {
+      const deleted = await client.query(`DELETE FROM ${TABLES.rules} WHERE id = $1`, [id]);
+      if (deleted.rowCount !== 1) return false;
+      await recordAction(client, action);
+      return true;
+    });
   }
 
   async saveResult(ruleId: string, state: RuleState, decision: AlertDecision | null): Promise<void> {
@@ -261,7 +324,7 @@ export class PgRuleStore implements RuleStore {
   }
 }
 
-export class PgChannelSettings implements ChannelSettings {
+export class PgChannelSettings implements ChannelSettings, ChannelAdmin {
   constructor(private readonly pool: pg.Pool) {}
 
   async switchedOn(): Promise<ReadonlySet<ChannelName>> {
@@ -271,12 +334,23 @@ export class PgChannelSettings implements ChannelSettings {
     return new Set(rows.map((r) => r.channel));
   }
 
-  /** Switches a channel on or off system-wide (D-09). */
-  async setEnabled(channel: ChannelName, enabled: boolean): Promise<void> {
-    await this.pool.query(`UPDATE ${TABLES.channelSettings} SET enabled = $2, updated_at = now() WHERE channel = $1`, [
-      channel,
-      enabled,
-    ]);
+  async list(): Promise<readonly ChannelState[]> {
+    const { rows } = await this.pool.query<{ channel: ChannelName; enabled: boolean; dead_since: Date | null }>(
+      `SELECT channel, enabled, dead_since FROM ${TABLES.channelSettings}
+       ORDER BY array_position(${CHANNEL_ORDER}, channel)`,
+    );
+    return rows.map((r) => ({ channel: r.channel, enabled: r.enabled, deadSince: r.dead_since }));
+  }
+
+  /** Switches a channel on or off system-wide (D-09), with its action in the same transaction. */
+  async setEnabled(channel: ChannelName, enabled: boolean, action?: OwnerAction): Promise<void> {
+    await inTransaction(this.pool, async (client) => {
+      await client.query(`UPDATE ${TABLES.channelSettings} SET enabled = $2, updated_at = now() WHERE channel = $1`, [
+        channel,
+        enabled,
+      ]);
+      await recordAction(client, action);
+    });
   }
 
   async isDead(channel: ChannelName): Promise<boolean> {
@@ -352,5 +426,85 @@ export class PgHealthLog implements HealthLog {
       `INSERT INTO ${TABLES.healthEvents} (id, kind, subject, since, reported_at) VALUES ($1, $2, $3, $4, $5)`,
       [event.id, event.kind, event.subject, event.since, event.reportedAt],
     );
+  }
+}
+
+export class PgSessionStore implements SessionStore {
+  constructor(private readonly pool: pg.Pool) {}
+
+  async create(idHash: string, createdAt: Date, expiresAt: Date): Promise<void> {
+    await this.pool.query(`INSERT INTO ${TABLES.ownerSessions} (id_hash, created_at, expires_at) VALUES ($1, $2, $3)`, [
+      idHash,
+      createdAt,
+      expiresAt,
+    ]);
+  }
+
+  async isValid(idHash: string, now: Date): Promise<boolean> {
+    const { rows } = await this.pool.query(`SELECT 1 FROM ${TABLES.ownerSessions} WHERE id_hash = $1 AND expires_at > $2`, [
+      idHash,
+      now,
+    ]);
+    return rows.length > 0;
+  }
+
+  async remove(idHash: string): Promise<void> {
+    await this.pool.query(`DELETE FROM ${TABLES.ownerSessions} WHERE id_hash = $1`, [idHash]);
+  }
+
+  async recordFailedLogin(at: Date): Promise<void> {
+    await this.pool.query(`INSERT INTO ${TABLES.loginAttempts} (at) VALUES ($1)`, [at]);
+  }
+
+  async failedLoginsSince(since: Date): Promise<readonly Date[]> {
+    const { rows } = await this.pool.query<{ at: Date }>(
+      `SELECT at FROM ${TABLES.loginAttempts} WHERE at >= $1 ORDER BY at`,
+      [since],
+    );
+    return rows.map((r) => r.at);
+  }
+}
+
+interface DecisionRow {
+  id: string;
+  rule_id: string;
+  tick_id: string;
+  price: string;
+  reference_price: string | null;
+  change_percent: string | null;
+  channels: ChannelName[];
+  message: string;
+  decided_at: Date;
+}
+
+export class PgAlertQuery implements AlertQuery {
+  constructor(private readonly pool: pg.Pool) {}
+
+  async decisions(from: Date, to: Date, limit: number): Promise<readonly DecisionWithAttempts[]> {
+    const { rows } = await this.pool.query<DecisionRow>(
+      `SELECT id, rule_id, tick_id, price, reference_price, change_percent, channels, message, decided_at
+       FROM ${TABLES.alertDecisions} WHERE decided_at >= $1 AND decided_at < $2
+       ORDER BY decided_at DESC, id LIMIT $3`,
+      [from, to, limit],
+    );
+    const attempts = await this.pool.query<DeliveryAttempt & { alertId: string }>(
+      `SELECT alert_id AS "alertId", channel, attempt, status, reason, at FROM ${TABLES.deliveryAttempts}
+       WHERE alert_id = ANY($1) ORDER BY channel, attempt`,
+      [rows.map((r) => r.id)],
+    );
+    return rows.map((r) => ({
+      decision: {
+        id: r.id,
+        ruleId: r.rule_id,
+        tickId: r.tick_id,
+        price: r.price,
+        referencePrice: r.reference_price,
+        changePercent: r.change_percent,
+        decidedAt: r.decided_at,
+        channels: r.channels,
+        message: r.message,
+      },
+      attempts: attempts.rows.filter((a) => a.alertId === r.id),
+    }));
   }
 }

@@ -10,12 +10,15 @@ import {
   dropExpiredPartitions,
   ensurePartitions,
   migrate,
+  PgAlertQuery,
   PgChannelSettings,
   PgDeliveryLog,
   PgHealthLog,
   PgPriceLog,
   PgRuleStore,
+  PgSessionStore,
 } from "../../src/storage/postgres.js";
+import type { OwnerAction } from "../../src/ports/owner.js";
 import { FakeChannel } from "../fakes/fake-channel.js";
 import { TEST_DATABASE_URL, testPool } from "./database.js";
 
@@ -233,6 +236,107 @@ describe.skipIf(TEST_DATABASE_URL === undefined)("PostgreSQL storage", () => {
       await rules.saveResult(rule.id, "fired", decision);
       const attempt = { alertId: decision.id, channel: "line" as const, attempt: 1, status: "delivered" as const, reason: null, at: at(0) };
       await expect(new PgDeliveryLog(pool).record(attempt, randomUUID(), "2026-10-01")).rejects.toThrow();
+    });
+  });
+
+  describe("owner interface stores (API.md, SECURITY.md T-22)", () => {
+    const action = (name: string, subject: string): OwnerAction => ({
+      id: randomUUID(),
+      at: at(0),
+      source: "web",
+      action: name,
+      subject,
+      detail: { demo: true },
+    });
+    const actionsFor = async (subject: string) =>
+      (await pool.query("SELECT action, source, detail FROM owner_actions WHERE subject = $1 ORDER BY at, action", [subject])).rows;
+
+    it("lists, gets, updates and removes rules, recording each change with the change", async () => {
+      const store = new PgRuleStore(pool);
+      const rule = levelRule({ pair: "AVAX/THB", channels: ["telegram"] });
+      await store.create(rule, action("rule.created", rule.id));
+      expect((await store.list()).some((r) => r.id === rule.id)).toBe(true);
+      expect(await store.get(rule.id)).toEqual(rule);
+
+      const changed: ChangeRule = {
+        id: rule.id,
+        pair: "AVAX/THB",
+        kind: "change",
+        percent: "3",
+        windowMinutes: 15,
+        direction: "down",
+        channels: ["line", "discord"],
+        enabled: false,
+        state: "armed",
+      };
+      expect(await store.update(changed, action("rule.updated", rule.id))).toBe(true);
+      expect(await store.get(rule.id)).toEqual({ ...changed, percent: "3.00", channels: ["line", "discord"] });
+      expect(await store.update({ ...changed, id: randomUUID() }, action("rule.updated", "x"))).toBe(false);
+
+      const decision = decisionFor(rule.id);
+      await store.saveResult(rule.id, "armed", decision);
+      expect(await store.remove(rule.id, action("rule.deleted", rule.id))).toBe(true);
+      expect(await store.get(rule.id)).toBeUndefined();
+      expect(await store.remove(rule.id, action("rule.deleted", rule.id))).toBe(false);
+      const kept = await pool.query("SELECT count(*)::int AS n FROM alert_decisions WHERE id = $1", [decision.id]);
+      expect(kept.rows[0].n).toBe(1);
+      expect((await actionsFor(rule.id)).map((r) => r.action)).toEqual(["rule.created", "rule.deleted", "rule.updated"]);
+    });
+
+    it("does not record an action for a change that fails", async () => {
+      const store = new PgRuleStore(pool);
+      const rule = levelRule({ pair: "NEAR/THB" });
+      await store.create(rule);
+      // The table refuses a level of 0 (DATABASE.md), so the update fails and its action must not be kept.
+      await expect(store.update({ ...rule, level: "0" }, action("rule.updated", rule.id))).rejects.toThrow();
+      expect(await actionsFor(rule.id)).toEqual([]);
+    });
+
+    it("lists channels with their dead time and switches one, with its action", async () => {
+      const settings = new PgChannelSettings(pool);
+      await settings.setEnabled("email", false, action("channel.switched_off", "email"));
+      const list = await settings.list();
+      expect(list.map((c) => c.channel)).toEqual(["telegram", "line", "discord", "email"]);
+      expect(list.find((c) => c.channel === "email")?.enabled).toBe(false);
+      expect(list.find((c) => c.channel === "discord")?.deadSince).toEqual(at(0));
+      expect(await actionsFor("email")).toEqual([{ action: "channel.switched_off", source: "web", detail: { demo: true } }]);
+      await settings.setEnabled("email", true, action("channel.switched_on", "email"));
+    });
+
+    it("keeps sessions by hash until they expire, and failed logins by time", async () => {
+      const sessions = new PgSessionStore(pool);
+      await sessions.create("hash-1", at(0), at(1000));
+      expect(await sessions.isValid("hash-1", at(999))).toBe(true);
+      expect(await sessions.isValid("hash-1", at(1000))).toBe(false);
+      expect(await sessions.isValid("hash-2", at(0))).toBe(false);
+      await sessions.remove("hash-1");
+      expect(await sessions.isValid("hash-1", at(0))).toBe(false);
+
+      await sessions.recordFailedLogin(at(-5000));
+      await sessions.recordFailedLogin(at(-1000));
+      expect(await sessions.failedLoginsSince(at(-2000))).toEqual([at(-1000)]);
+    });
+
+    it("returns decisions in a time range, newest first, with their attempts", async () => {
+      const rules = new PgRuleStore(pool);
+      const deliveries = new PgDeliveryLog(pool);
+      const rule = levelRule({ pair: "ATOM/THB" });
+      await rules.create(rule);
+      const early = decisionFor(rule.id, { decidedAt: at(10_000_000) });
+      const late = decisionFor(rule.id, { decidedAt: at(10_001_000) });
+      await rules.saveResult(rule.id, "fired", early);
+      await rules.saveResult(rule.id, "fired", late);
+      await deliveries.record(
+        { alertId: late.id, channel: "telegram", attempt: 1, status: "delivered", reason: null, at: at(10_001_500) },
+        rule.id,
+        null,
+      );
+      const found = await new PgAlertQuery(pool).decisions(at(10_000_000), at(10_002_000), 10);
+      expect(found.map((d) => d.decision.id)).toEqual([late.id, early.id]);
+      expect(found[0]?.decision).toEqual(late);
+      expect(found[0]?.attempts.map((a) => a.status)).toEqual(["delivered"]);
+      expect(found[1]?.attempts).toEqual([]);
+      expect(await new PgAlertQuery(pool).decisions(at(10_000_001), at(10_002_000), 1)).toHaveLength(1);
     });
   });
 

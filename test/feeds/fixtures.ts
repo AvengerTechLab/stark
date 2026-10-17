@@ -75,3 +75,44 @@ export const BINANCE_REST_PRICES = `[
 
 /** Demo: a price with more digits than a binary float can hold. */
 export const BITKUB_TICKER_LONG_PRICE = `{"stream":"market.ticker.thb_shib","id":9,"last":0.000012345678901234567}`;
+
+/** Bitkub rest-v3.md, "GET /api/v3/market/symbols" response, verbatim (one symbol). */
+export const BITKUB_SYMBOLS = `{
+  "error": 0,
+  "result": [
+    {
+      "base_asset": "BTC",
+      "base_asset_scale": 8,
+      "buy_price_gap_as_percent": 20,
+      "created_at": "2017-10-30T22:16:10+07:00",
+      "description": "Thai Baht to Bitcoin",
+      "freeze_buy": false,
+      "freeze_cancel": false,
+      "freeze_sell": false,
+      "market_segment": "SPOT",
+      "min_quote_size": 10,
+      "modified_at": "2025-05-20T16:48:04.599+07:00",
+      "name": "Bitcoin",
+      "pairing_id": 1,
+      "price_scale": 2,
+      "price_step": "0.01",
+      "quantity_scale": 0,
+      "quantity_step": "1",
+      "quote_asset": "THB",
+      "quote_asset_scale": 2,
+      "sell_price_gap_as_percent": 20,
+      "status": "active",
+      "symbol": "BTC_THB",
+      "source": "exchange"
+    }
+  ]
+}`;
+
+/** Binance rest-api.md, "Exchange information" response, trimmed to its symbols; ETHBTC changed to ETHUSDT (quote USDT). */
+export const BINANCE_EXCHANGE_INFO = `{
+  "timezone": "UTC",
+  "serverTime": 1565246363776,
+  "symbols": [
+    { "symbol": "ETHUSDT", "status": "TRADING", "baseAsset": "ETH", "quoteAsset": "USDT" }
+  ]
+}`;
