@@ -137,8 +137,8 @@ Google's rule for the OAuth app was read on 2026-10-17 in Google Cloud Platform 
   for sensitive or restricted scopes, and an app that shows that warning is capped at 100 new users in total.
 
 So the Google project behind Stark must be published "In production" before its refresh token is made. Otherwise email
-alerts stop after a week, and the health monitor's `token_refresh_failed` report is the only sign. Whether to accept the
-unverified warning or apply for verification is `SPEC.md` Q-34. That page does not say whether `gmail.send` counts as
+alerts stop after a week, and the health monitor's `token_refresh_failed` report is the only sign. The PO accepts the
+unverified warning and does not apply for verification (`SPEC.md` D-54). That page does not say whether `gmail.send` counts as
 sensitive; it was not read elsewhere.
 
 ### 2.3 What the success criteria imply
@@ -270,7 +270,7 @@ Results:
 
 The PO's machine reaches all three, so Binance does not block it (no `451`). WebSocket connections were not tested.
 
-### 8.1 Hosting preparation (S6-12; the choice is the PO's, Q-16)
+### 8.1 Hosting (S6-12; chosen by the PO in `SPEC.md` D-52)
 
 **The check.** On each candidate host, run `node scripts/hosting-check.mjs`. It needs Node.js 22 and nothing else.
 
@@ -285,7 +285,7 @@ The PO's machine reaches all three, so Binance does not block it (no `451`). Web
 | Always on; Linux recommended for the process; Node.js 22 | D-13, D-25 |
 | PostgreSQL 16 on the same host, reachable from localhost only | D-22, D-25 |
 | Outbound HTTPS and WSS to the provider and channel hosts in §2.1–2.2 and `src/channels/`; no inbound port | D-38 |
-| A way for the PO to reach the web page privately, which also gives HTTPS (Q-33) | D-38, `API.md` §1.1 |
+| A way for the PO to reach the web page privately, which also gives HTTPS (D-53: an SSH tunnel) | D-38, `API.md` §1.1 |
 | A supervisor that restarts Stark if it crashes | T-17 |
 | Time kept by NTP | T-14 |
 | Disk for about 4–6 GB of price log plus room to spare; `disk_low` warns below 20 % | `DATABASE.md` §2, T-23 |
@@ -307,5 +307,6 @@ The PO's machine reaches all three, so Binance does not block it (no `451`). Web
 | Binance reachable | Must pass the check. Cloud IP ranges can get `451` (§2.1) | Must pass the check, from the region chosen |
 | Backups (D-40) | A daily `pg_dump`, encrypted and copied off the host, still to be set up | Railway's own backups (not verified) |
 
-Recommendation, **PO to confirm**: a small Linux VPS in Asia, from the provider `ai-trading` uses, if it passes the check.
-It fits D-25 and D-38 as they are, and the systemd unit is ready for it.
+Decided (`SPEC.md` D-52): a small Linux VPS in Asia, from the provider `ai-trading` uses, on its own machine, if it passes
+the check. The PO reaches the web page through an SSH tunnel (D-53), and the Google project is published "In
+production" (D-54).

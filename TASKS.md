@@ -181,8 +181,14 @@ Tick a task only with evidence: the commit, the file created, or the command run
   - health never seeing channel outcomes
 
   The last two first survived; 2 tests were added. Gate A-1 waits for the PO's go-ahead (D-05).
-- [!] **S6-12. Hosting** (carried over from S5-6) — must be settled before the first deploy. Blocked on the PO
-  (Q-16 host and budget, Q-33 private access). Prepared on 2026-10-17, without choosing a host:
+- [!] **S6-12. Hosting** (carried over from S5-6) — must be settled before the first deploy.
+  - Decided on 2026-10-17:
+    - the host: a Linux VPS in Asia from `ai-trading`'s provider, on its own machine (D-52)
+    - the PO reaches the web page through an SSH tunnel (D-53)
+    - the Google project is published "In production" (D-54)
+  - Blocked on the PO: the machine itself, and a run of `scripts/hosting-check.mjs` on it. The budget stays open
+    under D-26.
+  - Prepared beforehand:
   - `scripts/hosting-check.mjs` is a read-only check to run on each candidate. It covers three REST calls and both
     WebSocket streams.
   - `deploy/stark.service` is a hardened systemd unit for a Linux host.
@@ -195,7 +201,7 @@ Tick a task only with evidence: the commit, the file created, or the command run
     (`support.google.com/cloud/answer/15549945`): a test user's authorization, and its refresh token, expire seven
     days from consent; `gmail.send` is not one of the exempt scopes.
   - `developers.google.com` is blocked from this session; the help page is Google's own.
-  - Recorded in `ARCHITECTURE.md` §2.2 and T-21. The publishing choice is `SPEC.md` Q-34, for the PO.
+  - Recorded in `ARCHITECTURE.md` §2.2 and T-21. The PO chose to publish "In production" and accept the warning (D-54).
 
 ## Next Phases (not started)
 

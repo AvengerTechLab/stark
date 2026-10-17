@@ -11,7 +11,7 @@ import { DEFAULT_QUOTAS, usagePeriod, type ChannelOutcome } from "./dispatcher.j
 
 /** A feed with no tick for this long is stale (EVENTS.md §2.4). */
 export const STALE_AFTER_MS = 60_000;
-/** A condition is reported once it has lasted this long, so a short gap stays quiet (proposed). */
+/** A condition is reported once it has lasted this long, so a short gap stays quiet (SPEC.md D-55). */
 export const REPORT_AFTER_MS = 5 * 60_000;
 /** Free disk below this share is `disk_low` (SECURITY.md T-23). */
 export const DISK_LOW_SHARE = 0.2;

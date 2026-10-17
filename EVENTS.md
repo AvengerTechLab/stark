@@ -116,7 +116,7 @@ A feed is stale after 60 s with no tick (proposed). The PO is told within 15 min
 channel failing (SC-3), through a channel other than the failing one. Recovery is reported once. `disk_low` is raised
 when free disk on the host falls below 20 % (proposed, `SECURITY.md` T-23).
 
-How the monitor applies this (`src/app/health.ts`; timings proposed, **PO to confirm**):
+How the monitor applies this (`src/app/health.ts`; timings decided in `SPEC.md` D-55):
 
 | Condition | Starts when | Reported |
 |---|---|---|
@@ -199,7 +199,7 @@ A new or re-enabled rule starts `armed`. If its condition is already true on its
 | `change` BTC/USDT, 5 %, 60 min, `up`; price 60 min earlier 100 | 104 → 105 → 106 | Fires at 105 (+5.00 %); nothing at 106 |
 | `change` as above, Stark started 10 min ago | any | Nothing: no reference price yet |
 
-### 2.5 Health messages (proposed wording, **PO to confirm**)
+### 2.5 Health messages (wording decided in `SPEC.md` D-55)
 
 Plain text in Thai, like the alerts (§4). The times are in Thai time.
 
