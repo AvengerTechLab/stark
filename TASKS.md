@@ -205,10 +205,17 @@ Tick a task only with evidence: the commit, the file created, or the command run
     days from consent; `gmail.send` is not one of the exempt scopes.
   - `developers.google.com` is blocked from this session; the help page is Google's own.
   - Recorded in `ARCHITECTURE.md` §2.2 and T-21. The PO chose to publish "In production" and accept the warning (D-54).
-- [~] **S6-14. Server setup** — `deploy/SETUP.md`, run by the PO on the D-56 machine: SSH key login only, firewall,
+- [x] **S6-14. Server setup** — `deploy/SETUP.md`, run by the PO on the D-56 machine: SSH key login only, firewall,
   automatic security updates, NTP, PostgreSQL 16 on localhost only, the `stark` user and `/etc/stark`
   (`SECURITY.md` T-12, T-14; D-25). Stark is installed but not started with real channels until gate A-1 passes.
   Open for the PO: which uptime monitor receives the heartbeat (D-43) and where the off-host backups go (D-40).
+  - Evidence: the PO ran every step with Claude on 2026-10-19 and sent each check's output: password login off
+    (`passwordauthentication no`, `permitrootlogin without-password`), only `22/tcp` allowed in by `ufw`,
+    unattended-upgrades enabled, clock synchronised by NTP, PostgreSQL 16 listening on `127.0.0.1:5432` only with a
+    `stark` database owned by `stark`, `/etc/stark` mode 700, `dist/index.js` built in `/opt/stark` and owned by root,
+    and `stark.service` loaded, disabled and inactive. Not seen: the output of `id stark`.
+  - The machine needed what the guide did not have: `ufw` was not installed, and `apt-get upgrade` asked about
+    console-setup and grub-pc. `deploy/SETUP.md` now covers both.
 
 ## Next Phases (not started)
 
