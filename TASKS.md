@@ -181,15 +181,16 @@ Tick a task only with evidence: the commit, the file created, or the command run
   - health never seeing channel outcomes
 
   The last two first survived; 2 tests were added. Gate A-1 waits for the PO's go-ahead (D-05).
-- [!] **S6-12. Hosting** (carried over from S5-6) — must be settled before the first deploy.
+- [x] **S6-12. Hosting** (carried over from S5-6) — must be settled before the first deploy.
   - Decided on 2026-10-17:
     - the host: a Linux VPS in Asia from `ai-trading`'s provider, on its own machine (D-52)
     - the PO reaches the web page through an SSH tunnel (D-53)
     - the Google project is published "In production" (D-54)
   - Decided on 2026-10-19: the machine is a VisperHost "Cloud VPS 02" in Bangkok, rented month to month, not shared
     with the PO's POS project (D-56, which replaces the provider in D-52).
-  - Blocked on the PO: renting the machine and a run of `scripts/hosting-check.mjs` on it. The budget stays open under
-    D-26.
+  - Evidence: the PO rented the machine on 2026-10-19 (Ubuntu 24.04 LTS, 59 GB disk) and ran
+    `scripts/hosting-check.mjs` on it: all five checks passed (`ARCHITECTURE.md` §8). The budget stays open under D-26.
+  - Next: S6-14.
   - Prepared beforehand:
   - `scripts/hosting-check.mjs` is a read-only check to run on each candidate. It covers three REST calls and both
     WebSocket streams.
@@ -204,6 +205,10 @@ Tick a task only with evidence: the commit, the file created, or the command run
     days from consent; `gmail.send` is not one of the exempt scopes.
   - `developers.google.com` is blocked from this session; the help page is Google's own.
   - Recorded in `ARCHITECTURE.md` §2.2 and T-21. The PO chose to publish "In production" and accept the warning (D-54).
+- [~] **S6-14. Server setup** — `deploy/SETUP.md`, run by the PO on the D-56 machine: SSH key login only, firewall,
+  automatic security updates, NTP, PostgreSQL 16 on localhost only, the `stark` user and `/etc/stark`
+  (`SECURITY.md` T-12, T-14; D-25). Stark is installed but not started with real channels until gate A-1 passes.
+  Open for the PO: which uptime monitor receives the heartbeat (D-43) and where the off-host backups go (D-40).
 
 ## Next Phases (not started)
 

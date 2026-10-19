@@ -270,6 +270,17 @@ Results:
 
 The PO's machine reaches all three, so Binance does not block it (no `451`). WebSocket connections were not tested.
 
+`scripts/hosting-check.mjs` on the chosen host (`SPEC.md` D-56), run by the PO on 2026-10-19 (Ubuntu 24.04 LTS,
+Node.js 22 from NodeSource). All five checks passed:
+
+| Check | Result |
+|---|---|
+| Bitkub ticker (REST) | `200` in 0.27 s |
+| Binance market-data ticker (REST) | `200` in 0.43 s |
+| Binance exchange info (REST) | `200` in 0.35 s |
+| Bitkub ticker stream (WebSocket) | first message after 0.16 s |
+| Binance trade stream (WebSocket) | first message after 1.36 s |
+
 ### 8.1 Hosting (S6-12; chosen by the PO in `SPEC.md` D-52 and D-56)
 
 **The check.** On each candidate host, run `node scripts/hosting-check.mjs`. It needs Node.js 22 and nothing else.
