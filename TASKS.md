@@ -186,8 +186,10 @@ Tick a task only with evidence: the commit, the file created, or the command run
     - the host: a Linux VPS in Asia from `ai-trading`'s provider, on its own machine (D-52)
     - the PO reaches the web page through an SSH tunnel (D-53)
     - the Google project is published "In production" (D-54)
-  - Blocked on the PO: the machine itself, and a run of `scripts/hosting-check.mjs` on it. The budget stays open
-    under D-26.
+  - Decided on 2026-10-19: the machine is a VisperHost "Cloud VPS 02" in Bangkok, rented month to month, not shared
+    with the PO's POS project (D-56, which replaces the provider in D-52).
+  - Blocked on the PO: renting the machine and a run of `scripts/hosting-check.mjs` on it. The budget stays open under
+    D-26.
   - Prepared beforehand:
   - `scripts/hosting-check.mjs` is a read-only check to run on each candidate. It covers three REST calls and both
     WebSocket streams.

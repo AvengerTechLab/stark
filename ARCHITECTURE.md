@@ -270,7 +270,7 @@ Results:
 
 The PO's machine reaches all three, so Binance does not block it (no `451`). WebSocket connections were not tested.
 
-### 8.1 Hosting (S6-12; chosen by the PO in `SPEC.md` D-52)
+### 8.1 Hosting (S6-12; chosen by the PO in `SPEC.md` D-52 and D-56)
 
 **The check.** On each candidate host, run `node scripts/hosting-check.mjs`. It needs Node.js 22 and nothing else.
 
@@ -307,6 +307,7 @@ The PO's machine reaches all three, so Binance does not block it (no `451`). Web
 | Binance reachable | Must pass the check. Cloud IP ranges can get `451` (§2.1) | Must pass the check, from the region chosen |
 | Backups (D-40) | A daily `pg_dump`, encrypted and copied off the host, still to be set up | Railway's own backups (not verified) |
 
-Decided (`SPEC.md` D-52): a small Linux VPS in Asia, from the provider `ai-trading` uses, on its own machine, if it passes
-the check. The PO reaches the web page through an SSH tunnel (D-53), and the Google project is published "In
-production" (D-54).
+Decided (`SPEC.md` D-52): a small Linux VPS in Asia, on its own machine, if it passes the check. The machine is a
+VisperHost "Cloud VPS 02" in Bangkok (D-56, which replaces D-52's "the provider `ai-trading` uses"). It is not shared
+with the PO's POS project, which must open ports 80 and 443 while Stark opens none. The PO reaches the web page
+through an SSH tunnel (D-53), and the Google project is published "In production" (D-54).
