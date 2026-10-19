@@ -1,9 +1,10 @@
-# systemd unit for Stark on a Linux host (ARCHITECTURE.md §8). Proposed for the Linux VPS option only;
-# the host itself is a PO decision (TASKS.md S6-12). Install as /etc/systemd/system/stark.service.
+# systemd unit for Stark on a Linux host (ARCHITECTURE.md §8), on the machine chosen in SPEC.md D-56.
+# Install as /etc/systemd/system/stark.service; deploy/SETUP.md has the steps.
 #
 # Expects:
 #   - a system user "stark" with no login shell
-#   - the built app in /opt/stark (npm ci --omit=dev && npm run build)
+#   - the built app in /opt/stark (npm ci && npm run build && npm prune --omit=dev; the build needs the
+#     dev dependencies)
 #   - secrets in /etc/stark/stark.env, owned by root, mode 0600, holding the names in .env.example
 #   - PostgreSQL on the same host, listening on localhost only (SPEC.md D-25)
 
