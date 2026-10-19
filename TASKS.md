@@ -208,12 +208,14 @@ Tick a task only with evidence: the commit, the file created, or the command run
 - [x] **S6-14. Server setup** — `deploy/SETUP.md`, run by the PO on the D-56 machine: SSH key login only, firewall,
   automatic security updates, NTP, PostgreSQL 16 on localhost only, the `stark` user and `/etc/stark`
   (`SECURITY.md` T-12, T-14; D-25). Stark is installed but not started with real channels until gate A-1 passes.
-  Open for the PO: which uptime monitor receives the heartbeat (D-43) and where the off-host backups go (D-40).
+  Open for the PO: where the off-host backups go (D-40). The uptime monitor is Healthchecks.io (D-57); its check
+  and `HEARTBEAT_URL` are not set up yet.
   - Evidence: the PO ran every step with Claude on 2026-10-19 and sent each check's output: password login off
     (`passwordauthentication no`, `permitrootlogin without-password`), only `22/tcp` allowed in by `ufw`,
     unattended-upgrades enabled, clock synchronised by NTP, PostgreSQL 16 listening on `127.0.0.1:5432` only with a
     `stark` database owned by `stark`, `/etc/stark` mode 700, `dist/index.js` built in `/opt/stark` and owned by root,
-    and `stark.service` loaded, disabled and inactive. Not seen: the output of `id stark`.
+    and `stark.service` loaded, disabled and inactive. `id stark` (sent by the PO later on 2026-10-19):
+    `uid=999(stark) gid=988(stark) groups=988(stark)`, a system user in its own group only (no `sudo`, no `adm`).
   - The machine needed what the guide did not have: `ufw` was not installed, and `apt-get upgrade` asked about
     console-setup and grub-pc. `deploy/SETUP.md` now covers both.
 
@@ -236,6 +238,13 @@ Detailed tasks are written when the phase becomes current. Order from the standa
   deprecated Node.js 20 and are forced onto Node.js 24 (seen on the S6-6 CI run, 2026-10-16). Move to their current
   major versions in a CI change of their own.
 
+- [ ] **The D-56 machine cannot reach Hetzner, so the D-57 monitor cannot receive its heartbeat.** Checked by the PO
+  on 2026-10-19: TCP 80 and 443 to `hc-ping.com` (159.69.66.229, 178.63.26.145), `healthchecks.io` and
+  `www.hetzner.com` time out, while `api.bitkub.com`, `www.google.de`, `vercel.com` and `railway.com` answer;
+  `ufw` allows all outgoing. Tracepath goes through NTT (129.250.x.x) and gets no reply after hop 10. Asking
+  VisperHost is with the PO. The PO is considering an AvengerTech-wide uptime tool of their own (on Railway or
+  Vercel, both reachable) instead; it would be its own project, and Stark only needs its URL as `HEARTBEAT_URL`
+  (push, no inbound port: D-38). PO to decide; it also bears on D-40.
 - [ ] **`tdd` skill not copied.** The avengertech copy's "AvengerTech" section is specific to that repo. Copying it
   means reading avengertech, which the PO asked this session not to touch; the PO decides when.
 - [ ] **MSAP V1.0 path in `AvengerTechLab/avengertech` not confirmed** (`SPEC.md` D-03). The PO supplied the file in
