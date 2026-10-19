@@ -308,6 +308,6 @@ The PO's machine reaches all three, so Binance does not block it (no `451`). Web
 | Backups (D-40) | A daily `pg_dump`, encrypted and copied off the host, still to be set up | Railway's own backups (not verified) |
 
 Decided (`SPEC.md` D-52): a small Linux VPS in Asia, on its own machine, if it passes the check. The machine is a
-ThaiEasyVPS "VPS-MINI" in Thailand (D-56, which replaces D-52's "the provider `ai-trading` uses"), separate from the
-PO's POS machine, which must open ports 80 and 443 while Stark opens none. The PO reaches the web page through an SSH tunnel (D-53), and the Google project is published "In
-production" (D-54).
+ThaiEasyVPS "VPS-MINI" in Thailand (D-56, which replaces D-52's "the provider `ai-trading` uses"). It is not shared
+with the PO's POS project, which must open ports 80 and 443 while Stark opens none. The PO reaches the web page
+through an SSH tunnel (D-53), and the Google project is published "In production" (D-54).
