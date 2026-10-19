@@ -208,7 +208,8 @@ Tick a task only with evidence: the commit, the file created, or the command run
 - [x] **S6-14. Server setup** — `deploy/SETUP.md`, run by the PO on the D-56 machine: SSH key login only, firewall,
   automatic security updates, NTP, PostgreSQL 16 on localhost only, the `stark` user and `/etc/stark`
   (`SECURITY.md` T-12, T-14; D-25). Stark is installed but not started with real channels until gate A-1 passes.
-  Open for the PO: which uptime monitor receives the heartbeat (D-43) and where the off-host backups go (D-40).
+  Open for the PO: where the off-host backups go (D-40). The uptime monitor is Healthchecks.io (D-57); its check
+  and `HEARTBEAT_URL` are not set up yet.
   - Evidence: the PO ran every step with Claude on 2026-10-19 and sent each check's output: password login off
     (`passwordauthentication no`, `permitrootlogin without-password`), only `22/tcp` allowed in by `ufw`,
     unattended-upgrades enabled, clock synchronised by NTP, PostgreSQL 16 listening on `127.0.0.1:5432` only with a
