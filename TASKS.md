@@ -213,7 +213,8 @@ Tick a task only with evidence: the commit, the file created, or the command run
     (`passwordauthentication no`, `permitrootlogin without-password`), only `22/tcp` allowed in by `ufw`,
     unattended-upgrades enabled, clock synchronised by NTP, PostgreSQL 16 listening on `127.0.0.1:5432` only with a
     `stark` database owned by `stark`, `/etc/stark` mode 700, `dist/index.js` built in `/opt/stark` and owned by root,
-    and `stark.service` loaded, disabled and inactive. Not seen: the output of `id stark`.
+    and `stark.service` loaded, disabled and inactive. `id stark` (sent by the PO later on 2026-10-19):
+    `uid=999(stark) gid=988(stark) groups=988(stark)`, a system user in its own group only (no `sudo`, no `adm`).
   - The machine needed what the guide did not have: `ufw` was not installed, and `apt-get upgrade` asked about
     console-setup and grub-pc. `deploy/SETUP.md` now covers both.
 
