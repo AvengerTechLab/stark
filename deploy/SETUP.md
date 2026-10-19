@@ -55,9 +55,19 @@ vps# [ -f /var/run/reboot-required ] && reboot
 
 ตอน `dpkg-reconfigure` ให้ตอบ **Yes** ส่วนข้อความ "New release '26.04' available" ไม่ต้องทำตาม ให้อยู่ที่ 24.04 LTS
 
+ระหว่าง `apt-get -y upgrade` อาจมีหน้าจอถามขึ้นมา (พบบนเครื่อง D-56 เมื่อ 2026-10-19):
+
+- **Configuring console-setup** (ฟอนต์ของ console): กด Enter รับค่าที่เลือกไว้ ไม่มีผลกับ Stark
+- **Configuring grub-pc** (ตัวบูตเครื่อง): กด Space ให้ `/dev/sda` เป็น `[*]` อย่าเลือก `/dev/sda1` แล้ว Tab ไป `<Ok>`
+  ถ้าเลือกผิด เครื่องอาจบูตไม่ขึ้นหลัง reboot
+- ข้อความ "Service restarts being deferred" หรือ "outdated binaries" เป็นเรื่องปกติ หายไปหลัง reboot
+
 ## 3. Firewall: เปิดแค่ SSH (D-38)
 
+VisperHost ไม่ได้ติดตั้ง `ufw` มาให้ ให้ติดตั้งจาก apt ก่อน (ไม่ใช้ snap):
+
 ```
+vps# apt-get install -y ufw
 vps# ufw default deny incoming
 vps# ufw default allow outgoing
 vps# ufw allow OpenSSH
