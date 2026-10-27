@@ -252,11 +252,11 @@ Detailed tasks are written when the phase becomes current. Order from the standa
   on 2026-10-27 all three answered (301, 200, 200) and a manual ping reached the D-57 check (logged by Healthchecks
   at 17:21 as "HTTPS GET from 143.14.11.53"). An AvengerTech-wide uptime tool of the PO's own is being discovered
   in a separate session; Stark would only need its URL as `HEARTBEAT_URL` (push, no inbound port: D-38).
-- [ ] **The D-57 check's Down alert was not received.** After the manual ping at 17:21 on 2026-10-27, neither
-  Telegram nor email brought a Down alert (both integrations' test messages had arrived on 2026-10-19). The PO set
-  it aside for now. Not yet looked into: whether the check reached Down, and whether both integrations are on for
-  the check. Must work before Stark runs with real channels: it is the only report of Stark itself being down
-  (`SECURITY.md` T-17).
+- [x] **The D-57 check's Down alert.** After the manual ping at 17:21 on 2026-10-27 the PO first saw no alert; it had
+  arrived, at 17:36 (Period 5 minutes plus Grace 10 minutes), in the Telegram group "Stark" that the Healthchecks
+  integration posts to, not the PO's private chat. Evidence: the PO's screenshot of that group ("The check Stark is
+  DOWN … Total Pings: 1 … Last Ping: Success, 15 minutes ago", 17:36), and the PO confirmed the email alert arrived
+  too. The check was then paused (`deploy/SETUP.md` §9 step 7); Stark's first ping resumes it.
 - [ ] **`tdd` skill not copied.** The avengertech copy's "AvengerTech" section is specific to that repo. Copying it
   means reading avengertech, which the PO asked this session not to touch; the PO decides when.
 - [ ] **MSAP V1.0 path in `AvengerTechLab/avengertech` not confirmed** (`SPEC.md` D-03). The PO supplied the file in
