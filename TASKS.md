@@ -208,8 +208,8 @@ Tick a task only with evidence: the commit, the file created, or the command run
 - [x] **S6-14. Server setup** — `deploy/SETUP.md`, run by the PO on the D-56 machine: SSH key login only, firewall,
   automatic security updates, NTP, PostgreSQL 16 on localhost only, the `stark` user and `/etc/stark`
   (`SECURITY.md` T-12, T-14; D-25). Stark is installed but not started with real channels until gate A-1 passes.
-  Open for the PO: where the off-host backups go (D-40). The uptime monitor is Healthchecks.io (D-57); its check
-  and `HEARTBEAT_URL` are not set up yet.
+  The uptime monitor is Healthchecks.io (D-57); its check and `HEARTBEAT_URL` are not set up yet. The off-host
+  backups go to Cloudflare R2 with restic (D-58), built in S6-15.
   - Evidence: the PO ran every step with Claude on 2026-10-19 and sent each check's output: password login off
     (`passwordauthentication no`, `permitrootlogin without-password`), only `22/tcp` allowed in by `ufw`,
     unattended-upgrades enabled, clock synchronised by NTP, PostgreSQL 16 listening on `127.0.0.1:5432` only with a
@@ -218,6 +218,11 @@ Tick a task only with evidence: the commit, the file created, or the command run
     `uid=999(stark) gid=988(stark) groups=988(stark)`, a system user in its own group only (no `sudo`, no `adm`).
   - The machine needed what the guide did not have: `ufw` was not installed, and `apt-get upgrade` asked about
     console-setup and grub-pc. `deploy/SETUP.md` now covers both.
+- [ ] **S6-15. Daily encrypted off-host backup** — D-40, D-58: a daily `pg_dump` of the `stark` database, backed up
+  with restic to Cloudflare R2 and pruned to 35 days, run by a systemd timer; a restore guide, and one real restore
+  to prove the backup works. Steps, one at a time: the PO creates the R2 bucket and an API token scoped to it; the
+  script and units are written test-first; the PO installs them; one backup and one restore are run and their output
+  sent. The R2 keys and the restic password live only on the VPS, never in chat or the repository.
 
 ## Next Phases (not started)
 

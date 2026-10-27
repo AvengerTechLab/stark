@@ -76,7 +76,7 @@ Likelihood and impact are design judgements for one user and one host, not measu
 |---|---|
 | `SPEC.md` D-38 | The web page is reachable only through a private network; no inbound port |
 | D-39 | No second login factor in v1.0; TOTP first if the page ever becomes public |
-| D-40 | Daily encrypted off-host database backups, kept 35 days |
+| D-40 | Daily encrypted off-host database backups, kept 35 days; to Cloudflare R2 with restic (D-58) |
 | D-41 | Gmail OAuth with the send-only scope |
 | D-42 | Each rule sends at most once per channel per 5 minutes; decisions are still stored |
 | D-43 | Heartbeat to an uptime monitor outside the host |
