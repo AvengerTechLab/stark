@@ -234,9 +234,11 @@ Detailed tasks are written when the phase becomes current. Order from the standa
 
 ## Discovered Work
 
-- [ ] **CI actions on Node.js 20.** GitHub warns that `actions/checkout@v4` and `actions/setup-node@v4` target the
-  deprecated Node.js 20 and are forced onto Node.js 24 (seen on the S6-6 CI run, 2026-10-16). Move to their current
-  major versions in a CI change of their own.
+- [~] **CI actions on Node.js 20.** GitHub warns that `actions/checkout@v4` and `actions/setup-node@v4` target the
+  deprecated Node.js 20 and are forced onto Node.js 24 (seen on the S6-6 CI run, 2026-10-16). Moved to `@v7`, the
+  current major of each (2026-10-27): both run on `node24` (their `action.yml`). checkout v7 only changes
+  `pull_request_target` and `workflow_run`, and setup-node v7 only `registry-url` without `NODE_AUTH_TOKEN`; this
+  workflow uses neither. `cache: npm` stays explicit. Tick once CI is green on it.
 
 - [x] **The D-56 machine could not reach Hetzner.** Checked by the PO on 2026-10-19: TCP 80 and 443 to `hc-ping.com`
   (159.69.66.229, 178.63.26.145), `healthchecks.io` and `www.hetzner.com` timed out, while `api.bitkub.com`,
