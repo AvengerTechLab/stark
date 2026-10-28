@@ -316,7 +316,7 @@ Node.js 22 from NodeSource). All five checks passed:
 | No public web page (D-38) | Yes: nothing listens publicly | A web service is usually given a public domain; Stark's must not be (not verified) |
 | Supervisor | systemd (`deploy/stark.service`) | Railway restarts the process (not verified) |
 | Binance reachable | Must pass the check. Cloud IP ranges can get `451` (§2.1) | Must pass the check, from the region chosen |
-| Backups (D-40) | A daily `pg_dump`, encrypted and copied off the host, still to be set up | Railway's own backups (not verified) |
+| Backups (D-40) | A daily `pg_dump`, encrypted by restic and copied to Cloudflare R2 (D-58), still to be set up | Railway's own backups (not verified) |
 
 Decided (`SPEC.md` D-52): a small Linux VPS in Asia, on its own machine, if it passes the check. The machine is a
 VisperHost "Cloud VPS 02" in Bangkok (D-56, which replaces D-52's "the provider `ai-trading` uses"). It is not shared

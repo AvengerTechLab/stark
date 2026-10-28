@@ -208,8 +208,8 @@ Tick a task only with evidence: the commit, the file created, or the command run
 - [x] **S6-14. Server setup** — `deploy/SETUP.md`, run by the PO on the D-56 machine: SSH key login only, firewall,
   automatic security updates, NTP, PostgreSQL 16 on localhost only, the `stark` user and `/etc/stark`
   (`SECURITY.md` T-12, T-14; D-25). Stark is installed but not started with real channels until gate A-1 passes.
-  Open for the PO: where the off-host backups go (D-40). The uptime monitor is Healthchecks.io (D-57); its check
-  and `HEARTBEAT_URL` are not set up yet.
+  The uptime monitor is Healthchecks.io (D-57); its check and `HEARTBEAT_URL` are not set up yet. The off-host
+  backups go to Cloudflare R2 with restic (D-58), built in S6-15.
   - Evidence: the PO ran every step with Claude on 2026-10-19 and sent each check's output: password login off
     (`passwordauthentication no`, `permitrootlogin without-password`), only `22/tcp` allowed in by `ufw`,
     unattended-upgrades enabled, clock synchronised by NTP, PostgreSQL 16 listening on `127.0.0.1:5432` only with a
@@ -218,6 +218,11 @@ Tick a task only with evidence: the commit, the file created, or the command run
     `uid=999(stark) gid=988(stark) groups=988(stark)`, a system user in its own group only (no `sudo`, no `adm`).
   - The machine needed what the guide did not have: `ufw` was not installed, and `apt-get upgrade` asked about
     console-setup and grub-pc. `deploy/SETUP.md` now covers both.
+- [ ] **S6-15. Daily encrypted off-host backup** — D-40, D-58: a daily `pg_dump` of the `stark` database, backed up
+  with restic to Cloudflare R2 and pruned to 35 days, run by a systemd timer; a restore guide, and one real restore
+  to prove the backup works. Steps, one at a time: the PO creates the R2 bucket and an API token scoped to it; the
+  script and units are written test-first; the PO installs them; one backup and one restore are run and their output
+  sent. The R2 keys and the restic password live only on the VPS, never in chat or the repository.
 
 ## Next Phases (not started)
 
@@ -234,17 +239,24 @@ Detailed tasks are written when the phase becomes current. Order from the standa
 
 ## Discovered Work
 
-- [ ] **CI actions on Node.js 20.** GitHub warns that `actions/checkout@v4` and `actions/setup-node@v4` target the
-  deprecated Node.js 20 and are forced onto Node.js 24 (seen on the S6-6 CI run, 2026-10-16). Move to their current
-  major versions in a CI change of their own.
+- [x] **CI actions on Node.js 20.** GitHub warns that `actions/checkout@v4` and `actions/setup-node@v4` target the
+  deprecated Node.js 20 and are forced onto Node.js 24 (seen on the S6-6 CI run, 2026-10-16). Moved to `@v7`, the
+  current major of each (2026-10-27): both run on `node24` (their `action.yml`). checkout v7 only changes
+  `pull_request_target` and `workflow_run`, and setup-node v7 only `registry-url` without `NODE_AUTH_TOKEN`; this
+  workflow uses neither. `cache: npm` stays explicit. Evidence: CI green on AvengerTechLab/stark#16 at `7ada4c3` (Actions run
+  40490413793, 2026-10-27): both actions ran at v7, 268 tests passed with PostgreSQL.
 
-- [ ] **The D-56 machine cannot reach Hetzner, so the D-57 monitor cannot receive its heartbeat.** Checked by the PO
-  on 2026-10-19: TCP 80 and 443 to `hc-ping.com` (159.69.66.229, 178.63.26.145), `healthchecks.io` and
-  `www.hetzner.com` time out, while `api.bitkub.com`, `www.google.de`, `vercel.com` and `railway.com` answer;
-  `ufw` allows all outgoing. Tracepath goes through NTT (129.250.x.x) and gets no reply after hop 10. Asking
-  VisperHost is with the PO. The PO is considering an AvengerTech-wide uptime tool of their own (on Railway or
-  Vercel, both reachable) instead; it would be its own project, and Stark only needs its URL as `HEARTBEAT_URL`
-  (push, no inbound port: D-38). PO to decide; it also bears on D-40.
+- [x] **The D-56 machine could not reach Hetzner.** Checked by the PO on 2026-10-19: TCP 80 and 443 to `hc-ping.com`
+  (159.69.66.229, 178.63.26.145), `healthchecks.io` and `www.hetzner.com` timed out, while `api.bitkub.com`,
+  `www.google.de`, `vercel.com` and `railway.com` answered, with `ufw` allowing all outgoing. VisperHost fixed it;
+  on 2026-10-27 all three answered (301, 200, 200) and a manual ping reached the D-57 check (logged by Healthchecks
+  at 17:21 as "HTTPS GET from 143.14.11.53"). An AvengerTech-wide uptime tool of the PO's own is being discovered
+  in a separate session; Stark would only need its URL as `HEARTBEAT_URL` (push, no inbound port: D-38).
+- [x] **The D-57 check's Down alert.** After the manual ping at 17:21 on 2026-10-27 the PO first saw no alert; it had
+  arrived, at 17:36 (Period 5 minutes plus Grace 10 minutes), in the Telegram group "Stark" that the Healthchecks
+  integration posts to, not the PO's private chat. Evidence: the PO's screenshot of that group ("The check Stark is
+  DOWN … Total Pings: 1 … Last Ping: Success, 15 minutes ago", 17:36), and the PO confirmed the email alert arrived
+  too. The check was then paused (`deploy/SETUP.md` §9 step 7); Stark's first ping resumes it.
 - [ ] **`tdd` skill not copied.** The avengertech copy's "AvengerTech" section is specific to that repo. Copying it
   means reading avengertech, which the PO asked this session not to touch; the PO decides when.
 - [ ] **MSAP V1.0 path in `AvengerTechLab/avengertech` not confirmed** (`SPEC.md` D-03). The PO supplied the file in
