@@ -93,4 +93,5 @@ alert. This threat model is a design review, not an MSAP audit; A-1 checks the c
 | No control is implemented yet | Phase 5 (secrets, logging, CI, host) and Phase 6 (interface and feeds), with tests |
 | Host hardening steps depend on the host | S3-4 hosting choice |
 | ~~Which uptime monitor receives the heartbeat (D-43)~~ Healthchecks.io (D-57, 2026-10-19) | Closed |
+| Whoever takes over the VPS can also delete the backups: the R2 token must delete to prune (D-58) | Open; options to be put to the PO (`TASKS.md` Discovered Work) |
 | ~~Google's 7-day refresh token rule (T-21) not read from the primary source~~ Read 2026-10-17 (S6-13) | Closed |
