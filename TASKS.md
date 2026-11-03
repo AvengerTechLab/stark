@@ -239,7 +239,7 @@ Tick a task only with evidence: the commit, the file created, or the command run
     repository `856890517f`; the second Healthchecks check "Stark backup" (1 day, grace 2 hours) set as
     `BACKUP_HEARTBEAT_URL`.
   - First run through `stark-backup.service`: `backup.completed`, snapshot `f0d8fccc`, 707 bytes processed, pruned
-    and checked, 12 s, no `backup.heartbeat_failed`; `runuser` and pg_dump work under the unit's hardening.
+    and checked, 12 s, no `backup.heartbeat_failed`, and the PO saw the "Stark backup" check go new ➔ up at 16:23; `runuser` and pg_dump work under the unit's hardening.
   - Restore test: `restic snapshots` listed `f0d8fccc`; `restic restore` brought back 707 B; it loaded into
     `stark_restore_test` with `ON_ERROR_STOP`; `\dt` showed no tables, as Stark has not run yet; the test database
     was dropped.
