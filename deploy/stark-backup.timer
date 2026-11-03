@@ -1,0 +1,12 @@
+# Starts deploy/stark-backup.service every day at 03:30 Bangkok time (SPEC.md D-58). Persistent=true runs
+# a missed backup as soon as the machine is back up. Install as /etc/systemd/system/stark-backup.timer.
+
+[Unit]
+Description=Run the Stark backup daily at 03:30 Bangkok time
+
+[Timer]
+OnCalendar=*-*-* 03:30:00 Asia/Bangkok
+Persistent=true
+
+[Install]
+WantedBy=timers.target

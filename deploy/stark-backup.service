@@ -1,0 +1,31 @@
+# systemd unit for Stark's daily off-host backup (SPEC.md D-40, D-58; TASKS.md S6-15). Started by
+# deploy/stark-backup.timer. Install as /etc/systemd/system/stark-backup.service; steps in deploy/BACKUP.md.
+#
+# Expects:
+#   - restic from Ubuntu's apt
+#   - the built app in /opt/stark (dist/backup/main.js)
+#   - /etc/stark/backup.env and /etc/stark/restic-password, owned by root, mode 0600
+#
+# Runs as root: it reads root-only secrets, and runs pg_dump as the postgres user through runuser.
+
+[Unit]
+Description=Stark daily database backup to Cloudflare R2
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/stark/backup.env
+Environment=RESTIC_CACHE_DIR=/var/cache/stark-backup
+ExecStart=/usr/bin/node /opt/stark/dist/backup/main.js
+# The dump is written to /var/lib/stark-backup and removed after each run; restic keeps its cache apart.
+StateDirectory=stark-backup
+StateDirectoryMode=0700
+CacheDirectory=stark-backup
+CacheDirectoryMode=0700
+StandardOutput=journal
+StandardError=journal
+NoNewPrivileges=yes
+ProtectSystem=full
+ProtectHome=yes
+PrivateTmp=yes
