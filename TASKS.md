@@ -222,7 +222,19 @@ Tick a task only with evidence: the commit, the file created, or the command run
   with restic to Cloudflare R2 and pruned to 35 days, run by a systemd timer; a restore guide, and one real restore
   to prove the backup works. Steps, one at a time: the PO creates the R2 bucket and an API token scoped to it; the
   script and units are written test-first; the PO installs them; one backup and one restore are run and their output
-  sent. The R2 keys and the restic password live only on the VPS, never in chat or the repository.
+  sent. The R2 keys and the restic password live only on the VPS and in the PO's password manager, never in chat or
+  the repository.
+  - Done 2026-11-03: the PO turned R2 on (card on file, $0 a month within the free tier), created the bucket
+    `stark-backup` (Standard class, location Automatic: Asia Pacific) and an Object Read & Write token scoped to it.
+  - Built (design accepted by the PO, "ตามคำแนะนำ"): `src/backup/` runs pg_dump to a root-only file, `restic backup`,
+    `restic forget --keep-within 35d --prune`, `restic check`, then pings a second Healthchecks check ("Stark
+    backup", `/fail` on any failed step); `deploy/stark-backup.service` and `.timer` (03:30 Bangkok time,
+    Persistent); `deploy/BACKUP.md` (install, first run, restore test, rebuilding on a new machine). Control run:
+    10 mutations (a failed dump backed up, prune after a failed backup, 30 days, no `/fail`, prune or check failure
+    ignored, no summary accepted, secrets not redacted, dump left on disk, dump readable by all, plain-HTTP
+    repository) each turn a test red.
+  - Still to do: the PO installs it on the VPS, sends the first run's journal and the restore test's output. Until
+    Stark has run once the database has no tables, so the restore is repeated after Stark starts.
 
 ## Next Phases (not started)
 
@@ -257,6 +269,10 @@ Detailed tasks are written when the phase becomes current. Order from the standa
   integration posts to, not the PO's private chat. Evidence: the PO's screenshot of that group ("The check Stark is
   DOWN … Total Pings: 1 … Last Ping: Success, 15 minutes ago", 17:36), and the PO confirmed the email alert arrived
   too. The check was then paused (`deploy/SETUP.md` §9 step 7); Stark's first ping resumes it.
+- [ ] **Backups can be deleted from the VPS.** The R2 token is Object Read & Write because `restic forget --prune`
+  deletes; whoever takes over the VPS holds it and can delete every backup (`SECURITY.md` gap, D-58). Options to put
+  to the PO: an R2 bucket lock rule (objects cannot be deleted for N days; prune then needs a longer window), a
+  second, read-only copy, or pruning from another machine with its own token. Not started.
 - [ ] **`tdd` skill not copied.** The avengertech copy's "AvengerTech" section is specific to that repo. Copying it
   means reading avengertech, which the PO asked this session not to touch; the PO decides when.
 - [ ] **MSAP V1.0 path in `AvengerTechLab/avengertech` not confirmed** (`SPEC.md` D-03). The PO supplied the file in
