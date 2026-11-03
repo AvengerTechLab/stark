@@ -218,7 +218,7 @@ Tick a task only with evidence: the commit, the file created, or the command run
     `uid=999(stark) gid=988(stark) groups=988(stark)`, a system user in its own group only (no `sudo`, no `adm`).
   - The machine needed what the guide did not have: `ufw` was not installed, and `apt-get upgrade` asked about
     console-setup and grub-pc. `deploy/SETUP.md` now covers both.
-- [ ] **S6-15. Daily encrypted off-host backup** — D-40, D-58: a daily `pg_dump` of the `stark` database, backed up
+- [x] **S6-15. Daily encrypted off-host backup** — D-40, D-58: a daily `pg_dump` of the `stark` database, backed up
   with restic to Cloudflare R2 and pruned to 35 days, run by a systemd timer; a restore guide, and one real restore
   to prove the backup works. Steps, one at a time: the PO creates the R2 bucket and an API token scoped to it; the
   script and units are written test-first; the PO installs them; one backup and one restore are run and their output
@@ -233,8 +233,18 @@ Tick a task only with evidence: the commit, the file created, or the command run
     10 mutations (a failed dump backed up, prune after a failed backup, 30 days, no `/fail`, prune or check failure
     ignored, no summary accepted, secrets not redacted, dump left on disk, dump readable by all, plain-HTTP
     repository) each turn a test red.
-  - Still to do: the PO installs it on the VPS, sends the first run's journal and the restore test's output. Until
-    Stark has run once the database has no tables, so the restore is repeated after Stark starts.
+  - Installed by the PO on the D-56 machine on 2026-11-03 (`deploy/BACKUP.md` steps 1–9), with output sent:
+    restic 0.16.4 from apt; `/etc/stark/restic-password` and `/etc/stark/backup.env` mode 600 root (6 names, values
+    not shown; the restic password and R2 keys are also in the PO's password manager); `restic init` created
+    repository `856890517f`; the second Healthchecks check "Stark backup" (1 day, grace 2 hours) set as
+    `BACKUP_HEARTBEAT_URL`.
+  - First run through `stark-backup.service`: `backup.completed`, snapshot `f0d8fccc`, 707 bytes processed, pruned
+    and checked, 12 s, no `backup.heartbeat_failed`; `runuser` and pg_dump work under the unit's hardening.
+  - Restore test: `restic snapshots` listed `f0d8fccc`; `restic restore` brought back 707 B; it loaded into
+    `stark_restore_test` with `ON_ERROR_STOP`; `\dt` showed no tables, as Stark has not run yet; the test database
+    was dropped.
+  - `stark-backup.timer` enabled: next run Wed 2026-11-04 03:30 +07.
+  - Follow-up: repeat the restore test once Stark has run and the database has tables (Discovered Work).
 
 ## Next Phases (not started)
 
@@ -269,6 +279,12 @@ Detailed tasks are written when the phase becomes current. Order from the standa
   integration posts to, not the PO's private chat. Evidence: the PO's screenshot of that group ("The check Stark is
   DOWN … Total Pings: 1 … Last Ping: Success, 15 minutes ago", 17:36), and the PO confirmed the email alert arrived
   too. The check was then paused (`deploy/SETUP.md` §9 step 7); Stark's first ping resumes it.
+- [ ] **Repeat the restore test with real data.** The S6-15 restore proved the path end to end on an empty database
+  (Stark has not run). Once Stark has run, repeat `deploy/BACKUP.md` §8 and check the tables and a row count.
+- [ ] **Moderate npm advisories in lint tooling.** `npm audit` on the VPS (2026-11-03) reported 11 moderate
+  advisories, all through `minimatch` in eslint and typescript-eslint (dev only); after `npm prune --omit=dev` the
+  production audit finds 0. The suggested `npm audit fix --force` would downgrade eslint to 4.0.0, so it is not
+  applied; update eslint when a release carries a fixed `minimatch`. CI's `--audit-level=high` is unaffected.
 - [ ] **Backups can be deleted from the VPS.** The R2 token is Object Read & Write because `restic forget --prune`
   deletes; whoever takes over the VPS holds it and can delete every backup (`SECURITY.md` gap, D-58). Options to put
   to the PO: an R2 bucket lock rule (objects cannot be deleted for N days; prune then needs a longer window), a
