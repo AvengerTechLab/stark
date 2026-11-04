@@ -190,6 +190,42 @@ URL ของ check เป็นความลับ (ใครมีก็ส�
 
 ---
 
+## 10. อัปเดต Stark หลัง merge
+
+ใช้ทุกครั้งที่ PR ที่แก้โค้ดถูก merge แล้ว Stark บน VPS จะยังใช้โค้ดเก่าจนกว่าจะทำขั้นนี้ ใช้เวลาประมาณ 2–3 นาที
+ระหว่าง restart Stark จะหยุดไม่กี่วินาที
+
+1. บน Mac ในโฟลเดอร์ repo stark:
+
+   ```
+   mac$ git checkout main
+   mac$ git pull
+   mac$ git log --oneline -1
+   mac$ rsync -a --delete --exclude .git --exclude node_modules --exclude dist --exclude .env ./ root@143.14.11.53:/opt/stark/
+   ```
+
+   `git log` ต้องแสดง commit ที่ Claude บอกว่าเป็นตัวล่าสุด
+
+2. บน VPS:
+
+   ```
+   vps# cd /opt/stark
+   vps# npm ci
+   vps# npm run build
+   vps# npm prune --omit=dev
+   vps# chown -R root:root /opt/stark
+   vps# systemctl restart stark
+   vps# systemctl is-active stark
+   vps# journalctl -u stark -n 30 --no-pager | grep -E 'app.started|error'
+   ```
+
+   `systemctl is-active` ต้องได้ `active` และต้องมีบรรทัด `app.started` ที่เวลาใหม่ ส่วน `npm ci` อาจขึ้นคำเตือน
+   `moderate` เรื่อง npm audit ได้ ไม่เป็นไร (`TASKS.md`, Discovered Work)
+
+3. ส่ง `/status` ถึงบอทใน Telegram บอทต้องตอบ
+
+ถ้า Stark ไม่ขึ้นหลัง restart ให้ส่งผลของ `journalctl -u stark -n 50 --no-pager` มาให้ Claude (Stark ซ่อนค่าลับใน log ให้แล้ว)
+
 ## ส่งผลกลับมา
 
 ส่งผลของ 4 คำสั่งนี้มาให้ Claude (ไม่มีข้อมูลลับในผลเหล่านี้):
