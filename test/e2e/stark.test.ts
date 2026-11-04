@@ -46,6 +46,7 @@ async function boot(seed?: (stores: { rules: FakeRuleStore; deliveries: FakeDeli
   seed?.({ rules, deliveries });
   let next = 0;
   const lines: string[] = [];
+  const storage = { up: true };
   let base = "";
   const stark = await startStark({
     config,
@@ -68,6 +69,9 @@ async function boot(seed?: (stores: { rules: FakeRuleStore; deliveries: FakeDeli
     newId: () => `0000${String(++next).padStart(4, "0")}-0000-4000-8000-000000000000`,
     logger: createLogger({ level: "debug", secrets: [TOKEN], write: (l) => lines.push(l) }),
     diskFree: async () => 0.5,
+    storageCheck: async () => {
+      if (!storage.up) throw new Error("connect ECONNREFUSED 127.0.0.1:5432");
+    },
     listen: async (handler) => {
       const server = createServer((req, res) => void handler(req, res));
       await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -88,9 +92,10 @@ async function boot(seed?: (stores: { rules: FakeRuleStore; deliveries: FakeDeli
     const setCookie = response.headers.get("set-cookie");
     if (setCookie !== null) cookie = setCookie.split(";")[0] ?? "";
     const text = await response.text();
-    return { status: response.status, json: text === "" ? undefined : (JSON.parse(text) as unknown) };
+    const isJson = (response.headers.get("content-type") ?? "").includes("json");
+    return { status: response.status, json: text === "" || !isJson ? undefined : (JSON.parse(text) as unknown) };
   };
-  return { stark, clock, sockets, internet, rules, deliveries, settings, web, lines };
+  return { stark, clock, sockets, internet, rules, deliveries, settings, web, lines, storage };
 }
 
 const tickerAt = (last: string) => BITKUB_TICKER.replace('"last": 2883194.85', `"last": ${last}`);
@@ -174,6 +179,22 @@ describe("Stark end to end on fakes (TASKS.md S6-11)", () => {
       await clock.advance(10_000);
     }
     expect(internet.telegramTexts().some((t) => t.startsWith("[Stark] ส่งแจ้งเตือนทาง LINE ไม่สำเร็จ"))).toBe(true);
+  });
+
+  it("tells the PO when the database stays down, marks /healthz degraded and withholds the heartbeat (R-2, F-002)", async () => {
+    const { clock, internet, web, storage } = await boot();
+    const pings = () => internet.gets.filter((u) => u === "https://uptime.example.com/ping/not-real").length;
+    await clock.advance(0);
+    expect(pings()).toBe(1);
+    storage.up = false;
+    await clock.advance(6 * 60_000);
+    expect(internet.telegramTexts().some((t) => t.startsWith("[Stark] ฐานข้อมูลใช้งานไม่ได้"))).toBe(true);
+    expect((await web("GET", "/healthz")).status).toBe(503);
+    expect(pings()).toBe(1);
+    storage.up = true;
+    await clock.advance(5 * 60_000);
+    expect(internet.telegramTexts().some((t) => t.startsWith("[Stark] ฐานข้อมูลกลับมาใช้งานได้แล้ว"))).toBe(true);
+    expect(pings()).toBeGreaterThan(1);
   });
 
   it("sends at start the alerts a restart left unsent, and pings the uptime monitor", async () => {

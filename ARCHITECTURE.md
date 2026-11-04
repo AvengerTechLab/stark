@@ -76,6 +76,10 @@ Both adapters follow the same rules (`src/feeds/stream-feed.ts`):
 
 - **Reconnect:** waits 1, 2, 4 … seconds between attempts, at most 60 s. The wait starts over once connected.
 - **Polling:** once a second while the stream is down. A poll never starts while the last one is unanswered.
+- **Silent stream:** an open stream with no message at all for 60 s (proposed, **PO to confirm**) counts as down:
+  Stark closes it, polls, and reconnects with the backoff above (R-1, audit `MSAP-2026-11-04-01` F-001). Neither
+  provider gives a keep-alive Stark can see (Bitkub: "No explicit ping required"; Binance's ping frames are answered
+  below the WebSocket API). A quiet pair therefore reconnects about once a minute, with REST prices in between.
 - **429 or 418:** nothing is sent until `Retry-After` has passed. Without that header, Bitkub waits its documented
   30 s and Binance waits 60 s.
 - **403 or 451:** polling stops for 60 s (proposed) and the event is logged as an error.
@@ -219,8 +223,9 @@ chosen host.
 
 | Failure | Behaviour (proposed) |
 |---|---|
-| Stream drops | Reconnect with backoff; switch to REST polling while down |
+| Stream drops, or stays open with no message for 60 s | Reconnect with backoff; switch to REST polling while down |
 | No tick from a provider for 60 s | Mark that feed stale; rules on it do not fire on old prices |
+| Database not answering | No tick is stored or evaluated, so no alert; the health monitor reports it after 5 minutes through a channel, `/healthz` is degraded and the heartbeat stops, so the outside monitor reports it too (R-2) |
 | Feed stale or a channel failing for 15 minutes | Health monitor tells the PO through another working channel (SC-3) |
 | Channel send fails | Retry with backoff using the same alert ID, so the channel never gets the same alert twice; record each attempt |
 | LINE free quota reached | Stop LINE sends; tell the PO through another channel (D-17) |

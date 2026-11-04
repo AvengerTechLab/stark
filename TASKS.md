@@ -239,7 +239,7 @@ Tick a task only with evidence: the commit, the file created, or the command run
     repository `856890517f`; the second Healthchecks check "Stark backup" (1 day, grace 2 hours) set as
     `BACKUP_HEARTBEAT_URL`.
   - First run through `stark-backup.service`: `backup.completed`, snapshot `f0d8fccc`, 707 bytes processed, pruned
-    and checked, 12 s, no `backup.heartbeat_failed`; `runuser` and pg_dump work under the unit's hardening.
+    and checked, 12 s, no `backup.heartbeat_failed`, and the PO saw the "Stark backup" check go new ➔ up at 16:23; `runuser` and pg_dump work under the unit's hardening.
   - Restore test: `restic snapshots` listed `f0d8fccc`; `restic restore` brought back 707 B; it loaded into
     `stark_restore_test` with `ON_ERROR_STOP`; `\dt` showed no tables, as Stark has not run yet; the test database
     was dropped.
@@ -254,6 +254,14 @@ Detailed tasks are written when the phase becomes current. Order from the standa
 - **Gate A-1 — MSAP audit** (`SPEC.md` D-02): Modes A + B once Phase 6 works end to end on fakes. Ask the PO
   before starting (D-05). No real alert is sent until A-1 passes its Stop Gate; findings are fixed only in a
   separate, PO-authorised remediation change, then re-audited (MSAP §28–29).
+  - Ran 2026-11-04 as `MSAP-2026-11-04-01` on `main` @ `b1c922d`: COMPLETE, Stop Gate PASS, findings frozen in
+    `AUDIT/MSAP-2026-11-04-01/` (D-59). 16 findings: F-001 and F-002 (S3) recommended before the first real alert.
+  - Authorised by the PO (D-59): R-1 (F-001) and R-2 (F-002). Each runs in its own remediation context, test-first,
+    then the affected area is re-audited. R-3 to R-8 and the untracked findings wait on the PO.
+  - R-1 done: a silent open stream is replaced after 60 s (`R-1_REMEDIATION_CONTEXT.md`; F-001 RESOLVED on re-audit).
+  - R-2 done: a database that does not answer is reported after 5 minutes, `/healthz` is degraded and the heartbeat
+    is withheld (`R-2_REMEDIATION_CONTEXT.md`; F-002 RESOLVED on re-audit). Both values and the Thai wording are
+    proposed, **PO to confirm**. Recorded for the PO, outside R-2: ticks that fail to store are dropped, not queued.
 - **Later audits** (`SPEC.md` D-16): before v1.1, before v1.2, before any user other than the PO, before any link to
   `ai-trading`, and a full audit every quarter. Ask the PO before each (D-05).
 
@@ -293,7 +301,9 @@ Detailed tasks are written when the phase becomes current. Order from the standa
   means reading avengertech, which the PO asked this session not to touch; the PO decides when.
 - [ ] **MSAP V1.0 path in `AvengerTechLab/avengertech` not confirmed** (`SPEC.md` D-03). The PO supplied the file in
   a session on 2026-10-03; adding it to avengertech is outside this repository's scope. Once it is there,
-  `CLAUDE.md` §6a names its path. Needed before gate A-1.
+  `CLAUDE.md` §6a names its path. On 2026-11-04 a read-only search of avengertech `main` (`a223882`) and its
+  `claude/audit-msap-2026-10-03` branch found only audit outputs, not the protocol; the PO supplied the file again
+  (`MASTER_SYSTEM_AUDIT_PROTOCOL_V1.0.md`, sha256 prefix `b7135a559a3efa90`) and A-1 used it.
 
 ---
 

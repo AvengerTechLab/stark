@@ -36,6 +36,8 @@ export interface HealthOptions {
   readonly log: HealthLog;
   /** Share of the disk that is free, 0 to 1. */
   readonly diskFree: () => Promise<number>;
+  /** Resolves if the database answers (e.g. `SELECT 1`); rejects if it does not (R-2, F-002). */
+  readonly storageCheck?: () => Promise<void>;
   readonly now: () => Date;
   /** Must return a UUID: LINE needs one as its retry key. */
   readonly newId: () => string;
@@ -43,7 +45,7 @@ export interface HealthOptions {
 }
 
 export interface HealthCondition {
-  readonly kind: "feed_stale" | "channel_failing" | "disk_low";
+  readonly kind: "feed_stale" | "channel_failing" | "disk_low" | "storage_failing";
   readonly subject: string;
   readonly since: Date;
   readonly reported: boolean;
@@ -73,6 +75,7 @@ export class HealthMonitor {
   private readonly quotaSeen = new Map<ChannelName, string>();
   private readonly quotaReported = new Map<ChannelName, string>();
   private disk: { since: Date; reported: boolean } | undefined;
+  private storage: Condition | undefined;
   /** Exchanges watched, each with the time it was first watched (a feed is stale counted from then). */
   private readonly watched = new Map<Exchange, Date>();
 
@@ -147,12 +150,21 @@ export class HealthMonitor {
       ...[...this.feeds].map(([subject, c]) => ({ kind: "feed_stale" as const, subject, since: c.since, reported: c.reported })),
       ...[...this.failing].map(([subject, c]) => ({ kind: "channel_failing" as const, subject, since: c.since, reported: c.reported })),
       ...(this.disk === undefined ? [] : [{ kind: "disk_low" as const, subject: "disk", since: this.disk.since, reported: this.disk.reported }]),
+      ...(this.storage === undefined || this.storage.recovered !== undefined
+        ? []
+        : [{ kind: "storage_failing" as const, subject: "storage", since: this.storage.since, reported: this.storage.reported }]),
     ];
     return { degraded: conditions.length > 0 || feeds.some((f) => f.stale), feeds, conditions };
   }
 
+  /** True while the database is not answering; the heartbeat is withheld then (R-2). */
+  storageFailing(): boolean {
+    return this.storage !== undefined && this.storage.recovered === undefined;
+  }
+
   /** Looks at every condition and sends the reports that are due. */
   async check(): Promise<void> {
+    await this.checkStorage();
     await this.checkFeeds();
     await this.checkChannels();
     await this.checkQuotas();
@@ -210,6 +222,41 @@ export class HealthMonitor {
     }
   }
 
+  /**
+   * A database that does not answer stops every alert while feeds and the heartbeat still look healthy, so it is
+   * a condition of its own (audit MSAP-2026-11-04-01 F-002). Reported after 5 minutes, like the others (D-55).
+   */
+  private async checkStorage(): Promise<void> {
+    if (this.options.storageCheck === undefined) return;
+    const now = this.options.now();
+    let up = true;
+    try {
+      await this.options.storageCheck();
+    } catch (error) {
+      up = false;
+      this.options.logger.warn("health.storage_check_failed", { error });
+    }
+    const condition = this.storage;
+    if (up) {
+      if (condition === undefined) return;
+      if (!condition.reported) {
+        this.storage = undefined;
+        return;
+      }
+      condition.recovered ??= now;
+      const text = `[Stark] ฐานข้อมูลกลับมาใช้งานได้แล้ว เวลา ${thaiClock(condition.recovered)} น.`;
+      if (await this.report("storage_recovered", "storage", condition.since, text, null)) this.storage = undefined;
+      return;
+    }
+    if (condition === undefined || condition.recovered !== undefined) {
+      this.storage = { since: condition?.since ?? now, reported: condition?.reported ?? false };
+      return;
+    }
+    if (condition.reported || now.getTime() - condition.since.getTime() < REPORT_AFTER_MS) return;
+    const text = `[Stark] ฐานข้อมูลใช้งานไม่ได้ตั้งแต่ ${thaiClock(condition.since)} น.\nStark ตรวจกฎและส่งแจ้งเตือนไม่ได้จนกว่าฐานข้อมูลจะกลับมา`;
+    condition.reported = await this.report("storage_failing", "storage", condition.since, text, null);
+  }
+
   private async checkDisk(): Promise<void> {
     let share: number;
     try {
@@ -233,13 +280,18 @@ export class HealthMonitor {
     this.disk.reported = await this.report("disk_low", "disk", this.disk.since, `[Stark] พื้นที่ดิสก์บนเครื่องเหลือ ${percent}%`, null);
   }
 
-  /** Sends a report through the first working channel other than `exclude`; records it if one took it. */
+  /**
+   * Sends a report through the first working channel other than `exclude`; records it if one took it. When the
+   * database cannot say which channels are on or dead, every configured channel is tried (R-2), and a report
+   * that could not be recorded still counts as sent, so it is not repeated.
+   */
   private async report(kind: HealthKind, subject: string, since: Date, text: string, exclude: ChannelName | null): Promise<boolean> {
     const { settings, logger } = this.options;
-    const on = await settings.switchedOn();
+    const on = await settings.switchedOn().catch(() => undefined);
     for (const name of REPORT_ORDER) {
       const channel = this.options.channels.find((c) => c.name === name);
-      if (channel === undefined || name === exclude || !on.has(name) || (await settings.isDead(name))) continue;
+      if (channel === undefined || name === exclude) continue;
+      if (on !== undefined && (!on.has(name) || (await settings.isDead(name).catch(() => false)))) continue;
       if (this.failing.get(name)?.dead === true) continue;
       let delivered = false;
       try {
@@ -248,7 +300,11 @@ export class HealthMonitor {
         logger.warn("health.report_send_failed", { kind, channel: name, error });
       }
       if (!delivered) continue;
-      await this.options.log.record({ id: this.options.newId(), kind, subject, since, reportedAt: this.options.now() });
+      try {
+        await this.options.log.record({ id: this.options.newId(), kind, subject, since, reportedAt: this.options.now() });
+      } catch (error) {
+        logger.error("health.record_failed", { kind, subject, error });
+      }
       logger.info("health.reported", { kind, subject, channel: name });
       return true;
     }

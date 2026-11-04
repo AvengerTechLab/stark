@@ -77,7 +77,9 @@ export type HealthKind =
   | "channel_recovered"
   | "quota_reached"
   | "disk_low"
-  | "disk_recovered";
+  | "disk_recovered"
+  | "storage_failing"
+  | "storage_recovered";
 
 /** A health event the PO has been told about (EVENTS.md §2.4, DATABASE.md `health_events`). */
 export interface HealthRecord {

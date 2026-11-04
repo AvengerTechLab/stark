@@ -58,6 +58,8 @@ export interface StarkDeps {
   readonly newId: () => string;
   readonly logger: Logger;
   readonly diskFree: () => Promise<number>;
+  /** Resolves if the database answers; the health monitor reports it when it does not (R-2, F-002). */
+  readonly storageCheck: () => Promise<void>;
   /** Starts the owner web server with this handler. */
   readonly listen: (handler: (req: IncomingMessage, res: ServerResponse) => Promise<void>) => Promise<{ close(): Promise<void> }>;
 }
@@ -101,6 +103,7 @@ export async function startStark(deps: StarkDeps): Promise<StarkHandle> {
     settings: stores.channelSettings,
     log: stores.healthLog,
     diskFree: deps.diskFree,
+    storageCheck: deps.storageCheck,
     now,
     newId,
     logger,
@@ -188,7 +191,9 @@ export async function startStark(deps: StarkDeps): Promise<StarkHandle> {
   const maintenance = deps.maintenance;
   if (maintenance !== undefined) every(MAINTENANCE_INTERVAL_MS, "storage.maintenance", () => maintenance.daily(now()));
   if (config.heartbeatUrl !== undefined) {
-    stops.push(startHeartbeat({ url: config.heartbeatUrl, get: deps.httpGet, timers, logger }));
+    stops.push(
+      startHeartbeat({ url: config.heartbeatUrl, get: deps.httpGet, timers, logger, withhold: () => health.storageFailing() }),
+    );
   }
 
   const server = await deps.listen(

@@ -81,7 +81,7 @@ describe.skipIf(TEST_DATABASE_URL === undefined)("PostgreSQL storage", () => {
     it("applies each migration once and records it", async () => {
       expect(await migrate(pool)).toEqual([]);
       const { rows } = await pool.query("SELECT version FROM schema_migrations ORDER BY version");
-      expect(rows.map((r) => r.version)).toEqual(["001_initial"]);
+      expect(rows.map((r) => r.version)).toEqual(["001_initial", "002_storage_health"]);
     });
   });
 
@@ -346,6 +346,15 @@ describe.skipIf(TEST_DATABASE_URL === undefined)("PostgreSQL storage", () => {
       await new PgHealthLog(pool).record({ id, kind: "feed_stale", subject: "bitkub", since: at(0), reportedAt: at(6 * 60_000) });
       const { rows } = await pool.query("SELECT kind, subject, since, reported_at FROM health_events WHERE id = $1", [id]);
       expect(rows).toEqual([{ kind: "feed_stale", subject: "bitkub", since: at(0), reported_at: at(6 * 60_000) }]);
+    });
+
+    it("accepts the storage kinds added for R-2 (F-002)", async () => {
+      for (const kind of ["storage_failing", "storage_recovered"] as const) {
+        const id = randomUUID();
+        await new PgHealthLog(pool).record({ id, kind, subject: "storage", since: at(0), reportedAt: at(6 * 60_000) });
+        const { rows } = await pool.query("SELECT kind FROM health_events WHERE id = $1", [id]);
+        expect(rows).toEqual([{ kind }]);
+      }
     });
   });
 
