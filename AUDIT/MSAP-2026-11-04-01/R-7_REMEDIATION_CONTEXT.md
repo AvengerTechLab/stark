@@ -40,11 +40,14 @@
 - Each corrected statement was read against `src/interface/http-server.ts` (cookie, Origin check, lockout),
   `src/config.ts` (`OWNER_HTTP_HOST`, `OWNER_HTTP_PORT` defaults), `src/interface/web.ts` (the messages the page
   shows) and `SPEC.md` D-35, D-53, D-55, D-57.
-- Not verified: the PO's own browser through the real tunnel. Safari was not tested.
+- The PO's login, 2026-11-04 14:55: through the real tunnel (`ssh -N -L 8080:127.0.0.1:8080 root@143.14.11.53`, after
+  the `stark` alias failed because it was never set up) the PO logged in at `http://localhost:8080` on their Mac
+  and sent a PDF printed from the page: prices, rules form, channels, health (`degraded: false`) and the 13:33:46
+  test alert (telegram, delivered) all shown. The browser was not named.
+- Not verified: Safari specifically.
 
 ## Re-audit of the affected area (MSAP §29)
 
 - F-015: each statement listed in 02 now matches the code and the decisions. **F-015: RESOLVED.**
-- F-008: the tunnel command and URL are documented, and the cookie path works in Chromium. The remaining part, the
-  PO's browser through the real tunnel, is **VALIDATION REQUIRED** until the PO's result is recorded in
-  `deploy/WEB.md`.
+- F-008: the tunnel command and URL are documented, the cookie path works in Chromium, and the PO logged in through
+  the real tunnel (recorded in `deploy/WEB.md`). **F-008: RESOLVED.**
