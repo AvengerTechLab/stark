@@ -270,8 +270,8 @@ Detailed tasks are written when the phase becomes current. Order from the standa
   - Authorised by the PO (D-59): R-1 (F-001) and R-2 (F-002). Each runs in its own remediation context, test-first,
     then the affected area is re-audited. R-3 to R-8 and the untracked findings wait on the PO.
   - R-7 authorised (D-62) and done in documents: `deploy/WEB.md` gives the tunnel and the URL; `API.md`, `EVENTS.md`
-    and `README.md` no longer drift (`R-7_REMEDIATION_CONTEXT.md`). F-015 RESOLVED; F-008 waits on the PO's login
-    through the real tunnel (Chromium on fakes passed).
+    and `README.md` no longer drift (`R-7_REMEDIATION_CONTEXT.md`). F-015 RESOLVED; F-008 RESOLVED after the PO
+    logged in through the real tunnel on 2026-11-04 (PDF of the page sent).
   - R-3 to R-6 and R-8 authorised (D-63), to be done in the order R-4, R-5, R-6, R-3, R-8.
   - R-4 done: the bot confirms each batch of Telegram updates before handling it, skips an update it cannot
     handle, and survives a failed round (`R-4_REMEDIATION_CONTEXT.md`; F-005 and F-006 RESOLVED on re-audit).
