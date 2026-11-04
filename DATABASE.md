@@ -82,7 +82,9 @@ before sending (D-17, Gmail's 500 a day).
 ### `health_events`
 
 `id`, `kind`, `subject`, `since`, `reported_at` (`timestamptz`, null until the PO has been told). The health monitor
-writes a row only once a report has been delivered, so `reported_at` is always set (`EVENTS.md` §2.4).
+writes a row only once a report has been delivered, so `reported_at` is always set (`EVENTS.md` §2.4). Migration
+`002_storage_health` adds the kinds `storage_failing` and `storage_recovered` (R-2). A `storage_failing` report is
+usually not stored, since the database is down when it is sent; its recovery is.
 
 ### `owner_actions`
 

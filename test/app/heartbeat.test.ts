@@ -11,16 +11,30 @@ function setup() {
   const clock = new FakeClock(new Date("2026-10-16T07:00:00.000Z"));
   const http = new FakeHttp({ status: 200, retryAfter: null, body: "OK" });
   const lines: string[] = [];
+  const health = { withhold: false };
   const stop = startHeartbeat({
     url: URL,
     get: http.get,
     timers: clock,
+    withhold: () => health.withhold,
     logger: createLogger({ level: "debug", secrets: [URL], write: (line) => lines.push(line) }),
   });
-  return { clock, http, lines, stop };
+  return { clock, http, lines, stop, health };
 }
 
 describe("heartbeat (SPEC.md D-43)", () => {
+  it("sends no ping while storage is failing, so the outside monitor notices (R-2, F-002)", async () => {
+    const { clock, http, health, lines } = setup();
+    await clock.advance(0);
+    health.withhold = true;
+    await clock.advance(3 * HEARTBEAT_INTERVAL_MS);
+    expect(http.requests).toEqual([URL]);
+    expect(lines.some((l) => l.includes('"event":"heartbeat.withheld"'))).toBe(true);
+    health.withhold = false;
+    await clock.advance(HEARTBEAT_INTERVAL_MS);
+    expect(http.requests).toEqual([URL, URL]);
+  });
+
   it("pings at start and then every 5 minutes", async () => {
     const { clock, http } = setup();
     await clock.advance(0);

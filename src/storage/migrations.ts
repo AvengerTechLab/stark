@@ -128,4 +128,14 @@ CREATE TABLE login_attempts (
 CREATE INDEX login_attempts_time ON login_attempts (at);
 `,
   },
+  {
+    // R-2 (audit MSAP-2026-11-04-01 F-002): the health monitor also reports a database that does not answer.
+    version: "002_storage_health",
+    sql: `
+ALTER TABLE health_events DROP CONSTRAINT health_events_kind_check;
+ALTER TABLE health_events ADD CONSTRAINT health_events_kind_check CHECK (kind IN ('feed_stale', 'feed_recovered',
+  'channel_failing', 'channel_recovered', 'quota_reached', 'disk_low', 'disk_recovered', 'storage_failing',
+  'storage_recovered'));
+`,
+  },
 ];

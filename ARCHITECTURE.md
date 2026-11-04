@@ -225,6 +225,7 @@ chosen host.
 |---|---|
 | Stream drops, or stays open with no message for 60 s | Reconnect with backoff; switch to REST polling while down |
 | No tick from a provider for 60 s | Mark that feed stale; rules on it do not fire on old prices |
+| Database not answering | No tick is stored or evaluated, so no alert; the health monitor reports it after 5 minutes through a channel, `/healthz` is degraded and the heartbeat stops, so the outside monitor reports it too (R-2) |
 | Feed stale or a channel failing for 15 minutes | Health monitor tells the PO through another working channel (SC-3) |
 | Channel send fails | Retry with backoff using the same alert ID, so the channel never gets the same alert twice; record each attempt |
 | LINE free quota reached | Stop LINE sends; tell the PO through another channel (D-17) |

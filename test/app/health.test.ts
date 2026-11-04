@@ -12,19 +12,31 @@ const SECOND = 1000;
 const MINUTE = 60 * SECOND;
 
 function setup(options: { on?: ChannelName[]; disk?: number } = {}) {
+  /** Set `up` to false to make the database fail: the probe, the channel settings and the health log all throw. */
+  const storage = { up: true };
+  const down = () => {
+    if (!storage.up) throw new Error("connect ECONNREFUSED 127.0.0.1:5432");
+  };
   const clock = { now: at(0) };
   const channels = (["telegram", "line", "discord", "email"] as const).map((name) => new FakeChannel(name));
   const settings = new FakeChannelSettings(...(options.on ?? ["telegram", "line", "discord", "email"]));
   const log = new FakeHealthLog();
+  const storedSettings = {
+    switchedOn: async () => (down(), settings.switchedOn()),
+    isDead: async (c: ChannelName) => (down(), settings.isDead(c)),
+    markDead: async (c: ChannelName, when: Date) => (down(), settings.markDead(c, when)),
+  };
+  const storedLog = { record: async (e: Parameters<FakeHealthLog["record"]>[0]) => (down(), log.record(e)) };
   const lines: Record<string, unknown>[] = [];
   const disk = { free: options.disk ?? 0.5 };
   let next = 0;
   const monitor = new HealthMonitor({
     exchanges: ["bitkub", "binance"],
     channels,
-    settings,
-    log,
+    settings: storedSettings,
+    log: storedLog,
     diskFree: async () => disk.free,
+    storageCheck: async () => down(),
     now: () => clock.now,
     newId: () => `00000000-0000-4000-8000-${String(++next).padStart(12, "0")}`,
     logger: createLogger({ level: "debug", write: (line) => lines.push(JSON.parse(line)) }),
@@ -44,7 +56,7 @@ function setup(options: { on?: ChannelName[]; disk?: number } = {}) {
     monitor.tickSeen("binance");
   };
   const events = () => lines.map((l) => l["event"]);
-  return { monitor, clock, settings, log, disk, byName, sent, checkAt, ticks, events };
+  return { monitor, clock, settings, log, disk, storage, byName, sent, checkAt, ticks, events };
 }
 
 describe("HealthMonitor: feeds (EVENTS.md §2.4, SC-3)", () => {
@@ -215,6 +227,67 @@ describe("HealthMonitor: disk (SECURITY.md T-23)", () => {
       "[Stark] พื้นที่ดิสก์บนเครื่องเหลือ 19%",
       "[Stark] พื้นที่ดิสก์บนเครื่องกลับมาเหลือ 20% แล้ว",
     ]);
+  });
+});
+
+describe("HealthMonitor: storage (R-2, audit MSAP-2026-11-04-01 F-002)", () => {
+  it("reports a database that stays down for 5 minutes, once, though the database it would read is down too", async () => {
+    const { monitor, storage, sent, checkAt, ticks, events } = setup();
+    ticks(0);
+    storage.up = false;
+    for (let s = 30; s <= 5 * 60; s += 30) {
+      ticks(s * SECOND);
+      await checkAt(s * SECOND);
+    }
+    expect(sent()).toEqual([]);
+    expect(monitor.storageFailing()).toBe(true);
+    expect(monitor.snapshot()).toMatchObject({ degraded: true, conditions: [{ kind: "storage_failing", subject: "storage", since: at(30 * SECOND) }] });
+    ticks(5 * MINUTE + 30 * SECOND);
+    await checkAt(5 * MINUTE + 30 * SECOND);
+    expect(sent()).toEqual([
+      { c: "telegram", id: "00000000-0000-4000-8000-000000000001", line: "[Stark] ฐานข้อมูลใช้งานไม่ได้ตั้งแต่ 14:00:30 น." },
+    ]);
+    expect(events()).toContain("health.record_failed");
+    for (let s = 6 * 60; s <= 10 * 60; s += 30) {
+      ticks(s * SECOND);
+      await checkAt(s * SECOND);
+    }
+    expect(sent()).toHaveLength(1);
+  });
+
+  it("says nothing about a short outage, and forgets it", async () => {
+    const { monitor, storage, sent, checkAt, ticks } = setup();
+    ticks(0);
+    storage.up = false;
+    await checkAt(30 * SECOND);
+    storage.up = true;
+    ticks(2 * MINUTE);
+    await checkAt(2 * MINUTE);
+    ticks(10 * MINUTE);
+    await checkAt(10 * MINUTE);
+    expect(sent()).toEqual([]);
+    expect(monitor.storageFailing()).toBe(false);
+    expect(monitor.snapshot().degraded).toBe(false);
+  });
+
+  it("reports the recovery once after a reported outage, and records it once the database is back", async () => {
+    const { monitor, storage, log, sent, checkAt, ticks } = setup();
+    storage.up = false;
+    for (let s = 0; s <= 6 * 60; s += 30) {
+      ticks(s * SECOND);
+      await checkAt(s * SECOND);
+    }
+    storage.up = true;
+    ticks(7 * MINUTE);
+    await checkAt(7 * MINUTE);
+    ticks(8 * MINUTE);
+    await checkAt(8 * MINUTE);
+    expect(sent().map((m) => m.line)).toEqual([
+      "[Stark] ฐานข้อมูลใช้งานไม่ได้ตั้งแต่ 14:00:00 น.",
+      "[Stark] ฐานข้อมูลกลับมาใช้งานได้แล้ว เวลา 14:07:00 น.",
+    ]);
+    expect(log.events.map((e) => [e.kind, e.subject])).toEqual([["storage_recovered", "storage"]]);
+    expect(monitor.storageFailing()).toBe(false);
   });
 });
 

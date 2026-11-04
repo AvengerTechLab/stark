@@ -258,6 +258,10 @@ Detailed tasks are written when the phase becomes current. Order from the standa
     `AUDIT/MSAP-2026-11-04-01/` (D-59). 16 findings: F-001 and F-002 (S3) recommended before the first real alert.
   - Authorised by the PO (D-59): R-1 (F-001) and R-2 (F-002). Each runs in its own remediation context, test-first,
     then the affected area is re-audited. R-3 to R-8 and the untracked findings wait on the PO.
+  - R-1 done: a silent open stream is replaced after 60 s (`R-1_REMEDIATION_CONTEXT.md`; F-001 RESOLVED on re-audit).
+  - R-2 done: a database that does not answer is reported after 5 minutes, `/healthz` is degraded and the heartbeat
+    is withheld (`R-2_REMEDIATION_CONTEXT.md`; F-002 RESOLVED on re-audit). Both values and the Thai wording are
+    proposed, **PO to confirm**. Recorded for the PO, outside R-2: ticks that fail to store are dropped, not queued.
 - **Later audits** (`SPEC.md` D-16): before v1.1, before v1.2, before any user other than the PO, before any link to
   `ai-trading`, and a full audit every quarter. Ask the PO before each (D-05).
 

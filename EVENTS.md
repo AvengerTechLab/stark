@@ -108,8 +108,8 @@ must hold no line break.
 
 | Field | Type | Note |
 |---|---|---|
-| `kind` | `feed_stale`, `feed_recovered`, `channel_failing`, `channel_recovered`, `quota_reached`, `disk_low`, `disk_recovered` | A failed Gmail token refresh is `channel_failing` for `email` (`SECURITY.md` T-21) |
-| `subject` | exchange or channel name | |
+| `kind` | `feed_stale`, `feed_recovered`, `channel_failing`, `channel_recovered`, `quota_reached`, `disk_low`, `disk_recovered`, `storage_failing`, `storage_recovered` | A failed Gmail token refresh is `channel_failing` for `email` (`SECURITY.md` T-21) |
+| `subject` | exchange or channel name, `disk` or `storage` | |
 | `since` | `Timestamp` | When the condition started |
 
 A feed is stale after 60 s with no tick (proposed). The PO is told within 15 minutes of a feed staying stale or a
@@ -125,7 +125,8 @@ How the monitor applies this (`src/app/health.ts`; timings decided in `SPEC.md` 
 | `channel_failing` (dead) | The channel answers it is dead (a Discord `404`) | At the next check |
 | `quota_reached` | The dispatcher skips a send for the quota | Once per usage period |
 | `disk_low` | Free disk below 20 % | At the next check |
-| `*_recovered` | A tick, a delivery, or free disk at 20 % or more, after a reported condition | Once. An unreported condition that clears is forgotten |
+| `storage_failing` | The database does not answer `SELECT 1` within 5 s (R-2, audit `MSAP-2026-11-04-01` F-002) | When it has lasted 5 minutes (proposed, **PO to confirm**) |
+| `*_recovered` | A tick, a delivery, free disk at 20 % or more, or the database answering again, after a reported condition | Once. An unreported condition that clears is forgotten |
 
 Checks run every 30 s. A report goes to the first channel in the order Telegram, Discord, email, LINE that:
 
@@ -133,13 +134,17 @@ Checks run every 30 s. A report goes to the first channel in the order Telegram,
 - is not dead
 - is not the channel the report is about
 
-LINE comes last because its sends are counted (D-17). If that channel does not deliver, the next one is tried. If
+LINE comes last because its sends are counted (D-17). While the database cannot say which channels are on or dead,
+every configured channel is tried in that order, and a report that was delivered but could not be stored still
+counts as sent, so it is not repeated. If that channel does not deliver, the next one is tried. If
 no channel delivers, the event is logged `health.report_failed` and tried again at the next check. Each delivered
 report is stored in `health_events`. The dispatcher feeds the monitor each channel's final outcome; a cooldown or a
 channel switched off says nothing about health, so neither is reported.
 
 Heartbeat (`SPEC.md` D-43): every 5 minutes, while the process runs, Stark sends a heartbeat to an uptime monitor
-outside the host. The monitor tells the PO when no heartbeat arrives for 15 minutes (SC-3). The heartbeat carries no
+outside the host. The monitor tells the PO when no heartbeat arrives for 15 minutes (SC-3). No heartbeat is sent
+while the database is not answering (`storage_failing`, from the first failed check), so the outside monitor reports
+it too, independently of Stark's own channels (R-2). The heartbeat carries no
 data, and its URL is a secret like a channel credential (proposed timings).
 
 ## 3. Rule evaluation

@@ -26,6 +26,21 @@ import {
 
 /** Price-log partitions made ahead of time, in days (DATABASE.md). */
 const PARTITION_DAYS_AHEAD = 3;
+/** A storage check that has not answered in this time counts as failed (R-2). */
+const STORAGE_CHECK_TIMEOUT_MS = 5000;
+
+/** `SELECT 1`, failing if the database does not answer in time, so a hung database is reported too. */
+async function storageCheck(pool: pg.Pool): Promise<void> {
+  let cancel: NodeJS.Timeout | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    cancel = setTimeout(() => reject(new Error("storage check timed out")), STORAGE_CHECK_TIMEOUT_MS);
+  });
+  try {
+    await Promise.race([pool.query("SELECT 1"), timeout]);
+  } finally {
+    clearTimeout(cancel);
+  }
+}
 
 async function start(config: Config, logger: Logger): Promise<{ stark: StarkHandle; pool: pg.Pool }> {
   const pool = new pg.Pool({ connectionString: config.databaseUrl });
@@ -66,6 +81,7 @@ async function start(config: Config, logger: Logger): Promise<{ stark: StarkHand
       newId: randomUUID,
       logger,
       diskFree: () => diskFreeShare("/"),
+      storageCheck: () => storageCheck(pool),
       listen: async (handler) => {
         const server = createServer((req, res) => void handler(req, res));
         await new Promise<void>((resolve, reject) => {
