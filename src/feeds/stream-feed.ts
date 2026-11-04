@@ -42,6 +42,12 @@ export const RECONNECT_MIN_MS = 1000;
 export const RECONNECT_MAX_MS = 60_000;
 /** Pause after a 403 (WAF block) or 451 (region refused) before polling again (proposed). */
 export const BLOCKED_MS = 60_000;
+/**
+ * An open stream with no message for this long counts as lost: Stark polls and reconnects (R-1, audit
+ * MSAP-2026-11-04-01 F-001). Neither provider gives Stark a keep-alive it can see: Bitkub needs no ping and
+ * Binance's ping frames are answered below the WebSocket API. Equal to the health monitor's stale time (proposed).
+ */
+export const SILENT_AFTER_MS = 60_000;
 
 const none = () => undefined;
 
@@ -55,6 +61,7 @@ export class StreamFeed implements PriceFeed {
   private failures = 0;
   private cancelReconnect: () => void = none;
   private cancelRotate: () => void = none;
+  private cancelSilence: () => void = none;
   private cancelPoll: (() => void) | undefined;
   private pollInFlight = false;
   private blockedUntil = 0;
@@ -76,6 +83,7 @@ export class StreamFeed implements PriceFeed {
     this.running = false;
     this.cancelReconnect();
     this.cancelRotate();
+    this.cancelSilence();
     this.stopPolling();
     this.generation++;
     this.socket?.close();
@@ -103,6 +111,7 @@ export class StreamFeed implements PriceFeed {
     this.failures = 0;
     this.stopPolling();
     this.deps.logger.info("feed.connected", { exchange: this.exchange });
+    this.watchSilence();
     const { rotateAfterMs } = this.provider;
     if (rotateAfterMs !== null) {
       this.cancelRotate = this.deps.timers.set(rotateAfterMs, () => {
@@ -113,6 +122,7 @@ export class StreamFeed implements PriceFeed {
   }
 
   private message(text: string): void {
+    this.watchSilence();
     const result = this.provider.parseStream(text, this.deps.now());
     if (result.kind === "ticks") this.emit(result.ticks);
     else if (result.kind === "shutdown") {
@@ -127,6 +137,7 @@ export class StreamFeed implements PriceFeed {
     this.connected = false;
     this.socket = undefined;
     this.cancelRotate();
+    this.cancelSilence();
     this.deps.logger.warn("feed.disconnected", { exchange: this.exchange });
     this.startPolling();
     const wait = Math.min(RECONNECT_MAX_MS, RECONNECT_MIN_MS * 2 ** this.failures);
@@ -134,9 +145,23 @@ export class StreamFeed implements PriceFeed {
     this.cancelReconnect = this.deps.timers.set(wait, () => this.open());
   }
 
+  /** Restarts the silence timer; any message, with or without a price, shows the stream is alive. */
+  private watchSilence(): void {
+    this.cancelSilence();
+    this.cancelSilence = this.deps.timers.set(SILENT_AFTER_MS, () => {
+      this.deps.logger.warn("feed.silent", { exchange: this.exchange, seconds: SILENT_AFTER_MS / 1000 });
+      // Ignore the old socket from now on, close it, and handle it as a lost connection (poll + reconnect).
+      const old = this.socket;
+      this.generation++;
+      old?.close();
+      this.closed();
+    });
+  }
+
   /** A planned reconnect (shutdown notice, 24-hour limit): a new connection at once, no backoff. */
   private reconnectNow(): void {
     this.cancelRotate();
+    this.cancelSilence();
     this.connected = false;
     const old = this.socket;
     this.open();

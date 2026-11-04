@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { binanceProvider } from "../../src/feeds/binance.js";
 import { bitkubProvider } from "../../src/feeds/bitkub.js";
-import { StreamFeed, type HttpResponse } from "../../src/feeds/stream-feed.js";
+import { SILENT_AFTER_MS, StreamFeed, type HttpResponse } from "../../src/feeds/stream-feed.js";
 import { createLogger } from "../../src/logger.js";
 import type { FeedTick } from "../../src/ports/feed.js";
 import { FakeClock, FakeHttp, FakeSockets } from "../fakes/fake-network.js";
@@ -110,7 +110,12 @@ describe("StreamFeed: reconnect and polling fallback (ARCHITECTURE.md §7)", () 
     const { sockets, clock, start } = setup(binanceProvider(["BTC/USDT"]), ok("[]"));
     await start();
     sockets.last.open();
-    await clock.advance(23 * HOUR - SECOND);
+    // Trades keep arriving, so the stream is never silent (R-1).
+    const step = SILENT_AFTER_MS / 2;
+    for (let t = 0; t < 23 * HOUR - SECOND; t += step) {
+      sockets.last.message(BINANCE_TRADE);
+      await clock.advance(Math.min(step, 23 * HOUR - SECOND - t));
+    }
     expect(sockets.sockets).toHaveLength(1);
     await clock.advance(SECOND);
     expect(sockets.sockets).toHaveLength(2);
@@ -136,6 +141,56 @@ describe("StreamFeed: reconnect and polling fallback (ARCHITECTURE.md §7)", () 
     answer(ok(BITKUB_REST_TICKER));
     await clock.advance(SECOND);
     expect(http.requests).toHaveLength(2);
+  });
+});
+
+describe("StreamFeed: a stream that stays open but silent (R-1, audit MSAP-2026-11-04-01 F-001)", () => {
+  it("treats a minute without any message as a lost connection: polls, then reconnects", async () => {
+    expect(SILENT_AFTER_MS).toBe(60 * SECOND);
+    const { sockets, http, ticks, clock, start, events } = setup();
+    await start();
+    sockets.last.open();
+    sockets.last.message(BITKUB_TICKER);
+    await clock.advance(SILENT_AFTER_MS - SECOND);
+    expect(http.requests).toEqual([]);
+    await clock.advance(SECOND);
+    expect(events()).toContain("feed.silent");
+    expect(sockets.sockets[0]?.closed).toBe(true);
+    expect(http.requests).toEqual(["https://api.bitkub.com/api/v3/market/ticker"]);
+    expect(ticks.at(-1)?.source).toBe("poll");
+    await clock.advance(SECOND);
+    expect(sockets.sockets).toHaveLength(2);
+  });
+
+  it("keeps a stream whose messages keep coming, even ones without a price", async () => {
+    const { sockets, http, clock, start } = setup(binanceProvider(["BTC/USDT"]), ok("[]"));
+    await start();
+    sockets.last.open();
+    for (let i = 0; i < 20; i++) {
+      sockets.last.message(i % 2 === 0 ? BINANCE_TRADE : '{"result":null,"id":1}');
+      await clock.advance(SILENT_AFTER_MS / 2);
+    }
+    expect(sockets.sockets).toHaveLength(1);
+    expect(http.requests).toEqual([]);
+  });
+
+  it("recovers from a socket that never says anything, however long it stays open (probe P-01)", async () => {
+    const { sockets, ticks, clock, start } = setup();
+    await start();
+    sockets.last.open();
+    await clock.advance(6 * HOUR);
+    expect(sockets.sockets.length).toBeGreaterThan(1);
+    expect(ticks.length).toBeGreaterThan(0);
+  });
+
+  it("does not watch for silence once stopped", async () => {
+    const { feed, sockets, http, clock, start } = setup();
+    await start();
+    sockets.last.open();
+    await feed.stop();
+    await clock.advance(5 * SILENT_AFTER_MS);
+    expect(sockets.sockets).toHaveLength(1);
+    expect(http.requests).toEqual([]);
   });
 });
 
