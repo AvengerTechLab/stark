@@ -290,7 +290,10 @@ Detailed tasks are written when the phase becomes current. Order from the standa
 - [ ] **The watchdog shares Stark's host (D-61, `SECURITY.md` T-25).** Found 2026-11-04 during go-live step 1:
   Docker runs `strange-watchdog` (Healthchecks 4.4, Caddy 2.10.2 on 0.0.0.0:80/443, PostgreSQL 16.15); the host
   is now named `avengertech-linux` (same IP, secrets and timer). The PO chose to keep it there. Open: the proposed
-  T-25 controls (PO to confirm), and a check that no container mounts Stark's files or database.
+  T-25 controls (PO to confirm).
+  - Checked 2026-11-04 (`docker inspect`, output sent by the PO): no container mounts `/etc/stark`, `/opt/stark` or the
+    host's PostgreSQL. Mounts are Docker volumes plus `/opt/strange-watchdog/Caddyfile`; all three containers are on
+    the `strange-watchdog_default` bridge network, none privileged.
 - [ ] **Repeat the restore test with real data.** The S6-15 restore proved the path end to end on an empty database
   (Stark has not run). Once Stark has run, repeat `deploy/BACKUP.md` §8 and check the tables and a row count.
 - [ ] **Moderate npm advisories in lint tooling.** `npm audit` on the VPS (2026-11-03) reported 11 moderate
