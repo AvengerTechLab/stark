@@ -88,7 +88,7 @@ remediation change that the PO authorises (MSAP §28).
 | `ARCHITECTURE.md` | Boundaries and layers; filled in as decisions land |
 | `EVENTS.md`, `API.md`, `DATABASE.md` | Contracts: domain events and rule evaluation, owner interface, database |
 | `SECURITY.md` | Threats, controls and gaps |
-| `AUDIT/<audit-id>/` | MSAP audit outputs, committed after the Stop Gate (none yet) |
+| `AUDIT/<audit-id>/` | MSAP audit outputs, committed after the Stop Gate (`MSAP-2026-11-04-01`: gate A-1) |
 | Commit message and PR description | Why a change was made (replaces a fix log) |
 
 Update the matching record in the same change. Tick a task only with evidence.

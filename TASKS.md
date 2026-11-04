@@ -254,6 +254,10 @@ Detailed tasks are written when the phase becomes current. Order from the standa
 - **Gate A-1 — MSAP audit** (`SPEC.md` D-02): Modes A + B once Phase 6 works end to end on fakes. Ask the PO
   before starting (D-05). No real alert is sent until A-1 passes its Stop Gate; findings are fixed only in a
   separate, PO-authorised remediation change, then re-audited (MSAP §28–29).
+  - Ran 2026-11-04 as `MSAP-2026-11-04-01` on `main` @ `b1c922d`: COMPLETE, Stop Gate PASS, findings frozen in
+    `AUDIT/MSAP-2026-11-04-01/` (D-59). 16 findings: F-001 and F-002 (S3) recommended before the first real alert.
+  - Authorised by the PO (D-59): R-1 (F-001) and R-2 (F-002). Each runs in its own remediation context, test-first,
+    then the affected area is re-audited. R-3 to R-8 and the untracked findings wait on the PO.
 - **Later audits** (`SPEC.md` D-16): before v1.1, before v1.2, before any user other than the PO, before any link to
   `ai-trading`, and a full audit every quarter. Ask the PO before each (D-05).
 
@@ -293,7 +297,9 @@ Detailed tasks are written when the phase becomes current. Order from the standa
   means reading avengertech, which the PO asked this session not to touch; the PO decides when.
 - [ ] **MSAP V1.0 path in `AvengerTechLab/avengertech` not confirmed** (`SPEC.md` D-03). The PO supplied the file in
   a session on 2026-10-03; adding it to avengertech is outside this repository's scope. Once it is there,
-  `CLAUDE.md` §6a names its path. Needed before gate A-1.
+  `CLAUDE.md` §6a names its path. On 2026-11-04 a read-only search of avengertech `main` (`a223882`) and its
+  `claude/audit-msap-2026-10-03` branch found only audit outputs, not the protocol; the PO supplied the file again
+  (`MASTER_SYSTEM_AUDIT_PROTOCOL_V1.0.md`, sha256 prefix `b7135a559a3efa90`) and A-1 used it.
 
 ---
 
