@@ -325,5 +325,6 @@ Node.js 22 from NodeSource). All five checks passed:
 
 Decided (`SPEC.md` D-52): a small Linux VPS in Asia, on its own machine, if it passes the check. The machine is a
 VisperHost "Cloud VPS 02" in Bangkok (D-56, which replaces D-52's "the provider `ai-trading` uses"). It is not shared
-with the PO's POS project, which must open ports 80 and 443 while Stark opens none. The PO reaches the web page
+with the PO's POS project, which must open ports 80 and 443 while Stark opens none. Since 2026-11-04 (D-61) the same
+host also runs the AvengerTech watchdog in Docker, serving ports 80 and 443; Stark itself still opens none (T-25). The PO reaches the web page
 through an SSH tunnel (D-53), and the Google project is published "In production" (D-54).
