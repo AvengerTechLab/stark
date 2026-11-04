@@ -37,7 +37,8 @@ it; Phase 5 and 6 add the file that implements it. Security choices are decided 
 | B6 | Host operating system | — | SSH or other administration access |
 | B7 | Build → host | — | npm dependencies and the deploy path (Phase 5) |
 
-No boundary needs an inbound port: the web page is reached only through a private network (`SPEC.md` D-38).
+No Stark boundary needs an inbound port: the web page is reached only through a private network (`SPEC.md` D-38). Since
+D-61 the host also serves another system (the AvengerTech watchdog) on ports 80 and 443 (T-25).
 
 ## 4. Threats and controls
 
@@ -69,6 +70,7 @@ Likelihood and impact are design judgements for one user and one host, not measu
 | T-22 | A stolen session changes rules or switches channels off, and nothing shows who did it | B1 | Medium | A new session ID on every login; a Telegram notice on each successful login; each rule and channel change logged with time and source (web or bot) in `owner_actions` Built: rule and channel changes are saved together with their `owner_actions` row; every login is reported on Telegram. | `API.md` §1.1, `DATABASE.md` `owner_actions` |
 | T-23 | The disk fills (about 30 million price rows over 35 days for 10 pairs, `DATABASE.md` §2), writes stop and alerts with them | B5 | Medium | Daily partitions dropped after 35 days; the health monitor raises `disk_low` when free disk falls below 20 % The health monitor checks free disk every 30 s and reports `disk_low` and its recovery once (`src/app/health.ts`). | `DATABASE.md` §1, `EVENTS.md` §2.4 |
 | T-24 | A bot command from a group chat that includes the PO, or a `/delete` confirmation answered long after it was asked | B2 | Low | Commands accepted only from a private chat whose ID is the PO's; a yes counts only for the last question and only within 60 s Built: a group chat is refused, and a yes counts only for the last question within 60 s. | `API.md` §2 |
+| T-25 | A public web service on the same host (the watchdog's Caddy and Healthchecks on 80/443, D-61) is broken into, and the attacker reaches Stark's secrets (`/etc/stark/*.env`, the restic password, the R2 keys) or its database. Docker publishes those ports through its own firewall rules, so `ufw status` does not show them | B1 | High | Accepted by the PO (D-61). Stark itself still listens only on 127.0.0.1; Stark's heartbeat stays outside the host (D-57). Proposed, **PO to confirm**: keep the watchdog's images updated; check open ports with `ss -tlnp`, not `ufw status`; confirm no container mounts `/etc/stark`, `/opt/stark` or the host's PostgreSQL | `SPEC.md` D-38, D-61 |
 
 ## 5. Decisions
 
