@@ -3,7 +3,7 @@ Market Intelligence &amp; Alerting Platform
 
 Stark is the AvengerTech Lab for market intelligence and alerting.
 
-**Status: Phase 6, first feature.** v1.0 is built and runs end to end on fakes (`test/e2e/`). That covers the rule engine, the Bitkub and Binance feeds, the decision pipeline, the dispatcher and its four channels, PostgreSQL storage, the health monitor and heartbeat, and the owner web page and Telegram commands. Hosting and gate A-1 wait on the PO. Scope, market,
+**Status: Phase 6, first feature.** v1.0 is built and runs end to end on fakes (`test/e2e/`). That covers the rule engine, the Bitkub and Binance feeds, the decision pipeline, the dispatcher and its four channels, PostgreSQL storage, the health monitor and heartbeat, and the owner web page and Telegram commands. Since 2026-11-04 it runs on its VPS (`SPEC.md` D-56) with Telegram as its channel, after gate A-1 (`AUDIT/MSAP-2026-11-04-01/`); how to open the owner page is in `deploy/WEB.md`. Scope, market,
 data providers, alert channels and stack are decided in `SPEC.md` §6; the remaining questions are in `SPEC.md` §5.
 
 | Document | Contents |
@@ -13,6 +13,7 @@ data providers, alert channels and stack are decided in `SPEC.md` §6; the remai
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | Components, boundaries, data flow, provider and channel facts |
 | [`EVENTS.md`](EVENTS.md), [`API.md`](API.md), [`DATABASE.md`](DATABASE.md) | Contracts: rule evaluation and events, owner interface, database |
 | [`SECURITY.md`](SECURITY.md) | Rules in force and threats to design for |
+| [`deploy/`](deploy/) | Running Stark on its VPS (Thai): `SETUP.md`, `BACKUP.md`, `WEB.md` (opening the owner page) |
 | [`CLAUDE.md`](CLAUDE.md) | Rules for AI agents working in this repository |
 
 Engineering standard: `AVENGERTECH_ENGINEERING_INTEGRATION_SYSTEM_V1.md` in `AvengerTechLab/avengertech`.

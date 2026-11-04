@@ -10,10 +10,10 @@ Types (`Pair`, `Decimal`, `Rule`, …) are defined in `EVENTS.md`.
 
 ## 1. HTTP API
 
-Base path `/api/v1`, JSON in and out, served by the Stark process on its host over HTTPS only, and reachable only
-through a private network (`SPEC.md` D-38).
+Base path `/api/v1`, JSON in and out, served by the Stark process on its host on `127.0.0.1` only, and reachable only
+through an SSH tunnel from the PO's computer (`SPEC.md` D-38, D-53; how: `deploy/WEB.md`).
 
-### 1.1 Authentication (proposed)
+### 1.1 Authentication
 
 - One owner password. The host stores only its hash (Argon2id) in an environment variable; the password itself is
   never stored or logged (`CLAUDE.md` §5).
@@ -41,8 +41,12 @@ As built (`src/interface/http-server.ts`):
   - `X-Content-Type-Options: nosniff`
   - `Referrer-Policy: no-referrer`
   - `Cache-Control: no-store`
-- **HTTPS:** the process serves HTTP. HTTPS comes from the private network or a reverse proxy in front of it, which
-  is chosen with hosting (S6-12, **PO to confirm**).
+- **Transport:** the process serves plain HTTP on `127.0.0.1:8080` (`OWNER_HTTP_HOST`, `OWNER_HTTP_PORT`). The PO
+  reaches it through an SSH tunnel (D-53), which encrypts the traffic between the PO's computer and the host; the
+  browser opens `http://localhost:8080` (`deploy/WEB.md`). Browsers treat `http://localhost` as a secure context and
+  keep the `Secure` cookie there; checked in Chromium on 2026-11-04 (R-7), the PO's own browser still to be checked.
+  `127.0.0.1` in the address bar is not used, since not every browser keeps a `Secure` cookie there. The Origin check
+  holds through the tunnel: the page and its requests both use `localhost:<port>`.
 
 ### 1.2 Endpoints
 

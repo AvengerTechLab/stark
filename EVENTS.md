@@ -112,9 +112,9 @@ must hold no line break.
 | `subject` | exchange or channel name, `disk` or `storage` | |
 | `since` | `Timestamp` | When the condition started |
 
-A feed is stale after 60 s with no tick (proposed). The PO is told within 15 minutes of a feed staying stale or a
+A feed is stale after 60 s with no tick (`SPEC.md` D-55). The PO is told within 15 minutes of a feed staying stale or a
 channel failing (SC-3), through a channel other than the failing one. Recovery is reported once. `disk_low` is raised
-when free disk on the host falls below 20 % (proposed, `SECURITY.md` T-23).
+when free disk on the host falls below 20 % (D-55, `SECURITY.md` T-23).
 
 How the monitor applies this (`src/app/health.ts`; timings decided in `SPEC.md` D-55):
 
@@ -145,7 +145,8 @@ Heartbeat (`SPEC.md` D-43): every 5 minutes, while the process runs, Stark sends
 outside the host. The monitor tells the PO when no heartbeat arrives for 15 minutes (SC-3). No heartbeat is sent
 while the database is not answering (`storage_failing`, from the first failed check), so the outside monitor reports
 it too, independently of Stark's own channels (R-2). The heartbeat carries no
-data, and its URL is a secret like a channel credential (proposed timings).
+data, and its URL is a secret like a channel credential. The outside monitor is Healthchecks.io, with a 5-minute
+period and 10 minutes' grace (D-57).
 
 ## 3. Rule evaluation
 
@@ -164,8 +165,8 @@ data, and its URL is a secret like a channel credential (proposed timings).
 | `enabled` | boolean | |
 | `state` | `armed` or `fired` | D-20 |
 
-A rule watches one quote. Choosing "both THB and USDT" in the owner interface creates two rules, one per quote
-(`SPEC.md` D-35).
+A rule watches one quote. To watch both THB and USDT, the PO creates two rules, one per quote (`SPEC.md` D-35);
+neither the web page nor the Telegram commands has a "both" choice.
 
 ### 3.2 Level rules
 

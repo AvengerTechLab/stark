@@ -269,6 +269,9 @@ Detailed tasks are written when the phase becomes current. Order from the standa
     `AUDIT/MSAP-2026-11-04-01/` (D-59). 16 findings: F-001 and F-002 (S3) recommended before the first real alert.
   - Authorised by the PO (D-59): R-1 (F-001) and R-2 (F-002). Each runs in its own remediation context, test-first,
     then the affected area is re-audited. R-3 to R-8 and the untracked findings wait on the PO.
+  - R-7 authorised (D-62) and done in documents: `deploy/WEB.md` gives the tunnel and the URL; `API.md`, `EVENTS.md`
+    and `README.md` no longer drift (`R-7_REMEDIATION_CONTEXT.md`). F-015 RESOLVED; F-008 waits on the PO's login
+    through the real tunnel (Chromium on fakes passed).
   - R-1 done: a silent open stream is replaced after 60 s (`R-1_REMEDIATION_CONTEXT.md`; F-001 RESOLVED on re-audit).
   - R-2 done: a database that does not answer is reported after 5 minutes, `/healthz` is degraded and the heartbeat
     is withheld (`R-2_REMEDIATION_CONTEXT.md`; F-002 RESOLVED on re-audit). Both values and the Thai wording were
