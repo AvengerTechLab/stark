@@ -76,7 +76,7 @@ Both adapters follow the same rules (`src/feeds/stream-feed.ts`):
 
 - **Reconnect:** waits 1, 2, 4 … seconds between attempts, at most 60 s. The wait starts over once connected.
 - **Polling:** once a second while the stream is down. A poll never starts while the last one is unanswered.
-- **Silent stream:** an open stream with no message at all for 60 s (proposed, **PO to confirm**) counts as down:
+- **Silent stream:** an open stream with no message at all for 60 s (`SPEC.md` D-60) counts as down:
   Stark closes it, polls, and reconnects with the backoff above (R-1, audit `MSAP-2026-11-04-01` F-001). Neither
   provider gives a keep-alive Stark can see (Bitkub: "No explicit ping required"; Binance's ping frames are answered
   below the WebSocket API). A quiet pair therefore reconnects about once a minute, with REST prices in between.

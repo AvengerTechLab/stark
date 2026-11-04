@@ -45,7 +45,7 @@ export const BLOCKED_MS = 60_000;
 /**
  * An open stream with no message for this long counts as lost: Stark polls and reconnects (R-1, audit
  * MSAP-2026-11-04-01 F-001). Neither provider gives Stark a keep-alive it can see: Bitkub needs no ping and
- * Binance's ping frames are answered below the WebSocket API. Equal to the health monitor's stale time (proposed).
+ * Binance's ping frames are answered below the WebSocket API. Equal to the health monitor's stale time (SPEC.md D-60).
  */
 export const SILENT_AFTER_MS = 60_000;
 

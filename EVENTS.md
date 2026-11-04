@@ -125,7 +125,7 @@ How the monitor applies this (`src/app/health.ts`; timings decided in `SPEC.md` 
 | `channel_failing` (dead) | The channel answers it is dead (a Discord `404`) | At the next check |
 | `quota_reached` | The dispatcher skips a send for the quota | Once per usage period |
 | `disk_low` | Free disk below 20 % | At the next check |
-| `storage_failing` | The database does not answer `SELECT 1` within 5 s (R-2, audit `MSAP-2026-11-04-01` F-002) | When it has lasted 5 minutes (proposed, **PO to confirm**) |
+| `storage_failing` | The database does not answer `SELECT 1` within 5 s (R-2, audit `MSAP-2026-11-04-01` F-002) | When it has lasted 5 minutes (`SPEC.md` D-60) |
 | `*_recovered` | A tick, a delivery, free disk at 20 % or more, or the database answering again, after a reported condition | Once. An unreported condition that clears is forgotten |
 
 Checks run every 30 s. A report goes to the first channel in the order Telegram, Discord, email, LINE that:

@@ -46,3 +46,8 @@
   still to be confirmed by the PO.
 - Not changed (outside the approved scope, recorded for the PO): ticks that fail to store are still dropped, so
   alerts during the outage are lost, not delayed; the pipeline's queue has no limit while the database hangs.
+
+## After review
+
+The PO confirmed the proposed values and wording on 2026-11-04 (`SPEC.md` D-60) and merged the change (PR #19,
+`10c7098`).

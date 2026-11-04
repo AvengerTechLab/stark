@@ -40,3 +40,8 @@
   both (`stream-feed.ts` `watchSilence`). Probe P-01's scenario is a test that passes. **F-001: RESOLVED**, with
   the 60 s value still to be confirmed by the PO.
 - No new finding in `src/feeds/stream-feed.ts`.
+
+## After review
+
+The PO confirmed the proposed values and wording on 2026-11-04 (`SPEC.md` D-60) and merged the change (PR #19,
+`10c7098`).
