@@ -245,6 +245,17 @@ Tick a task only with evidence: the commit, the file created, or the command run
     was dropped.
   - `stark-backup.timer` enabled: next run Wed 2026-11-04 03:30 +07.
   - Follow-up: repeat the restore test once Stark has run and the database has tables (Discovered Work).
+- [x] **S6-16. Go-live on the D-56 machine** — after gate A-1, R-1 and R-2 (D-59, D-60), with the PO's permission
+  ("อนุญาตเปิด Stark", 2026-11-04). Evidence, from the PO's VPS output and Telegram on 2026-11-04:
+  - Code at `main` `1f1eb70` (R-1 and R-2 included) rsynced and built in `/opt/stark`; `dist/` contains
+    `SILENT_AFTER_MS` and `storage_failing`.
+  - `/etc/stark/stark.env` mode 600 root, five names (database, owner hash, Telegram token and owner chat, heartbeat);
+    Telegram only, LINE/Discord/Gmail not configured. The database role's password was reset to a hex one so the
+    URL needs no escaping. Pre-flight: `loadConfig` OK and `SELECT 1` OK with that file.
+  - `systemctl enable --now stark`: active (running); journal `db.migrated` (`001_initial`, `002_storage_health`),
+    `http.listening` 127.0.0.1:8080, `app.started` with `telegram`; `ss` shows only 127.0.0.1:8080 for node.
+  - The bot answered the PO's private chat. First real alert: the test rule `/below BTC/THB 999999999` fired on a
+    real Bitkub price and reached Telegram; the PO then deleted the rule.
 
 ## Next Phases (not started)
 
@@ -258,6 +269,9 @@ Detailed tasks are written when the phase becomes current. Order from the standa
     `AUDIT/MSAP-2026-11-04-01/` (D-59). 16 findings: F-001 and F-002 (S3) recommended before the first real alert.
   - Authorised by the PO (D-59): R-1 (F-001) and R-2 (F-002). Each runs in its own remediation context, test-first,
     then the affected area is re-audited. R-3 to R-8 and the untracked findings wait on the PO.
+  - R-7 authorised (D-62) and done in documents: `deploy/WEB.md` gives the tunnel and the URL; `API.md`, `EVENTS.md`
+    and `README.md` no longer drift (`R-7_REMEDIATION_CONTEXT.md`). F-015 RESOLVED; F-008 waits on the PO's login
+    through the real tunnel (Chromium on fakes passed).
   - R-1 done: a silent open stream is replaced after 60 s (`R-1_REMEDIATION_CONTEXT.md`; F-001 RESOLVED on re-audit).
   - R-2 done: a database that does not answer is reported after 5 minutes, `/healthz` is degraded and the heartbeat
     is withheld (`R-2_REMEDIATION_CONTEXT.md`; F-002 RESOLVED on re-audit). Both values and the Thai wording were
