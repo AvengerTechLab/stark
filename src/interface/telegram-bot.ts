@@ -21,6 +21,10 @@ export const POLL_TIMEOUT_SECONDS = 50;
 /** A yes to /delete counts only within this time of the question (API.md §2). */
 export const CONFIRM_MS = 60_000;
 const RETRY_MS = 5000;
+/** The confirming getUpdates is a short poll (timeout 0), so it needs only a short limit. */
+const CONFIRM_TIMEOUT_MS = 10_000;
+
+type PollResult = { ok: true } | { ok: false; retryAfterSeconds: number | undefined };
 
 const EXCHANGE_NAMES = { bitkub: "Bitkub", binance: "Binance" } as const;
 const DIRECTION_WORDS = { up: "ขึ้น", down: "ลง", either: "ขึ้นหรือลง" } as const;
@@ -87,39 +91,72 @@ export class TelegramBot {
     this.reply = telegramChannel({ botToken: deps.botToken, chatId: deps.ownerChatId }, deps.post);
   }
 
-  /** Fetches and handles one batch of updates. */
-  async pollOnce(): Promise<{ ok: true } | { ok: false; retryAfterSeconds: number | undefined }> {
+  /**
+   * Fetches one batch of updates, confirms it with Telegram, then handles each. Telegram forgets an update
+   * only when a later getUpdates carries a higher offset (Bot API, getUpdates "offset"), so the batch is
+   * confirmed first: a restart while handling cannot replay a command (R-4, F-005). If the confirmation
+   * fails, nothing is handled and the same batch is fetched again.
+   */
+  async pollOnce(): Promise<PollResult> {
+    const fetched = await this.getUpdates({ offset: this.offset, timeout: POLL_TIMEOUT_SECONDS }, (POLL_TIMEOUT_SECONDS + 10) * 1000, "telegram.poll_failed");
+    if (!fetched.ok) return fetched;
+    const updates = fetched.result.filter(
+      (u): u is TelegramUpdate => typeof u === "object" && u !== null && Number.isSafeInteger((u as { update_id?: unknown }).update_id),
+    );
+    const next = updates.reduce((max, u) => Math.max(max, u.update_id + 1), this.offset);
+    if (next > this.offset) {
+      const confirmed = await this.getUpdates({ offset: next, timeout: 0, limit: 1 }, CONFIRM_TIMEOUT_MS, "telegram.confirm_failed");
+      if (!confirmed.ok) return confirmed;
+      this.offset = next;
+    }
+    for (const update of updates) {
+      try {
+        await this.handleUpdate(update);
+      } catch (error) {
+        // One update that cannot be handled is skipped; it is already confirmed, so it does not return (F-006).
+        this.deps.logger.error("telegram.update_failed", { error });
+      }
+    }
+    return { ok: true };
+  }
+
+  private async getUpdates(
+    params: { offset: number; timeout: number; limit?: number },
+    timeoutMs: number,
+    failure: string,
+  ): Promise<{ ok: true; result: unknown[] } | { ok: false; retryAfterSeconds: number | undefined }> {
     let response;
     try {
       response = await this.deps.post(`https://api.telegram.org/bot${this.deps.botToken}/getUpdates`, {
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ offset: this.offset, timeout: POLL_TIMEOUT_SECONDS, allowed_updates: ["message"] }),
-        timeoutMs: (POLL_TIMEOUT_SECONDS + 10) * 1000,
+        body: JSON.stringify({ ...params, allowed_updates: ["message"] }),
+        timeoutMs,
       });
     } catch {
-      this.deps.logger.warn("telegram.poll_failed", { reason: "network_error" });
+      this.deps.logger.warn(failure, { reason: "network_error" });
       return { ok: false, retryAfterSeconds: undefined };
     }
     const reply = jsonBody(response.body) as { ok?: unknown; result?: unknown; parameters?: { retry_after?: unknown } } | undefined;
     if (response.status !== 200 || reply?.ok !== true || !Array.isArray(reply.result)) {
       const wait = reply?.parameters?.retry_after;
-      this.deps.logger.warn("telegram.poll_failed", { status: response.status });
+      this.deps.logger.warn(failure, { status: response.status });
       return { ok: false, retryAfterSeconds: typeof wait === "number" && wait > 0 ? wait : undefined };
     }
-    for (const update of reply.result as TelegramUpdate[]) {
-      if (typeof update.update_id !== "number") continue;
-      this.offset = Math.max(this.offset, update.update_id + 1);
-      await this.handleUpdate(update);
-    }
-    return { ok: true };
+    return { ok: true, result: reply.result as unknown[] };
   }
 
-  /** Polls until stopped; waits after a failure, never earlier than Telegram asks. */
+  /** Polls until stopped; waits after a failure, never earlier than Telegram asks. A round that throws is logged and retried (F-006). */
   start(timers: Timers): void {
     this.running = true;
     const loop = async () => {
       if (!this.running) return;
-      const result = await this.pollOnce();
+      let result: PollResult;
+      try {
+        result = await this.pollOnce();
+      } catch (error) {
+        this.deps.logger.error("telegram.loop_failed", { error });
+        result = { ok: false, retryAfterSeconds: undefined };
+      }
       if (!this.running) return;
       const wait = result.ok ? 0 : Math.max(RETRY_MS, (result.retryAfterSeconds ?? 0) * 1000);
       this.cancel = timers.set(wait, () => void loop());

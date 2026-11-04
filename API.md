@@ -147,8 +147,14 @@ channels per rule is done on the web page (proposed).
 
 As built (`src/interface/telegram-bot.ts`):
 
-- **Polling:** updates come from `getUpdates`, a 50 s long poll. The offset is the last update ID plus one, so each
-  update is handled once. After a failure the bot waits 5 s, or Telegram's `retry_after` if that is longer.
+- **Polling:** updates come from `getUpdates`, a 50 s long poll. Telegram forgets an update only when a later
+  `getUpdates` carries a higher offset (Bot API, `getUpdates` "offset", read 2026-11-04), so before handling a batch
+  the bot confirms it with a short `getUpdates` (`offset` = last update ID plus one, `timeout` 0, `limit` 1, 10 s
+  limit). A command is therefore handled at most once, even across a restart. If the confirmation fails
+  (`telegram.confirm_failed`), nothing is handled and the same batch is fetched again. An update that cannot be
+  handled is logged `telegram.update_failed` and skipped, and a polling round that fails unexpectedly is logged
+  `telegram.loop_failed` and retried, so neither stops the bot or the process (R-4). After a failure the bot waits
+  5 s, or Telegram's `retry_after` if that is longer.
 - **Who is obeyed:** only a private chat whose ID is `TELEGRAM_OWNER_CHAT_ID`. Anyone else gets no reply, and the
   attempt is logged `telegram.command_rejected` with the chat type only.
 - **Rule IDs:** a rule is shown by the first 8 characters of its ID. A command accepts any prefix of 4 or more

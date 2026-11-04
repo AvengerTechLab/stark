@@ -272,7 +272,9 @@ Detailed tasks are written when the phase becomes current. Order from the standa
   - R-7 authorised (D-62) and done in documents: `deploy/WEB.md` gives the tunnel and the URL; `API.md`, `EVENTS.md`
     and `README.md` no longer drift (`R-7_REMEDIATION_CONTEXT.md`). F-015 RESOLVED; F-008 waits on the PO's login
     through the real tunnel (Chromium on fakes passed).
-  - R-3 to R-6 and R-8 authorised (D-63), to be done in the order R-4, R-5, R-6, R-3, R-8. Not started.
+  - R-3 to R-6 and R-8 authorised (D-63), to be done in the order R-4, R-5, R-6, R-3, R-8.
+  - R-4 done: the bot confirms each batch of Telegram updates before handling it, skips an update it cannot
+    handle, and survives a failed round (`R-4_REMEDIATION_CONTEXT.md`; F-005 and F-006 RESOLVED on re-audit).
 - [ ] **Extra channels (D-62, D-63):** Discord, then LINE, then email, configured on the VPS by the PO with
   `deploy/CHANNELS.md` (Discord written; LINE and email to follow). Not started.
   - R-1 done: a silent open stream is replaced after 60 s (`R-1_REMEDIATION_CONTEXT.md`; F-001 RESOLVED on re-audit).

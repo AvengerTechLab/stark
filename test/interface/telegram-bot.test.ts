@@ -6,6 +6,7 @@ import { TelegramBot } from "../../src/interface/telegram-bot.js";
 import { createLogger } from "../../src/logger.js";
 import { FakeChannel } from "../fakes/fake-channel.js";
 import { FakeHttpPost, response } from "../fakes/fake-http-post.js";
+import { FakeClock } from "../fakes/fake-network.js";
 import { FakeChannelAdmin, FakeRuleAdmin } from "../fakes/fake-owner-storage.js";
 import { FakeChannelSettings, FakeDeliveryLog, FakeHealthLog, FakeRuleStore } from "../fakes/fake-storage.js";
 
@@ -181,6 +182,11 @@ describe("TelegramBot: commands", () => {
   });
 });
 
+const ownerUpdate = (updateId: number, text: string) => ({
+  update_id: updateId,
+  message: { message_id: updateId, chat: { id: Number(OWNER), type: "private" }, text },
+});
+
 describe("TelegramBot: long polling (Bot API getUpdates)", () => {
   it("fetches updates after the last one seen, and handles each", async () => {
     const { bot, http, store } = setup();
@@ -190,6 +196,7 @@ describe("TelegramBot: long polling (Bot API getUpdates)", () => {
         result: [{ update_id: 7, message: { message_id: 1, chat: { id: Number(OWNER), type: "private" }, text: "/above BTC/THB 1" } }],
       }),
     );
+    http.willReturn(response(200, { ok: true, result: [] })); // the confirmation
     await bot.pollOnce();
     expect(http.requests[0]?.url).toBe(`https://api.telegram.org/bot${TOKEN}/getUpdates`);
     expect(JSON.parse(http.requests[0]?.request.body ?? "{}")).toEqual({ offset: 0, timeout: 50, allowed_updates: ["message"] });
@@ -198,7 +205,77 @@ describe("TelegramBot: long polling (Bot API getUpdates)", () => {
     http.willReturn(response(200, { ok: true, result: [] }));
     await bot.pollOnce();
     const getUpdates = http.requests.filter((r) => r.url.endsWith("/getUpdates"));
-    expect(JSON.parse(getUpdates[1]?.request.body ?? "{}")).toMatchObject({ offset: 8 });
+    expect(JSON.parse(getUpdates[2]?.request.body ?? "{}")).toMatchObject({ offset: 8, timeout: 50 });
+  });
+
+  // R-4 (F-005): Telegram forgets an update only when a later getUpdates carries a higher offset (Bot API,
+  // getUpdates "offset", read 2026-11-04). Confirming before handling means a restart cannot replay a command.
+  it("confirms a batch with Telegram before handling it", async () => {
+    const { bot, http, store } = setup();
+    http.willReturn(
+      response(200, { ok: true, result: [ownerUpdate(7, "/above BTC/THB 1"), ownerUpdate(9, "/above BTC/THB 2")] }),
+      response(200, { ok: true, result: [ownerUpdate(10, "/above BTC/THB 3")] }), // a newer one, not handled yet
+    );
+    expect(await bot.pollOnce()).toEqual({ ok: true });
+    expect(http.requests[1]?.url).toBe(`https://api.telegram.org/bot${TOKEN}/getUpdates`);
+    expect(http.json(1)).toEqual({ offset: 10, timeout: 0, limit: 1, allowed_updates: ["message"] });
+    expect(http.requests[1]?.request.timeoutMs).toBe(10_000);
+    expect(http.requests.slice(2).every((r) => r.url.endsWith("/sendMessage"))).toBe(true);
+    expect([...store.rules.values()].map((r) => r.kind === "above" && r.level)).toEqual(["1", "2"]);
+    http.willReturn(response(200, { ok: true, result: [] }));
+    await bot.pollOnce();
+    expect(http.json(http.requests.length - 1)).toMatchObject({ offset: 10, timeout: 50 });
+  });
+
+  it("handles nothing when the confirmation fails, and asks for the same batch again", async () => {
+    const { bot, http, store, events } = setup();
+    http.willReturn(
+      response(200, { ok: true, result: [ownerUpdate(7, "/above BTC/THB 1")] }),
+      new Error(`socket hang up https://api.telegram.org/bot${TOKEN}/getUpdates`),
+    );
+    expect(await bot.pollOnce()).toEqual({ ok: false, retryAfterSeconds: undefined });
+    http.willReturn(response(200, { ok: true, result: [ownerUpdate(7, "/above BTC/THB 1")] }), response(429, { ok: false, parameters: { retry_after: 3 } }));
+    expect(await bot.pollOnce()).toEqual({ ok: false, retryAfterSeconds: 3 });
+    expect(store.rules.size).toBe(0);
+    expect(http.requests.some((r) => r.url.endsWith("/sendMessage"))).toBe(false);
+    expect(http.json(2)).toMatchObject({ offset: 0, timeout: 50 });
+    expect(events().filter((e) => e === "telegram.confirm_failed")).toHaveLength(2);
+  });
+
+  // R-4 (F-006): one update that cannot be handled must not stop the others or the process.
+  it("skips an update it cannot handle and goes on with the rest", async () => {
+    const { bot, http, store, events } = setup();
+    http.willReturn(
+      response(200, {
+        ok: true,
+        result: [null, { update_id: 8, message: { message_id: 1, text: "/rules" } }, ownerUpdate(9, "/above BTC/THB 1")],
+      }),
+      response(200, { ok: true, result: [] }),
+    );
+    expect(await bot.pollOnce()).toEqual({ ok: true });
+    expect(http.json(1)).toMatchObject({ offset: 10 });
+    expect(store.rules.size).toBe(1);
+    expect(events()).toContain("telegram.update_failed");
+  });
+
+  it("keeps polling after a round fails unexpectedly", async () => {
+    const { bot, events } = setup();
+    const clock = new FakeClock(new Date(T0));
+    let rounds = 0;
+    bot.pollOnce = async () => {
+      rounds++;
+      if (rounds === 1) throw new TypeError("Cannot read properties of undefined");
+      return { ok: false, retryAfterSeconds: undefined }; // each later round waits 5 s
+    };
+    bot.start(clock);
+    await clock.advance(0);
+    expect(rounds).toBe(1);
+    expect(events()).toContain("telegram.loop_failed");
+    await clock.advance(4_999);
+    expect(rounds).toBe(1);
+    await clock.advance(1);
+    expect(rounds).toBe(2);
+    bot.stop();
   });
 
   it("reports a failed poll without its URL, which holds the token (T-19)", async () => {

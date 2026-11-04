@@ -1,6 +1,7 @@
 // One fake for every outside HTTP service Stark calls (CLAUDE.md §5), routed by URL, for the end-to-end
 // test: the providers' pair lists, Telegram, LINE, Discord, Google and the uptime monitor. Telegram's
-// getUpdates is a long poll: it waits until the test queues a message, as the real one does.
+// getUpdates follows the Bot API: updates stay queued until a call carries a higher offset, `limit` caps the
+// batch, and a call with a timeout waits until the test queues a message, while `timeout: 0` answers at once.
 
 import type { HttpPost, PostRequest, PostResponse } from "../../src/channels/http.js";
 import type { HttpGet, HttpResponse } from "../../src/feeds/stream-feed.js";
@@ -12,8 +13,8 @@ export class FakeInternet {
   readonly gets: string[] = [];
   readonly posts: { url: string; request: PostRequest }[] = [];
   private updateId = 0;
-  private queued: unknown[] = [];
-  private waiting: ((r: PostResponse) => void) | undefined;
+  private queued: { update_id: number }[] = [];
+  private waiting: { limit: number; resolve: (r: PostResponse) => void } | undefined;
   /** Extra Bitkub pairs on top of the documented BTC_THB example (demo). */
   bitkubSymbols = BITKUB_SYMBOLS;
   /** Status the LINE push API answers with; set to 500 to make LINE fail. */
@@ -34,7 +35,7 @@ export class FakeInternet {
   post: HttpPost = async (url, request) => {
     this.posts.push({ url, request });
     const telegram = `https://api.telegram.org/bot${this.telegramToken}/`;
-    if (url === `${telegram}getUpdates`) return this.longPoll();
+    if (url === `${telegram}getUpdates`) return this.getUpdates(JSON.parse(request.body) as { offset?: number; timeout?: number; limit?: number });
     if (url === `${telegram}sendMessage`) return ok({ ok: true, result: { message_id: 1 } });
     if (url === "https://api.line.me/v2/bot/message/push") {
       return this.lineStatus === 200 ? ok({ sentMessages: [{ id: "1" }] }) : { status: this.lineStatus, retryAfter: null, body: "{}" };
@@ -52,22 +53,23 @@ export class FakeInternet {
     this.release();
   }
 
-  private longPoll(): Promise<PostResponse> {
-    if (this.queued.length > 0) return Promise.resolve(this.takeQueued());
-    return new Promise((resolve) => (this.waiting = resolve));
+  private getUpdates(params: { offset?: number; timeout?: number; limit?: number }): Promise<PostResponse> {
+    const offset = params.offset ?? 0;
+    if (offset > 0) this.queued = this.queued.filter((u) => u.update_id >= offset); // confirmed: forgotten
+    const limit = params.limit ?? 100;
+    if (this.queued.length > 0 || (params.timeout ?? 0) === 0) return Promise.resolve(this.batch(limit));
+    return new Promise((resolve) => (this.waiting = { limit, resolve }));
   }
 
   private release(): void {
     if (this.waiting === undefined) return;
-    const resolve = this.waiting;
+    const { limit, resolve } = this.waiting;
     this.waiting = undefined;
-    resolve(this.takeQueued());
+    resolve(this.batch(limit));
   }
 
-  private takeQueued(): PostResponse {
-    const result = this.queued;
-    this.queued = [];
-    return ok({ ok: true, result });
+  private batch(limit: number): PostResponse {
+    return ok({ ok: true, result: this.queued.slice(0, limit) });
   }
 
   /** Text of every Telegram message Stark sent, in order. */
