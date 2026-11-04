@@ -13,7 +13,7 @@ data providers, alert channels and stack are decided in `SPEC.md` §6; the remai
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | Components, boundaries, data flow, provider and channel facts |
 | [`EVENTS.md`](EVENTS.md), [`API.md`](API.md), [`DATABASE.md`](DATABASE.md) | Contracts: rule evaluation and events, owner interface, database |
 | [`SECURITY.md`](SECURITY.md) | Rules in force and threats to design for |
-| [`deploy/`](deploy/) | Running Stark on its VPS (Thai): `SETUP.md`, `BACKUP.md`, `WEB.md` (opening the owner page) |
+| [`deploy/`](deploy/) | Running Stark on its VPS (Thai): `SETUP.md`, `BACKUP.md`, `WEB.md` (opening the owner page), `CHANNELS.md` (adding alert channels) |
 | [`CLAUDE.md`](CLAUDE.md) | Rules for AI agents working in this repository |
 
 Engineering standard: `AVENGERTECH_ENGINEERING_INTEGRATION_SYSTEM_V1.md` in `AvengerTechLab/avengertech`.

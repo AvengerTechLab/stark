@@ -272,6 +272,9 @@ Detailed tasks are written when the phase becomes current. Order from the standa
   - R-7 authorised (D-62) and done in documents: `deploy/WEB.md` gives the tunnel and the URL; `API.md`, `EVENTS.md`
     and `README.md` no longer drift (`R-7_REMEDIATION_CONTEXT.md`). F-015 RESOLVED; F-008 waits on the PO's login
     through the real tunnel (Chromium on fakes passed).
+  - R-3 to R-6 and R-8 authorised (D-63), to be done in the order R-4, R-5, R-6, R-3, R-8. Not started.
+- [ ] **Extra channels (D-62, D-63):** Discord, then LINE, then email, configured on the VPS by the PO with
+  `deploy/CHANNELS.md` (Discord written; LINE and email to follow). Not started.
   - R-1 done: a silent open stream is replaced after 60 s (`R-1_REMEDIATION_CONTEXT.md`; F-001 RESOLVED on re-audit).
   - R-2 done: a database that does not answer is reported after 5 minutes, `/healthz` is degraded and the heartbeat
     is withheld (`R-2_REMEDIATION_CONTEXT.md`; F-002 RESOLVED on re-audit). Both values and the Thai wording were
