@@ -131,6 +131,8 @@ vps# chmod 700 /etc/stark
 
 ## 7. วางโค้ดและ build
 
+ต้องมี Node.js 24 บน VPS ก่อน (ข้อ 11) ตรวจด้วย `vps# node -v` ต้องขึ้นต้นด้วย `v24.`
+
 จากโฟลเดอร์ repo stark บนเครื่องของคุณ ที่อยู่บน `main` ล่าสุด:
 
 ```
@@ -225,6 +227,62 @@ URL ของ check เป็นความลับ (ใครมีก็ส�
 3. ส่ง `/status` ถึงบอทใน Telegram บอทต้องตอบ
 
 ถ้า Stark ไม่ขึ้นหลัง restart ให้ส่งผลของ `journalctl -u stark -n 50 --no-pager` มาให้ Claude (Stark ซ่อนค่าลับใน log ให้แล้ว)
+
+## 11. Node.js 24 จาก NodeSource (D-64)
+
+Stark ใช้ Node.js 24 (`SPEC.md` D-64) ติดตั้งจาก NodeSource เพราะ Ubuntu 24.04 มีแต่รุ่นเก่า NodeSource เก็บที่อยู่ของ
+repository ไว้ในไฟล์ `/etc/apt/sources.list.d/nodesource.sources` ซึ่งมีบรรทัด `URIs: https://deb.nodesource.com/node_<รุ่น>`
+
+### 11.1 เครื่องใหม่ (ยังไม่มี Node.js)
+
+```
+vps# curl -fsSL https://deb.nodesource.com/setup_24.x -o /root/nodesource_setup.sh
+vps# less /root/nodesource_setup.sh
+vps# bash /root/nodesource_setup.sh
+vps# apt-get install -y nodejs
+vps# node -v
+```
+
+`less` ใช้เปิดอ่านสคริปต์ก่อนรัน (กด `q` เพื่อออก) สคริปต์นี้เพิ่ม key และไฟล์ `nodesource.sources` แล้วสั่ง `apt update`
+ผลของ `node -v` ต้องขึ้นต้นด้วย `v24.`
+
+### 11.2 อัปเกรดจาก Node.js 22 (เครื่อง D-56, 2026-11)
+
+ทำ**ก่อน**อัปเดตโค้ด Stark (ข้อ 10) เพราะโค้ดตั้งแต่ D-64 ต้องใช้ Node.js 24
+
+1. ดูของเดิม:
+
+   ```
+   vps# node -v
+   vps# cat /etc/apt/sources.list.d/nodesource.sources
+   ```
+
+   ต้องเห็น `v22.` และบรรทัด `URIs: https://deb.nodesource.com/node_22.x` ถ้าไม่ใช่แบบนี้ ให้หยุดแล้วส่งผลมาให้ Claude
+
+2. เปลี่ยนเป็น 24 แล้วติดตั้ง:
+
+   ```
+   vps# sed -i 's#deb.nodesource.com/node_22.x#deb.nodesource.com/node_24.x#' /etc/apt/sources.list.d/nodesource.sources
+   vps# grep URIs /etc/apt/sources.list.d/nodesource.sources
+   vps# apt-get update
+   vps# apt-get install -y nodejs
+   vps# node -v
+   vps# npm -v
+   ```
+
+   `grep` ต้องแสดง `node_24.x` และ `node -v` ต้องขึ้นต้นด้วย `v24.`
+
+3. Stark ยังรันด้วย Node.js 22 ที่โหลดไว้ในหน่วยความจำจนกว่าจะ restart ให้ทำข้อ 10 ต่อทันที (`npm ci` จะติดตั้ง
+   dependency ใหม่ด้วย npm ของ Node.js 24 แล้ว restart)
+
+4. backup ตอน 03:30 ใช้ Node.js ตัวเดียวกัน วันรุ่งขึ้นให้ตรวจว่ายังผ่าน:
+
+   ```
+   vps# journalctl -u stark-backup -n 20 --no-pager | grep -E 'backup.completed|error'
+   ```
+
+ถ้าต้องถอยกลับเป็น 22: เปลี่ยน `node_24.x` กลับเป็น `node_22.x` ด้วย `sed` แบบเดียวกัน แล้ว
+`apt-get update && apt-get install -y --allow-downgrades nodejs=22.*` และ deploy โค้ด commit ก่อน D-64
 
 ## ส่งผลกลับมา
 

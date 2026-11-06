@@ -257,6 +257,14 @@ Tick a task only with evidence: the commit, the file created, or the command run
   - The bot answered the PO's private chat. First real alert: the test rule `/below BTC/THB 999999999` fired on a
     real Bitkub price and reached Telegram; the PO then deleted the rule.
 
+- [ ] **S6-17. Node.js 24 (D-64)** — `package.json` `engines` `>=24`, CI on Node 24, `@types/node` 24.19.2,
+  `deploy/SETUP.md` §11 (install and the upgrade from 22 on the VPS). Locally on Node v24.22.2 (official tarball,
+  SHA-256 checked) with npm 11.19.1: `npm ci`, then `npm run check` with PostgreSQL green (298 tests) before and
+  after the change, with no deprecation warning under `--trace-deprecation`. Open: CI on Node 24, the VPS upgrade
+  (§11.2) and its first backup run.
+- [ ] **Audit MSAP #2 (D-64)** — after S6-17 is on the VPS: the PO asked for an audit and the widest testing
+  before the remaining work. Scope to be set at its Start Gate.
+
 ## Next Phases (not started)
 
 Detailed tasks are written when the phase becomes current. Order from the standard §2.2 and §4–10.

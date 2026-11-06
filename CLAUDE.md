@@ -95,7 +95,7 @@ Update the matching record in the same change. Tick a task only with evidence.
 
 ## 8. Commands
 
-Node.js 22 and npm. In CI order (`.github/workflows/ci.yml`):
+Node.js 24 and npm (`SPEC.md` D-64). In CI order (`.github/workflows/ci.yml`):
 
 | Step | Command |
 |---|---|

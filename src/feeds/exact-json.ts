@@ -1,6 +1,6 @@
 // JSON parsing that keeps every number as the exact text the provider sent. Bitkub sends prices as
 // JSON numbers; reading them as binary floats could change their digits (playbook §6), so the
-// reviver returns each number's source text instead (JSON.parse source text access, Node.js 22).
+// reviver returns each number's source text instead (JSON.parse source text access, available in Node.js 22 and later).
 
 interface ReviverContext {
   readonly source?: string;

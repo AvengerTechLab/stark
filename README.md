@@ -18,5 +18,5 @@ data providers, alert channels and stack are decided in `SPEC.md` §6; the remai
 
 Engineering standard: `AVENGERTECH_ENGINEERING_INTEGRATION_SYSTEM_V1.md` in `AvengerTechLab/avengertech`.
 
-Development: Node.js 22. `npm ci`, then `npm run check` (lint, typecheck, test, build). Commands are listed in
+Development: Node.js 24. `npm ci`, then `npm run check` (lint, typecheck, test, build). Commands are listed in
 `CLAUDE.md` §8.

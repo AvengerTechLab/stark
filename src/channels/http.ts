@@ -1,5 +1,5 @@
 // The HTTP POST every channel adapter sends through, so tests can replace it (CLAUDE.md §5).
-// The real one is Node.js 22's fetch, with a time limit; no dependency is added.
+// The real one is Node.js's built-in fetch, with a time limit; no dependency is added.
 
 export interface PostRequest {
   /** Header names in lower case. */
