@@ -110,7 +110,7 @@ Design notes: Stark sends alerts as push messages, so every LINE alert counts to
 reads the month's usage from the API to stop at the limit (D-17). A Discord webhook answering 404 is marked dead and
 reported (SC-3), not retried.
 
-Channel adapters as built (S6-8, `src/channels/`). Each sends one HTTPS POST through Node.js 22's `fetch`, with a 5 s
+Channel adapters as built (S6-8, `src/channels/`). Each sends one HTTPS POST through Node.js's built-in `fetch`, with a 5 s
 time limit; no dependency is added. Sources were read on 2026-10-16:
 
 | Channel | Request | How the answer is read | Source |
@@ -276,7 +276,7 @@ Results:
 The PO's machine reaches all three, so Binance does not block it (no `451`). WebSocket connections were not tested.
 
 `scripts/hosting-check.mjs` on the chosen host (`SPEC.md` D-56), run by the PO on 2026-10-19 (Ubuntu 24.04 LTS,
-Node.js 22 from NodeSource). All five checks passed:
+Node.js 22 from NodeSource at the time; Node.js 24 since D-64). All five checks passed:
 
 | Check | Result |
 |---|---|
@@ -288,7 +288,7 @@ Node.js 22 from NodeSource). All five checks passed:
 
 ### 8.1 Hosting (S6-12; chosen by the PO in `SPEC.md` D-52 and D-56)
 
-**The check.** On each candidate host, run `node scripts/hosting-check.mjs`. It needs Node.js 22 and nothing else.
+**The check.** On each candidate host, run `node scripts/hosting-check.mjs`. It needs Node.js 22 or later and nothing else.
 
 - It is read-only: the providers' public market-data endpoints only, no key, and nothing sent to any channel.
 - It checks three REST calls and both streams, and is the first test of the WebSocket connections.
@@ -298,7 +298,7 @@ Node.js 22 from NodeSource). All five checks passed:
 
 | Need | From |
 |---|---|
-| Always on; Linux recommended for the process; Node.js 22 | D-13, D-25 |
+| Always on; Linux recommended for the process; Node.js 24 | D-13, D-25, D-64 |
 | PostgreSQL 16 on the same host, reachable from localhost only | D-22, D-25 |
 | Outbound HTTPS and WSS to the provider and channel hosts in §2.1–2.2 and `src/channels/`; no inbound port | D-38 |
 | A way for the PO to reach the web page privately, which also gives HTTPS (D-53: an SSH tunnel) | D-38, `API.md` §1.1 |

@@ -1,4 +1,4 @@
-// The real socket, HTTP client and clock behind StreamFeed, using what Node.js 22 has built in
+// The real socket, HTTP client and clock behind StreamFeed, using what Node.js has built in
 // (global WebSocket and fetch), so the feeds add no dependency (SECURITY.md T-13). Kept thin: all
 // behaviour lives in StreamFeed, which is tested on fakes.
 
