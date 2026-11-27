@@ -28,10 +28,10 @@ export class FakePriceLog implements PriceLog {
     this.ticks.push(tick);
   }
 
-  async priceAtOrBefore(exchange: Exchange, pair: string, time: Date): Promise<string | undefined> {
+  async priceAtOrBefore(exchange: Exchange, pair: string, time: Date, notBefore: Date): Promise<string | undefined> {
     let best: PriceTick | undefined;
     for (const t of this.ticks) {
-      if (t.exchange !== exchange || t.pair !== pair || t.exchangeTime > time) continue;
+      if (t.exchange !== exchange || t.pair !== pair || t.exchangeTime > time || t.exchangeTime < notBefore) continue;
       if (best === undefined || t.exchangeTime >= best.exchangeTime) best = t;
     }
     return best?.price;

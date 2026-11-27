@@ -218,9 +218,17 @@ export function ownerHandler(deps: OwnerHttpDeps): (req: IncomingMessage, res: S
     throw new HttpError(404, "NOT_FOUND", "no such endpoint");
   }
 
-  return async (req, res) => {
-    const url = new URL(req.url ?? "/", "http://stark.invalid");
+  async function respond(req: IncomingMessage, res: ServerResponse): Promise<void> {
+    let path: string | undefined;
     try {
+      // Parsed inside the error boundary: a target such as "//" is not a valid URL (R-9, MSAP-2026-11-09-01 F-101).
+      let url: URL;
+      try {
+        url = new URL(req.url ?? "/", "http://stark.invalid");
+      } catch {
+        return send(res, 400, "bad request", "text/plain; charset=utf-8");
+      }
+      path = url.pathname;
       if (url.pathname.startsWith("/api/")) return await api(req, res, url);
       if (req.method !== "GET") return send(res, 404, "not found", "text/plain; charset=utf-8");
       if (url.pathname === "/healthz") {
@@ -237,8 +245,18 @@ export function ownerHandler(deps: OwnerHttpDeps): (req: IncomingMessage, res: S
         return sendJson(res, error.status, { error: body });
       }
       // Details go to the server log only (API.md §1.4).
-      logger.error("owner.request_failed", { method: req.method, path: url.pathname, error });
+      logger.error("owner.request_failed", { method: req.method, path, error });
       return sendJson(res, 500, { error: { code: "INTERNAL", message: "internal error" } });
+    }
+  }
+
+  // The returned promise never rejects: the server calls it without awaiting, and a rejection would end the process.
+  return async (req, res) => {
+    try {
+      await respond(req, res);
+    } catch (error) {
+      logger.error("owner.response_failed", { method: req.method, error });
+      res.destroy();
     }
   };
 }

@@ -205,6 +205,33 @@ describe("DecisionPipeline: decisions (EVENTS.md §2.2, §3)", () => {
     expect(dispatched[0]?.message.split("\n")[0]).toBe("[Stark] BTC/USDT ขึ้น +5.00% ใน 60 นาที");
   });
 
+  // R-10 (audit MSAP-2026-11-09-01 F-102): the reference must lie within 2 minutes before the cutoff (EVENTS.md §3.3,
+  // SPEC.md D-66). A price from before a gap (Stark or the feed down, or no rule on the pair) is no reference.
+  const seedRef = (priceLog: FakePriceLog, price: string, exchangeMs: number) =>
+    priceLog.seed({ id: `ref-${exchangeMs}`, exchange: "binance", pair: "BTC/USDT", price, exchangeTime: at(exchangeMs), receivedTime: at(exchangeMs), source: "stream" });
+
+  it("does not fire a change rule whose only earlier price is from before a gap (R-10)", async () => {
+    const { priceLog, dispatched, receive, flushAt } = setup(new FakeRuleStore(change));
+    seedRef(priceLog, "100", -60 * 60_000 - 3 * 60 * 60_000); // three hours before the cutoff
+    receive("BTC/USDT", "110", 0);
+    await flushAt(1000);
+    expect(dispatched).toEqual([]);
+  });
+
+  it("accepts a reference exactly 2 minutes before the cutoff and refuses one a millisecond older (R-10)", async () => {
+    const atLimit = setup(new FakeRuleStore(change));
+    seedRef(atLimit.priceLog, "100", -60 * 60_000 - 2 * 60_000);
+    atLimit.receive("BTC/USDT", "105", 0);
+    await atLimit.flushAt(1000);
+    expect(atLimit.dispatched.map((d) => d.referencePrice)).toEqual(["100"]);
+
+    const older = setup(new FakeRuleStore(change));
+    seedRef(older.priceLog, "100", -60 * 60_000 - 2 * 60_000 - 1);
+    older.receive("BTC/USDT", "105", 0);
+    await older.flushAt(1000);
+    expect(older.dispatched).toEqual([]);
+  });
+
   it("does not fire a change rule without a reference price", async () => {
     const { dispatched, receive, flushAt } = setup(new FakeRuleStore(change));
     receive("BTC/USDT", "500", 0);

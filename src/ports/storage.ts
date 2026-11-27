@@ -23,8 +23,11 @@ export interface AlertDecision extends RuleDecision {
 
 export interface PriceLog {
   append(tick: PriceTick): Promise<void>;
-  /** Price of the last stored tick for this exchange and pair at or before `time` (EVENTS.md §3.3 step 1). */
-  priceAtOrBefore(exchange: Exchange, pair: string, time: Date): Promise<string | undefined>;
+  /**
+   * Price of the last stored tick for this exchange and pair at or before `time` and not before `notBefore`
+   * (EVENTS.md §3.3 step 1); undefined when there is none in that span.
+   */
+  priceAtOrBefore(exchange: Exchange, pair: string, time: Date, notBefore: Date): Promise<string | undefined>;
 }
 
 export interface RuleStore {

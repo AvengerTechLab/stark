@@ -204,9 +204,8 @@ Bitkub / Binance stream ──► feed adapter ──► PriceTick ──► pri
 `PriceTick` (proposed): exchange, symbol, quote currency (THB or USDT), price as a decimal string, exchange time,
 received time. Prices are never stored or compared as binary floating point (playbook §6, items 1–4).
 
-Open for Phase 3 contracts: which stored tick counts as "the price N minutes earlier" for a percentage rule
-(proposed: the last tick at or before that moment), and what happens when there is no tick that old yet (proposed:
-the rule does not fire).
+"The price N minutes earlier" for a percentage rule is settled in `EVENTS.md` §3.3: the last stored tick at or before
+that moment and no more than 2 minutes before it (`SPEC.md` D-66); with none, the rule does not fire.
 
 ## 6. Timing budget for SC-1 (10 seconds)
 

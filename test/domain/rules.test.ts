@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { evaluateRule, referenceCutoff, type Rule, type RuleTick } from "../../src/domain/rules.js";
+import { evaluateRule, referenceCutoff, referenceEarliest, REFERENCE_MAX_AGE_MS, type Rule, type RuleTick } from "../../src/domain/rules.js";
 
 // Demo rules and prices from EVENTS.md §3.5; not market data.
 
@@ -95,6 +95,12 @@ describe("percentage rules (EVENTS.md §3.3)", () => {
   it("finds the reference cutoff windowMinutes before the tick's exchange time", () => {
     const at = new Date("2026-01-01T12:00:00.000Z");
     expect(referenceCutoff(at, 60).toISOString()).toBe("2026-01-01T11:00:00.000Z");
+  });
+
+  it("accepts a reference at most 2 minutes before the cutoff (R-10, SPEC.md D-66)", () => {
+    expect(REFERENCE_MAX_AGE_MS).toBe(2 * 60_000);
+    const at = new Date("2026-01-01T12:00:00.000Z");
+    expect(referenceEarliest(at, 60).toISOString()).toBe("2026-01-01T10:58:00.000Z");
   });
 });
 

@@ -94,16 +94,25 @@ describe.skipIf(TEST_DATABASE_URL === undefined)("PostgreSQL storage", () => {
       await log.append(tick({ exchange: "binance", pair: "BTC/USDT", price: "5", exchangeTime: at(-500) }));
       await log.append(tick({ pair: "ETH/THB", price: "7", exchangeTime: at(-500) }));
 
-      expect(await log.priceAtOrBefore("bitkub", "BTC/THB", at(-1000))).toBe("101");
-      expect(await log.priceAtOrBefore("bitkub", "BTC/THB", at(-1001))).toBe("100.123456789012345678901234567890");
-      expect(await log.priceAtOrBefore("bitkub", "BTC/THB", at(-3000))).toBeUndefined();
-      expect(await log.priceAtOrBefore("binance", "BTC/USDT", at(0))).toBe("5");
+      const since = at(-10_000);
+      expect(await log.priceAtOrBefore("bitkub", "BTC/THB", at(-1000), since)).toBe("101");
+      expect(await log.priceAtOrBefore("bitkub", "BTC/THB", at(-1001), since)).toBe("100.123456789012345678901234567890");
+      expect(await log.priceAtOrBefore("bitkub", "BTC/THB", at(-3000), since)).toBeUndefined();
+      expect(await log.priceAtOrBefore("binance", "BTC/USDT", at(0), since)).toBe("5");
+    });
+
+    it("finds no price older than the lower bound, which is inclusive (R-10)", async () => {
+      const log = new PgPriceLog(pool);
+      // A pair of its own: the tests in this file share one schema.
+      await log.append(tick({ pair: "XRP/THB", price: "100", exchangeTime: at(-5000) }));
+      expect(await log.priceAtOrBefore("bitkub", "XRP/THB", at(0), at(-5000))).toBe("100");
+      expect(await log.priceAtOrBefore("bitkub", "XRP/THB", at(0), at(-4999))).toBeUndefined();
     });
 
     it("creates a missing day's partition on first write", async () => {
       const log = new PgPriceLog(pool);
       await log.append(tick({ exchangeTime: at(40 * DAY), price: "1" }));
-      expect(await log.priceAtOrBefore("bitkub", "BTC/THB", at(40 * DAY))).toBe("1");
+      expect(await log.priceAtOrBefore("bitkub", "BTC/THB", at(40 * DAY), at(40 * DAY))).toBe("1");
     });
 
     it("drops whole days older than the 35-day retention and keeps the rest (D-34)", async () => {

@@ -274,6 +274,12 @@ Tick a task only with evidence: the commit, the file created, or the command run
   P-03…P-07, 35-day volume (12.1 M demo rows, 2.56 GB), three independent reviewers; Mode C blocked (no VPS output).
   20 new findings: F-101 (S3) one request ends the process; F-102…F-106 (S2). Next: the PO authorises packages
   (R-9 and R-10 recommended first).
+  - R-9 and R-10 authorised (D-66).
+  - R-9 done: a malformed request target gets `400`; the handler never rejects; uncaught errors are logged, then
+    exit 1 (`AUDIT/MSAP-2026-11-09-01/R-9_REMEDIATION_CONTEXT.md`; F-101 RESOLVED on re-audit).
+  - R-10 done: a change rule's reference must be within 2 minutes before its cutoff, so a price from before a gap
+    no longer fires a false "N นาที" alert (`R-10_REMEDIATION_CONTEXT.md`; F-102 RESOLVED on re-audit). `change`
+    rules may be used again once R-10 is on the VPS.
 
 ## Next Phases (not started)
 

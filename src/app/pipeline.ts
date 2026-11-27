@@ -7,7 +7,7 @@ import type { Logger } from "../logger.js";
 import type { FeedTick } from "../ports/feed.js";
 import type { AlertDecision, ChannelSettings, PriceLog, PriceTick, RuleStore } from "../ports/storage.js";
 import { formatAlertMessage } from "../domain/message.js";
-import { evaluateRule, referenceCutoff, type Rule } from "../domain/rules.js";
+import { evaluateRule, referenceCutoff, referenceEarliest, type Rule } from "../domain/rules.js";
 
 /** A tick received later than this after its exchange time is stored but not evaluated (EVENTS.md §2.1). */
 export const LATE_TICK_MS = 10_000;
@@ -115,6 +115,7 @@ export class DecisionPipeline {
             tick.exchange,
             tick.pair,
             referenceCutoff(tick.exchangeTime, rule.windowMinutes),
+            referenceEarliest(tick.exchangeTime, rule.windowMinutes),
           )
         : undefined;
     const result = evaluateRule(rule, tick, reference);

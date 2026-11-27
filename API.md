@@ -123,6 +123,10 @@ A rule refused for several reasons carries every one in `details`, and `code` is
 | `429` | `LOGIN_LOCKED` |
 | `500` | `INTERNAL` (details only in the server log) |
 
+A request whose target is not a valid URL (for example `//`) is answered `400` with the plain text `bad request`,
+before any route is chosen (R-9). The handler never lets an error escape: if even the error answer cannot be written,
+the event is logged `owner.response_failed` and the connection is closed.
+
 ## 2. Telegram bot commands
 
 The bot fetches updates by long polling, so it needs no inbound port (D-38). It acts only on messages from a private

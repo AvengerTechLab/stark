@@ -99,8 +99,27 @@ async function start(config: Config, logger: Logger): Promise<{ stark: StarkHand
   }
 }
 
-/** Starts Stark; resolves 1 if it cannot start, 0 once it is running. */
-export async function main(env: Env): Promise<number> {
+/**
+ * Last line of defence (R-9, SPEC.md D-66): an error nothing else caught is logged through Stark's logger, which
+ * hides secrets, and the process exits with 1 so systemd starts it clean, as Node.js would have done unlogged.
+ */
+export function installFatalHandlers(
+  target: Pick<NodeJS.EventEmitter, "on">,
+  logger: Logger,
+  exit: (code: number) => void = (code) => process.exit(code),
+): void {
+  target.on("unhandledRejection", (error: unknown) => {
+    logger.error("process.unhandled_rejection", { error });
+    exit(1);
+  });
+  target.on("uncaughtException", (error: unknown) => {
+    logger.error("process.uncaught_exception", { error });
+    exit(1);
+  });
+}
+
+/** Starts Stark; resolves 1 if it cannot start, 0 once it is running. `processGuards` is set by the entry point only. */
+export async function main(env: Env, options: { processGuards?: boolean } = {}): Promise<number> {
   let config: Config;
   try {
     config = loadConfig(env);
@@ -111,6 +130,7 @@ export async function main(env: Env): Promise<number> {
     return 1;
   }
   const logger = createLogger({ level: config.logLevel, secrets: secretValues(config) });
+  if (options.processGuards === true) installFatalHandlers(process, logger);
   try {
     const { stark, pool } = await start(config, logger);
     const shutdown = async (signal: string) => {
@@ -129,7 +149,7 @@ export async function main(env: Env): Promise<number> {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  void main(process.env).then((code) => {
+  void main(process.env, { processGuards: true }).then((code) => {
     if (code !== 0) process.exit(code);
   });
 }
