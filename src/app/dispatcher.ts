@@ -13,6 +13,11 @@ export const MAX_ATTEMPTS = 3;
 export const RETRY_WAITS_MS: readonly number[] = [1000, 2000];
 /** Each rule sends at most once per channel in this time (D-42). */
 export const COOLDOWN_MS = 5 * 60_000;
+/**
+ * The longest Retry-After the dispatcher waits for (R-5, SPEC.md D-67). A channel asking for longer gets no
+ * further attempt for that alert and is reported failed, so the health monitor tells the PO if it lasts.
+ */
+export const MAX_RETRY_WAIT_MS = 60_000;
 
 export interface Quota {
   readonly per: "day" | "month";
@@ -64,10 +69,27 @@ export class Dispatcher {
   private readonly quotas: Readonly<Partial<Record<ChannelName, Quota>>>;
   /** Called with each channel's final outcome for an alert; errors in it are logged, never thrown. */
   onOutcome: (outcome: ChannelOutcome) => void = () => undefined;
+  private stopping = false;
+  private wakeStopped: () => void = () => undefined;
+  private readonly stopped = new Promise<void>((resolve) => (this.wakeStopped = resolve));
 
   constructor(private readonly options: DispatcherOptions) {
     for (const channel of options.channels) this.adapters.set(channel.name, channel);
     this.quotas = options.quotas ?? DEFAULT_QUOTAS;
+  }
+
+  /**
+   * Ends every retry wait at once and starts no further retry (R-5). A send already under way finishes and is
+   * recorded; the restart sweep continues from the recorded attempts.
+   */
+  stop(): void {
+    this.stopping = true;
+    this.wakeStopped();
+  }
+
+  /** Resolves when every send queued so far has finished. */
+  async idle(): Promise<void> {
+    await Promise.all([...this.queues.values()]);
   }
 
   /** Sends one decision to each of its channels; resolves when every channel has finished with it. */
@@ -150,10 +172,19 @@ export class Dispatcher {
         this.report(channel, "failed", result.reason);
         return;
       }
-      // Never retry earlier than the channel asks (ARCHITECTURE.md §2.1–2.2).
+      // Never retry earlier than the channel asks (ARCHITECTURE.md §2.1–2.2), and never wait longer than the limit.
       const wait = RETRY_WAITS_MS[attempt - 1] ?? 0;
       const asked = result.retryAfterSeconds === undefined ? 0 : result.retryAfterSeconds * 1000;
-      await this.options.sleep(Math.max(wait, asked));
+      if (asked > MAX_RETRY_WAIT_MS) {
+        logger.error("dispatch.retry_after_too_long", { ...where, attempt, retryAfterSeconds: result.retryAfterSeconds });
+        this.report(channel, "failed", result.reason);
+        return;
+      }
+      if (!this.stopping) await Promise.race([this.options.sleep(Math.max(wait, asked)), this.stopped]);
+      if (this.stopping) {
+        logger.warn("dispatch.retry_abandoned", { ...where, attempt });
+        return;
+      }
     }
   }
 

@@ -78,7 +78,10 @@ slow send never delays the next tick. Implemented in `src/app/pipeline.ts`.
 
 Retries (proposed): up to 3 attempts per channel, 1 s then 2 s apart, all with the same `alertId`. A `429` counts as a
 failed attempt and the next one waits for the channel's `Retry-After` when that is longer, even past the SC-1 budget;
-it never retries early (`ARCHITECTURE.md` §2.1–2.2). A send that throws is a failed attempt with reason `send_error`.
+it never retries early (`ARCHITECTURE.md` §2.1–2.2). It waits at most 60 s (`SPEC.md` D-67, R-5): a channel that asks
+for longer gets no further attempt for that alert (`dispatch.retry_after_too_long`) and counts as failed for the health
+monitor, so a channel held off for long is reported like any failing one. When Stark stops, a retry wait ends at once
+and no further attempt starts (`dispatch.retry_abandoned`); the restart sweep continues from the recorded attempts. A send that throws is a failed attempt with reason `send_error`.
 A channel that answers it will never accept sends again (a Discord webhook's `404`) gets one `failed` attempt, is
 marked dead (`DATABASE.md` `channel_settings.dead_since`) and is not retried. LINE's `409` for a retry key it has
 already accepted counts as `delivered`. A Gmail token that cannot be refreshed is a `failed` attempt with reason
