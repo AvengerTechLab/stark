@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { binanceProvider } from "../../src/feeds/binance.js";
 import { bitkubProvider } from "../../src/feeds/bitkub.js";
-import { SILENT_AFTER_MS, StreamFeed, type HttpResponse } from "../../src/feeds/stream-feed.js";
+import { MAX_FUTURE_MS, SILENT_AFTER_MS, StreamFeed, type HttpResponse } from "../../src/feeds/stream-feed.js";
 import { createLogger } from "../../src/logger.js";
 import type { FeedTick } from "../../src/ports/feed.js";
 import { FakeClock, FakeHttp, FakeSockets } from "../fakes/fake-network.js";
@@ -263,5 +263,41 @@ describe("StreamFeed: stop", () => {
     await clock.advance(5 * 60 * SECOND);
     expect(sockets.sockets).toHaveLength(1);
     expect(http.requests).toEqual([]);
+  });
+});
+
+// R-6 (audit MSAP-2026-11-04-01 F-009, MSAP-2026-11-09-01 F-110): a trade time ahead of the local clock, or not a
+// real time, is never passed on: one such tick used to block its pair in the pipeline until a restart.
+describe("StreamFeed: exchange times ahead of the clock (R-6)", () => {
+  const tradeAt = (time: string) => BINANCE_TRADE.replaceAll("1672515782136", time);
+  const NOW = Date.parse("2026-10-16T07:00:00.000Z");
+
+  it("drops a tick timed more than 5 s ahead of the local clock, logs it, and passes on the next normal one", async () => {
+    expect(MAX_FUTURE_MS).toBe(5 * SECOND);
+    const { sockets, ticks, last, start } = setup(binanceProvider(["BTC/USDT"]), ok("[]"));
+    await start();
+    sockets.last.open();
+    sockets.last.message(tradeAt(String(Date.parse("2100-01-01T00:00:00.000Z"))));
+    sockets.last.message(tradeAt(String(NOW - SECOND)));
+    expect(ticks.map((t) => t.exchangeTime.getTime())).toEqual([NOW - SECOND]);
+    expect(last("feed.tick_rejected")).toMatchObject({ exchange: "binance", pair: "BTC/USDT", reason: "time_in_future" });
+  });
+
+  it("accepts a tick exactly 5 s ahead and drops one a millisecond further", async () => {
+    const { sockets, ticks, start } = setup(binanceProvider(["BTC/USDT"]), ok("[]"));
+    await start();
+    sockets.last.open();
+    sockets.last.message(tradeAt(String(NOW + 5 * SECOND)));
+    sockets.last.message(tradeAt(String(NOW + 5 * SECOND + 1)));
+    expect(ticks.map((t) => t.exchangeTime.getTime())).toEqual([NOW + 5 * SECOND]);
+  });
+
+  it("drops a trade time that is not a real time (beyond the largest Date)", async () => {
+    const { sockets, ticks, last, start } = setup(binanceProvider(["BTC/USDT"]), ok("[]"));
+    await start();
+    sockets.last.open();
+    sockets.last.message(tradeAt("9999999999999999"));
+    expect(ticks).toEqual([]);
+    expect(last("feed.tick_rejected")).toMatchObject({ reason: "time_invalid" });
   });
 });

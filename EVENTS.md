@@ -34,6 +34,11 @@ Components and data flow: `ARCHITECTURE.md` §4–5. Storage: `DATABASE.md`. Own
 | `source` | `stream` or `poll` | Polling is the fallback while a stream is down (`ARCHITECTURE.md` §7) |
 
 Rules (proposed):
+- A tick whose `exchangeTime` is more than 5 seconds ahead of Stark's clock, or is not a real time, is dropped by the
+  feed before anything sees it (logged `feed.tick_rejected` with `time_in_future` or `time_invalid`; `SPEC.md` D-68,
+  R-6). Exactly 5 seconds ahead is still kept. Bitkub ticks and polled prices carry their arrival time, so only a
+  Binance trade time can be dropped this way; if Stark's own clock falls behind, the dropped ticks leave the feed
+  stale and the health monitor reports it (§2.4).
 - At most one tick per pair per second is kept and evaluated: the last one to arrive for that second of
   `exchangeTime`. The price log and the rule engine see the same ticks, so a replay (SC-2) gives the same decisions.
 - A kept tick is released when Stark's clock passes the end of its second, or at once when a tick of a later second
