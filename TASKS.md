@@ -260,10 +260,20 @@ Tick a task only with evidence: the commit, the file created, or the command run
 - [ ] **S6-17. Node.js 24 (D-64)** — `package.json` `engines` `>=24`, CI on Node 24, `@types/node` 24.19.2,
   `deploy/SETUP.md` §11 (install and the upgrade from 22 on the VPS). Locally on Node v24.22.2 (official tarball,
   SHA-256 checked) with npm 11.19.1: `npm ci`, then `npm run check` with PostgreSQL green (298 tests) before and
-  after the change, with no deprecation warning under `--trace-deprecation`. Open: CI on Node 24, the VPS upgrade
-  (§11.2) and its first backup run.
-- [ ] **Audit MSAP #2 (D-64)** — after S6-17 is on the VPS: the PO asked for an audit and the widest testing
-  before the remaining work. Scope to be set at its Start Gate.
+  after the change, with no deprecation warning under `--trace-deprecation`. CI on Node v24.22.2 / npm 11.19.1:
+  298 passed (PR #24, merged as `289e243`).
+  - VPS, 2026-11-08 (PO's output): `node_22.x` → `node_24.x` in `nodesource.sources`, `apt-get install nodejs`:
+    `node -v` v24.22.2, `npm -v` 11.19.1. `main` `289e243` (also brings R-4) rsynced; `npm ci`, build,
+    `npm prune --omit=dev` (production audit: 0 vulnerabilities), restart: `active`, `app.started` at 15:30:03
+    (Bangkok) with `telegram`. Open: the bot's reply to `/status`, and the first backup on Node 24 (03:30).
+  - Seen in the journal of the old process: `telegram.poll_failed` `network_error` on 2026-11-05 17:18 and
+    2026-11-08 08:12 (Bangkok); polling carried on, as designed (5 s retry).
+- [x] **Audit MSAP #2 (D-64, D-65)** — `MSAP-2026-11-09-01` on `main` @ `289e243`: COMPLETE, Stop Gate PASS
+  2026-11-27, findings frozen in `AUDIT/MSAP-2026-11-09-01/`. Nine dimensions: tests ×10 (298/298), shuffle (2
+  order-dependent tests), coverage 92.05 %, mutation 76.94 % (4,187 mutants), history secret scan (clean), probes
+  P-03…P-07, 35-day volume (12.1 M demo rows, 2.56 GB), three independent reviewers; Mode C blocked (no VPS output).
+  20 new findings: F-101 (S3) one request ends the process; F-102…F-106 (S2). Next: the PO authorises packages
+  (R-9 and R-10 recommended first).
 
 ## Next Phases (not started)
 
