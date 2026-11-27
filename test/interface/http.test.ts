@@ -1,11 +1,12 @@
 import { createHash } from "node:crypto";
-import { createServer, type Server } from "node:http";
+import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
+import { connect } from "node:net";
 import type { AddressInfo } from "node:net";
 import { afterEach, describe, expect, it } from "vitest";
 import { HealthMonitor } from "../../src/app/health.js";
 import { OwnerService } from "../../src/app/owner-service.js";
 import { PriceBoard } from "../../src/app/price-board.js";
-import { ownerHandler } from "../../src/interface/http-server.js";
+import { ownerHandler, type OwnerHttpDeps } from "../../src/interface/http-server.js";
 import { createLogger } from "../../src/logger.js";
 import { FakeChannel } from "../fakes/fake-channel.js";
 import { FakeAlertQuery, FakeChannelAdmin, FakeRuleAdmin, FakeSessionStore } from "../fakes/fake-owner-storage.js";
@@ -310,5 +311,50 @@ describe("owner HTTP API: channels, prices, pairs, alerts, health", () => {
     await login();
     expect((await call("GET", "/api/v1/health")).json).toMatchObject({ degraded: false, feeds: expect.any(Array) });
     expect((await call("GET", "/api/v1/nothing")).json).toEqual({ error: { code: "NOT_FOUND", message: "no such endpoint" } });
+  });
+});
+
+/** Sends `target` as the request line, byte for byte, and returns the status line (or "closed"). */
+function rawRequest(base: string, target: string): Promise<string> {
+  const { hostname, port } = new URL(base);
+  return new Promise((resolve, reject) => {
+    const socket = connect(Number(port), hostname, () => socket.write(`GET ${target} HTTP/1.1\r\nHost: ${hostname}:${port}\r\nConnection: close\r\n\r\n`));
+    let text = "";
+    socket.on("data", (chunk) => (text += String(chunk)));
+    socket.on("end", () => resolve(text.split("\r\n")[0] || "closed"));
+    socket.on("error", reject);
+  });
+}
+
+// R-9 (audit MSAP-2026-11-09-01 F-101): one request with a target that is not a valid URL ended the
+// process, because the URL was parsed outside the handler's error boundary.
+describe("owner HTTP API: malformed requests (R-9)", () => {
+  it("answers 400 to a request target that is not a valid URL, and keeps serving", async () => {
+    const { call, base } = await setup();
+    for (const target of ["//", "///", "http://a:99999/", "//[/"]) {
+      expect(await rawRequest(base, target)).toBe("HTTP/1.1 400 Bad Request");
+    }
+    expect(await call("GET", "/healthz")).toMatchObject({ status: 200, text: "ok" });
+  });
+
+  it("never rejects, even when the response cannot be written, and logs it", async () => {
+    const lines: Record<string, unknown>[] = [];
+    const logger = createLogger({ level: "debug", write: (l) => lines.push(JSON.parse(l) as Record<string, unknown>) });
+    const handler = ownerHandler({ logger, health: () => ({ degraded: false }) } as unknown as OwnerHttpDeps);
+    let destroyed = false;
+    const res = {
+      headersSent: false,
+      writeHead: () => {
+        throw new Error("socket gone");
+      },
+      end: () => undefined,
+      destroy: () => {
+        destroyed = true;
+      },
+    } as unknown as ServerResponse;
+    const req = { url: "/healthz", method: "GET", headers: {} } as unknown as IncomingMessage;
+    await expect(handler(req, res)).resolves.toBeUndefined();
+    expect(destroyed).toBe(true);
+    expect(lines.map((l) => l["event"])).toContain("owner.response_failed");
   });
 });

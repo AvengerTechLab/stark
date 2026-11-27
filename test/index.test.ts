@@ -1,5 +1,7 @@
+import { EventEmitter } from "node:events";
 import { describe, expect, it, vi } from "vitest";
-import { main } from "../src/index.js";
+import { installFatalHandlers, main } from "../src/index.js";
+import { createLogger } from "../src/logger.js";
 
 // Fake values for tests only; none is a real credential. No test here reaches a real service: the
 // database address below refuses connections, so start-up stops before any network call.
@@ -35,5 +37,37 @@ describe("main", () => {
     expect(text).toContain('"event":"app.start_failed"');
     expect(text).not.toContain("fake-db-pass");
     expect(text).not.toContain("FAKE-telegram-token");
+  });
+});
+
+// R-9 (audit MSAP-2026-11-09-01 F-101): an error nothing else caught is logged through Stark's logger, which
+// hides secrets, and the process then exits so systemd starts it clean (SPEC.md D-66).
+describe("installFatalHandlers", () => {
+  it("logs an unhandled rejection or uncaught exception without secrets, then exits with 1", () => {
+    const lines: string[] = [];
+    const logger = createLogger({ level: "info", secrets: ["FAKE-telegram-token"], write: (l) => lines.push(l) });
+    const target = new EventEmitter();
+    const exits: number[] = [];
+    installFatalHandlers(target, logger, (code) => exits.push(code));
+    target.emit("unhandledRejection", new Error("failed at https://api.telegram.org/botFAKE-telegram-token/x"));
+    target.emit("uncaughtException", new TypeError("boom"));
+    expect(exits).toEqual([1, 1]);
+    expect(lines[0]).toContain('"event":"process.unhandled_rejection"');
+    expect(lines[1]).toContain('"event":"process.uncaught_exception"');
+    expect(lines.join("")).not.toContain("FAKE-telegram-token");
+  });
+
+  it("is installed on the process only when the entry point asks for it", async () => {
+    const before = { rejection: process.listeners("unhandledRejection"), exception: process.listeners("uncaughtException") };
+    await output(() => main(ENV));
+    expect(process.listeners("unhandledRejection")).toEqual(before.rejection);
+    await output(() => main(ENV, { processGuards: true }));
+    const added = {
+      rejection: process.listeners("unhandledRejection").filter((l) => !before.rejection.includes(l)),
+      exception: process.listeners("uncaughtException").filter((l) => !before.exception.includes(l)),
+    };
+    for (const l of added.rejection) process.removeListener("unhandledRejection", l);
+    for (const l of added.exception) process.removeListener("uncaughtException", l);
+    expect([added.rejection.length, added.exception.length]).toEqual([1, 1]);
   });
 });
