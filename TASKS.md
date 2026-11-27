@@ -307,6 +307,9 @@ Detailed tasks are written when the phase becomes current. Order from the standa
     (`R-5_REMEDIATION_CONTEXT.md`; F-007 and F-014 RESOLVED on re-audit, with the MSAP-2026-11-09-01 extensions).
   - R-6 done: the feed drops a tick timed more than 5 s ahead of the clock, or not a real time
     (`R-6_REMEDIATION_CONTEXT.md`; F-009 and MSAP-2026-11-09-01 F-110 RESOLVED on re-audit).
+  - R-5 and R-6 on the VPS 2026-11-27 (PO's output): `main` `35521c3` deployed (`deploy/SETUP.md` §10, `npm ci`
+    15 s); restart at 13:53:37 Bangkok, `http.listening` and `app.started` (`telegram`) at 13:53:38; `dist` contains
+    `retry_after_too_long` (1) and `tick_rejected` (1).
 - [ ] **Extra channels (D-62, D-63):** Discord, then LINE, then email, configured on the VPS by the PO with
   `deploy/CHANNELS.md` (Discord written; LINE and email to follow). Not started.
   - R-1 done: a silent open stream is replaced after 60 s (`R-1_REMEDIATION_CONTEXT.md`; F-001 RESOLVED on re-audit).
@@ -350,6 +353,11 @@ Detailed tasks are written when the phase becomes current. Order from the standa
   retried and polling carried on. One missed heartbeat stays inside Healthchecks' 10-minute grace. Earlier in November
   only 2 such events were seen in several days. Open: whether the "Stark" check has gone Down (PO to look), and
   whether to raise it with VisperHost if it grows.
+- [ ] **VPS updates and a pending reboot.** The login banner on 2026-11-27 said "21 updates can be applied" and
+  "System restart required" (security updates installed by unattended-upgrades that need a reboot, usually a new
+  kernel), and offered Ubuntu 26.04.1 LTS. A reboot is a production change (PO to schedule); Stark and the backup
+  timer start again on their own (`systemctl enable`, `Persistent=true`). The release upgrade to 26.04 is a separate
+  PO decision and not recommended now (24.04 is supported until 2029).
 - [ ] **Repeat the restore test with real data.** The S6-15 restore proved the path end to end on an empty database
   (Stark has not run). Once Stark has run, repeat `deploy/BACKUP.md` §8 and check the tables and a row count.
 - [ ] **Moderate npm advisories in lint tooling.** `npm audit` on the VPS (2026-11-03) reported 11 moderate
