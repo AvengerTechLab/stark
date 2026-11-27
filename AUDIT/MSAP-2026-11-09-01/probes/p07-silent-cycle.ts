@@ -1,3 +1,4 @@
+/* eslint-disable -- audit record of MSAP-2026-11-09-01, kept as it was run; not part of the build or tests */
 // P-07 (audit MSAP-2026-11-09-01): a provider that accepts every connection but never publishes. Each new socket
 // opens at once and stays silent. Count prices delivered and how long the feed goes without one. Fakes only.
 import { describe, expect, it } from "vitest";

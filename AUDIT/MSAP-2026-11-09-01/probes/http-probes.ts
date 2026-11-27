@@ -1,3 +1,4 @@
+/* eslint-disable -- audit record of MSAP-2026-11-09-01, kept as it was run; not part of the build or tests */
 import { createHash } from "node:crypto";
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";

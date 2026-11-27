@@ -11,3 +11,6 @@ the test run (vitest includes `test/**` only).
 | `volume-setup.mjs`, `volume-load.sql` | 35 days × 4 demo pairs × 1 tick/s in a throwaway database | `node volume-setup.mjs`, then `psql -f volume-load.sql` |
 
 The A-1 probes P-01 and P-02 are in `AUDIT/MSAP-2026-11-04-01/probes/`.
+
+Each script starts with an `eslint-disable` line, added when committing so that `npm run lint` (which reads the whole
+repository) stays clean; the rest is as run.

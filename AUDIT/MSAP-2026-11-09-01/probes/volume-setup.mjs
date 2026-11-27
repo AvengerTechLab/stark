@@ -1,3 +1,4 @@
+/* eslint-disable -- audit record of MSAP-2026-11-09-01, kept as it was run; not part of the build or tests */
 // Audit MSAP-2026-11-09-01, dimension 7: builds Stark's schema in a throwaway database (stark_volume)
 // with the audited code's own migrations and partitions. Demo data only.
 import pg from "pg";
