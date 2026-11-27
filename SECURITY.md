@@ -97,3 +97,7 @@ alert. This threat model is a design review, not an MSAP audit; A-1 checks the c
 | ~~Which uptime monitor receives the heartbeat (D-43)~~ Healthchecks.io (D-57, 2026-10-19) | Closed |
 | Whoever takes over the VPS can also delete the backups: the R2 token must delete to prune (D-58) | Open; options to be put to the PO (`TASKS.md` Discovered Work) |
 | ~~Google's 7-day refresh token rule (T-21) not read from the primary source~~ Read 2026-10-17 (S6-13) | Closed |
+| One request with a malformed target (for example `http://localhost:8080//`) ends the Stark process; reachable through the tunnel and from a web page in the PO's browser while the tunnel is open (MSAP-2026-11-09-01 F-101, S3) | Open; proposed R-9. Meanwhile the tunnel is opened only while the page is in use |
+| The login lock does not hold against parallel guesses, and each failure past the 5th sends a Telegram notice (F-103); no Host check, so DNS rebinding passes the Origin check (F-108) (T-02, T-04) | Open; proposed R-11 |
+| Changing the owner password does not end existing sessions (F-104, T-22) | Open; proposed R-11 |
+| Deploy copies `.env.*` and installs dev dependencies as root on the VPS; systemd sandboxing partial (F-116, F-117, T-13) | Open; proposed R-15 |

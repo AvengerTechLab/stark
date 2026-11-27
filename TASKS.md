@@ -268,8 +268,12 @@ Tick a task only with evidence: the commit, the file created, or the command run
     (Bangkok) with `telegram`. Open: the bot's reply to `/status`, and the first backup on Node 24 (03:30).
   - Seen in the journal of the old process: `telegram.poll_failed` `network_error` on 2026-11-05 17:18 and
     2026-11-08 08:12 (Bangkok); polling carried on, as designed (5 s retry).
-- [ ] **Audit MSAP #2 (D-64)** — after S6-17 is on the VPS: the PO asked for an audit and the widest testing
-  before the remaining work. Scope to be set at its Start Gate.
+- [x] **Audit MSAP #2 (D-64, D-65)** — `MSAP-2026-11-09-01` on `main` @ `289e243`: COMPLETE, Stop Gate PASS
+  2026-11-27, findings frozen in `AUDIT/MSAP-2026-11-09-01/`. Nine dimensions: tests ×10 (298/298), shuffle (2
+  order-dependent tests), coverage 92.05 %, mutation 76.94 % (4,187 mutants), history secret scan (clean), probes
+  P-03…P-07, 35-day volume (12.1 M demo rows, 2.56 GB), three independent reviewers; Mode C blocked (no VPS output).
+  20 new findings: F-101 (S3) one request ends the process; F-102…F-106 (S2). Next: the PO authorises packages
+  (R-9 and R-10 recommended first).
 
 ## Next Phases (not started)
 
