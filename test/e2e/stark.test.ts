@@ -27,7 +27,7 @@ afterEach(async () => {
   running = [];
 });
 
-async function boot(seed?: (stores: { rules: FakeRuleStore; deliveries: FakeDeliveryLog }) => void) {
+async function boot(seed?: (stores: { rules: FakeRuleStore; deliveries: FakeDeliveryLog; internet: FakeInternet }) => void) {
   const config = loadConfig({
     DATABASE_URL: "postgres://not-used/in-this-test",
     OWNER_PASSWORD_HASH: HASH,
@@ -43,7 +43,7 @@ async function boot(seed?: (stores: { rules: FakeRuleStore; deliveries: FakeDeli
   const rules = new FakeRuleStore();
   const settings = new FakeChannelSettings("telegram", "line", "discord", "email");
   const deliveries = new FakeDeliveryLog();
-  seed?.({ rules, deliveries });
+  seed?.({ rules, deliveries, internet });
   let next = 0;
   const lines: string[] = [];
   const storage = { up: true };
@@ -226,6 +226,68 @@ describe("Stark end to end on fakes (TASKS.md S6-11)", () => {
     await clock.advance(30 * 60_000);
     expect({ gets: internet.gets.length, posts: internet.posts.length, sockets: sockets.sockets.length }).toEqual(before);
     expect(sockets.sockets.every((s) => s.closed)).toBe(true);
+  });
+
+  // R-5 (audit MSAP-2026-11-04-01 F-014): a stop waits for alerts being sent, at most 10 s.
+  const alertBeingSent = async () => {
+    const env = await boot();
+    const { clock, sockets, internet, web } = env;
+    await web("POST", "/api/v1/session", { password: "demo-password" });
+    await web("POST", "/api/v1/rules", { kind: "above", pair: "BTC/THB", level: "3000000", channels: ["telegram"] });
+    await clock.advance(0);
+    sockets.last.open();
+    internet.holdSends = true;
+    sockets.last.message(tickerAt("3000000.5"));
+    await clock.advance(1000);
+    await clock.advance(0);
+    expect(internet.posts.filter((p) => p.url.endsWith("/sendMessage")).length).toBeGreaterThan(0);
+    running = [];
+    let stopped = false;
+    const stopping = env.stark.stop().then(() => (stopped = true));
+    return { ...env, stopping, isStopped: () => stopped };
+  };
+
+  it("on stop, waits for an alert still being sent before it reports stopped (R-5)", async () => {
+    const { clock, internet, deliveries, stopping, isStopped } = await alertBeingSent();
+    await clock.advance(0);
+    expect(isStopped()).toBe(false);
+    internet.releaseSends();
+    await stopping;
+    expect(deliveries.recorded.map((a) => `${a.channel}:${a.status}`)).toEqual(["telegram:delivered"]);
+  });
+
+  it("on stop, sends no more of the alerts a restart left unsent (R-5)", async () => {
+    const unsent = (n: number): AlertDecision => ({
+      id: `0000bbb${n}-0000-4000-8000-000000000000`,
+      ruleId: `r${n}`,
+      tickId: `t${n}`,
+      price: "100",
+      referencePrice: null,
+      changePercent: null,
+      decidedAt: new Date(T0.getTime() - (10 - n) * 60_000),
+      channels: ["telegram"],
+      message: `[Stark] demo alert ${n} left unsent`,
+    });
+    const { stark, clock, internet } = await boot(({ rules, internet }) => {
+      rules.decisions.push(unsent(1), unsent(2), unsent(3));
+      internet.holdSends = true;
+    });
+    await clock.advance(0);
+    running = [];
+    const stopping = stark.stop();
+    await clock.advance(0);
+    internet.releaseSends();
+    await stopping;
+    expect(internet.telegramTexts().filter((t) => t.includes("left unsent"))).toEqual(["[Stark] demo alert 1 left unsent"]);
+  });
+
+  it("on stop, gives up waiting for a send after 10 s and says so (R-5)", async () => {
+    const { clock, lines, stopping, isStopped } = await alertBeingSent();
+    await clock.advance(9_999);
+    expect(isStopped()).toBe(false);
+    await clock.advance(1);
+    await stopping;
+    expect(lines.some((l) => l.includes('"event":"app.drain_timeout"'))).toBe(true);
   });
 
   it("never logs a credential", async () => {

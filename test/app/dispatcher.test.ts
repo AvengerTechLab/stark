@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Dispatcher, DEFAULT_QUOTAS, usagePeriod } from "../../src/app/dispatcher.js";
+import { Dispatcher, DEFAULT_QUOTAS, MAX_RETRY_WAIT_MS, usagePeriod } from "../../src/app/dispatcher.js";
 import { createLogger } from "../../src/logger.js";
 import type { AlertChannel, ChannelName, SendResult } from "../../src/ports/channel.js";
 import type { AlertDecision } from "../../src/ports/storage.js";
@@ -25,7 +25,7 @@ function decision(id: string, channels: ChannelName[], ruleId = "rule-1"): Alert
   };
 }
 
-function setup(options: { channels?: AlertChannel[]; on?: ChannelName[] } = {}) {
+function setup(options: { channels?: AlertChannel[]; on?: ChannelName[]; sleep?: (ms: number) => Promise<void> } = {}) {
   const clock = { now: at(0) };
   const waits: number[] = [];
   const lines: Record<string, unknown>[] = [];
@@ -43,10 +43,12 @@ function setup(options: { channels?: AlertChannel[]; on?: ChannelName[] } = {}) 
     deliveries,
     logger: createLogger({ level: "debug", write: (line) => lines.push(JSON.parse(line)) }),
     now: () => clock.now,
-    sleep: async (ms) => {
-      waits.push(ms);
-      clock.now = new Date(clock.now.getTime() + ms);
-    },
+    sleep:
+      options.sleep ??
+      (async (ms) => {
+        waits.push(ms);
+        clock.now = new Date(clock.now.getTime() + ms);
+      }),
   });
   const byName = (name: ChannelName) => channels.find((c) => c.name === name) as FakeChannel;
   const attempts = (channel?: ChannelName) =>
@@ -272,5 +274,59 @@ describe("Dispatcher: outcomes for the health monitor (EVENTS.md §2.4)", () => 
     await dispatcher.dispatch(decision("a1", ["telegram", "line"]));
     await dispatcher.dispatch(decision("a2", ["telegram"]));
     expect(outcomes).toEqual(["delivered"]);
+  });
+});
+
+// R-5 (audit MSAP-2026-11-04-01 F-007, F-014; MSAP-2026-11-09-01 extensions): a channel cannot hold the
+// dispatcher for as long as it likes, and a stop does not leave a send half done.
+describe("Dispatcher: Retry-After limit and stopping (R-5)", () => {
+  it("waits at most 60 s: a longer Retry-After ends that channel's attempts and reports it failed", async () => {
+    expect(MAX_RETRY_WAIT_MS).toBe(60_000);
+    const outcomes: string[] = [];
+    const { dispatcher, byName, waits, attempts, events } = setup();
+    dispatcher.onOutcome = (o) => outcomes.push(`${o.channel}:${o.outcome}(${o.reason ?? ""})`);
+    byName("telegram").willReturn({ status: "failed", reason: "http_429", retryAfterSeconds: 3600 });
+    await dispatcher.dispatch(decision("a1", ["telegram", "line"]));
+    expect(waits).toEqual([]);
+    expect(attempts("telegram")).toEqual(["a1/telegram#1:failed(http_429)"]);
+    expect(outcomes.sort()).toEqual(["line:delivered()", "telegram:failed(http_429)"]);
+    expect(events()).toContain("dispatch.retry_after_too_long");
+  });
+
+  it("still waits a Retry-After of exactly 60 s", async () => {
+    const { dispatcher, byName, waits, attempts } = setup();
+    byName("telegram").willReturn({ status: "failed", reason: "http_429", retryAfterSeconds: 60 });
+    await dispatcher.dispatch(decision("a1", ["telegram"]));
+    expect(waits).toEqual([60_000]);
+    expect(attempts()).toEqual(["a1/telegram#1:failed(http_429)", "a1/telegram#2:delivered"]);
+  });
+
+  it("ends a retry wait at once when stopped, and makes no further attempt", async () => {
+    const { dispatcher, byName, attempts, events } = setup({ sleep: () => new Promise<void>(() => undefined) });
+    byName("telegram").willReturn({ status: "failed", reason: "http_500" });
+    const sending = dispatcher.dispatch(decision("a1", ["telegram"]));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(attempts()).toEqual(["a1/telegram#1:failed(http_500)"]);
+    dispatcher.stop();
+    await sending;
+    expect(attempts()).toEqual(["a1/telegram#1:failed(http_500)"]);
+    expect(events()).toContain("dispatch.retry_abandoned");
+  });
+
+  it("idle() resolves only when every queued send has finished", async () => {
+    let release: () => void = () => undefined;
+    const slow: AlertChannel = {
+      name: "telegram",
+      send: () => new Promise<SendResult>((resolve) => (release = () => resolve({ status: "delivered" }))),
+    };
+    const { dispatcher, attempts } = setup({ channels: [slow] });
+    void dispatcher.dispatch(decision("a1", ["telegram"]));
+    let idle = false;
+    const waiting = dispatcher.idle().then(() => (idle = true));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(idle).toBe(false);
+    release();
+    await waiting;
+    expect(attempts()).toEqual(["a1/telegram#1:delivered"]);
   });
 });

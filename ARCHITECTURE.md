@@ -229,6 +229,7 @@ chosen host.
 | Channel send fails | Retry with backoff using the same alert ID, so the channel never gets the same alert twice; record each attempt |
 | LINE free quota reached | Stop LINE sends; tell the PO through another channel (D-17) |
 | Process restarts | Rules and settings reload from storage; no alert decision is lost because each is stored before it is sent |
+| Process stops (SIGTERM) | Feeds and timers stop; ticks being processed and alerts being sent are given up to 10 s to finish (`app.drain_timeout` if not); retry waits end at once; the restart sweep resends what is left (R-5, `SPEC.md` D-67) |
 | Process or host down | A supervisor restarts the process on crash; the outside uptime monitor tells the PO when heartbeats stop (`SPEC.md` D-43, `EVENTS.md` §2.4) |
 | A price hovers at a level | Decisions follow D-20; sends are limited to one per rule per channel per 5 minutes (D-42) |
 

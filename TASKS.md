@@ -280,6 +280,10 @@ Tick a task only with evidence: the commit, the file created, or the command run
   - R-10 done: a change rule's reference must be within 2 minutes before its cutoff, so a price from before a gap
     no longer fires a false "N นาที" alert (`R-10_REMEDIATION_CONTEXT.md`; F-102 RESOLVED on re-audit). `change`
     rules may be used again once R-10 is on the VPS.
+  - On the VPS 2026-11-27 (PO's output): `main` `11ecc2b` deployed with `deploy/SETUP.md` §10 (`npm ci` 2 min);
+    restart at 10:39:23 Bangkok, `http.listening` and `app.started` (`telegram`) at 10:39:25; `dist` contains
+    `owner.response_failed` (1); `curl --path-as-is http://127.0.0.1:8080//` → `400` and the service stayed
+    `active` (F-101's request, which ended the process before R-9).
 
 ## Next Phases (not started)
 
@@ -299,6 +303,8 @@ Detailed tasks are written when the phase becomes current. Order from the standa
   - R-3 to R-6 and R-8 authorised (D-63), to be done in the order R-4, R-5, R-6, R-3, R-8.
   - R-4 done: the bot confirms each batch of Telegram updates before handling it, skips an update it cannot
     handle, and survives a failed round (`R-4_REMEDIATION_CONTEXT.md`; F-005 and F-006 RESOLVED on re-audit).
+  - R-5 done: Retry-After waits are capped at 60 s, and a stop lets sends under way finish within 10 s
+    (`R-5_REMEDIATION_CONTEXT.md`; F-007 and F-014 RESOLVED on re-audit, with the MSAP-2026-11-09-01 extensions).
 - [ ] **Extra channels (D-62, D-63):** Discord, then LINE, then email, configured on the VPS by the PO with
   `deploy/CHANNELS.md` (Discord written; LINE and email to follow). Not started.
   - R-1 done: a silent open stream is replaced after 60 s (`R-1_REMEDIATION_CONTEXT.md`; F-001 RESOLVED on re-audit).
@@ -337,6 +343,11 @@ Detailed tasks are written when the phase becomes current. Order from the standa
   - Checked 2026-11-04 (`docker inspect`, output sent by the PO): no container mounts `/etc/stark`, `/opt/stark` or the
     host's PostgreSQL. Mounts are Docker volumes plus `/opt/strange-watchdog/Caddyfile`; all three containers are on
     the `strange-watchdog_default` bridge network, none privileged.
+- [ ] **Intermittent network errors from the VPS.** The journal of 2026-11-25 to 2026-11-27 (PO's output) shows
+  9 `heartbeat.failed` and 11 `telegram.poll_failed`, all `network_error`, single events hours apart; each was
+  retried and polling carried on. One missed heartbeat stays inside Healthchecks' 10-minute grace. Earlier in November
+  only 2 such events were seen in several days. Open: whether the "Stark" check has gone Down (PO to look), and
+  whether to raise it with VisperHost if it grows.
 - [ ] **Repeat the restore test with real data.** The S6-15 restore proved the path end to end on an empty database
   (Stark has not run). Once Stark has run, repeat `deploy/BACKUP.md` §8 and check the tables and a row count.
 - [ ] **Moderate npm advisories in lint tooling.** `npm audit` on the VPS (2026-11-03) reported 11 moderate

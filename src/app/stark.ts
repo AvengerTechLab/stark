@@ -30,6 +30,8 @@ export const PAIRS_REFRESH_MS = 60 * 60_000;
 export const MAINTENANCE_INTERVAL_MS = 24 * 60 * 60_000;
 /** Decisions this recent are resent at start where a channel has not finished them; LINE's retry key lasts 24 h. */
 export const SWEEP_WINDOW_MS = 24 * 60 * 60_000;
+/** How long a stop waits for ticks being processed and alerts being sent (R-5, SPEC.md D-67). */
+export const DRAIN_MS = 10_000;
 const SWEEP_LIMIT = 500;
 
 export interface Stores {
@@ -234,7 +236,10 @@ export async function startStark(deps: StarkDeps): Promise<StarkHandle> {
   // not finished them; the dispatcher's idempotency skips every channel that has.
   const sweep = (async () => {
     const recent = await stores.alerts.decisions(new Date(now().getTime() - SWEEP_WINDOW_MS), now(), SWEEP_LIMIT);
-    for (const { decision } of [...recent].reverse()) await dispatcher.dispatch(decision);
+    for (const { decision } of [...recent].reverse()) {
+      if (stopped) break;
+      await dispatcher.dispatch(decision);
+    }
   })().catch((error: unknown) => logger.error("app.sweep_failed", { error }));
 
   logger.info("app.started", { channelsConfigured: configured as ChannelName[] });
@@ -242,7 +247,15 @@ export async function startStark(deps: StarkDeps): Promise<StarkHandle> {
     async stop() {
       stopped = true;
       for (const stop of [...stops].reverse()) await stop();
-      await sweep;
+      // Feeds and timers are stopped, so no new tick arrives. Let the ticks and alerts under way finish,
+      // within DRAIN_MS; retry waits end at once (R-5, F-014).
+      dispatcher.stop();
+      const drained = Promise.all([sweep, pipeline.idle()]).then(() => dispatcher.idle());
+      let cancel: () => void = () => undefined;
+      const limit = new Promise<"timeout">((resolve) => (cancel = timers.set(DRAIN_MS, () => resolve("timeout"))));
+      const result = await Promise.race([drained.then(() => "drained" as const), limit]);
+      cancel();
+      if (result === "timeout") logger.warn("app.drain_timeout", { afterMs: DRAIN_MS });
       logger.info("app.stopped");
     },
   };

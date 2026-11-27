@@ -19,6 +19,9 @@ export class FakeInternet {
   bitkubSymbols = BITKUB_SYMBOLS;
   /** Status the LINE push API answers with; set to 500 to make LINE fail. */
   lineStatus = 200;
+  /** While true, Telegram's sendMessage does not answer until releaseSends() (a slow channel). */
+  holdSends = false;
+  private held: (() => void)[] = [];
 
   constructor(private readonly telegramToken: string) {}
 
@@ -36,7 +39,10 @@ export class FakeInternet {
     this.posts.push({ url, request });
     const telegram = `https://api.telegram.org/bot${this.telegramToken}/`;
     if (url === `${telegram}getUpdates`) return this.getUpdates(JSON.parse(request.body) as { offset?: number; timeout?: number; limit?: number });
-    if (url === `${telegram}sendMessage`) return ok({ ok: true, result: { message_id: 1 } });
+    if (url === `${telegram}sendMessage`) {
+      if (this.holdSends) await new Promise<void>((resolve) => this.held.push(resolve));
+      return ok({ ok: true, result: { message_id: 1 } });
+    }
     if (url === "https://api.line.me/v2/bot/message/push") {
       return this.lineStatus === 200 ? ok({ sentMessages: [{ id: "1" }] }) : { status: this.lineStatus, retryAfter: null, body: "{}" };
     }
@@ -45,6 +51,12 @@ export class FakeInternet {
     if (url === "https://gmail.googleapis.com/gmail/v1/users/me/messages/send") return ok({ id: "m1" });
     return { status: 404, retryAfter: null, body: "" };
   };
+
+  /** Answers every held sendMessage and stops holding. */
+  releaseSends(): void {
+    this.holdSends = false;
+    for (const answer of this.held.splice(0)) answer();
+  }
 
   /** The PO sends `text` to the bot from their private chat. */
   telegramMessage(chatId: number, text: string, type = "private"): void {
