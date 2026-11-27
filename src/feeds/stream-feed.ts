@@ -48,6 +48,12 @@ export const BLOCKED_MS = 60_000;
  * Binance's ping frames are answered below the WebSocket API. Equal to the health monitor's stale time (SPEC.md D-60).
  */
 export const SILENT_AFTER_MS = 60_000;
+/**
+ * How far ahead of the local clock an exchange time may be (R-6, SPEC.md D-68). A later one, or one that is not a
+ * real time, is dropped before anything sees it: in the pipeline it made every later tick of the pair look out of
+ * order until a restart (audit MSAP-2026-11-04-01 F-009, MSAP-2026-11-09-01 F-110).
+ */
+export const MAX_FUTURE_MS = 5_000;
 
 const none = () => undefined;
 
@@ -214,7 +220,14 @@ export class StreamFeed implements PriceFeed {
   }
 
   private emit(ticks: readonly FeedTick[]): void {
+    const latest = this.deps.now().getTime() + MAX_FUTURE_MS;
     for (const tick of ticks) {
+      const time = tick.exchangeTime.getTime();
+      if (!Number.isFinite(time) || time > latest) {
+        const reason = Number.isFinite(time) ? "time_in_future" : "time_invalid";
+        this.deps.logger.warn("feed.tick_rejected", { exchange: this.exchange, pair: tick.pair, reason });
+        continue;
+      }
       try {
         this.onTick(tick);
       } catch (error) {

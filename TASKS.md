@@ -305,6 +305,8 @@ Detailed tasks are written when the phase becomes current. Order from the standa
     handle, and survives a failed round (`R-4_REMEDIATION_CONTEXT.md`; F-005 and F-006 RESOLVED on re-audit).
   - R-5 done: Retry-After waits are capped at 60 s, and a stop lets sends under way finish within 10 s
     (`R-5_REMEDIATION_CONTEXT.md`; F-007 and F-014 RESOLVED on re-audit, with the MSAP-2026-11-09-01 extensions).
+  - R-6 done: the feed drops a tick timed more than 5 s ahead of the clock, or not a real time
+    (`R-6_REMEDIATION_CONTEXT.md`; F-009 and MSAP-2026-11-09-01 F-110 RESOLVED on re-audit).
 - [ ] **Extra channels (D-62, D-63):** Discord, then LINE, then email, configured on the VPS by the PO with
   `deploy/CHANNELS.md` (Discord written; LINE and email to follow). Not started.
   - R-1 done: a silent open stream is replaced after 60 s (`R-1_REMEDIATION_CONTEXT.md`; F-001 RESOLVED on re-audit).

@@ -9,7 +9,7 @@ import { startStark, type StarkHandle } from "../../src/app/stark.js";
 import { loadConfig } from "../../src/config.js";
 import { createLogger } from "../../src/logger.js";
 import type { AlertDecision } from "../../src/ports/storage.js";
-import { BITKUB_TICKER } from "../feeds/fixtures.js";
+import { BINANCE_TRADE, BITKUB_TICKER } from "../feeds/fixtures.js";
 import { FakeInternet } from "../fakes/fake-internet.js";
 import { FakeClock, FakeSockets } from "../fakes/fake-network.js";
 import { FakeAlertQuery, FakeChannelAdmin, FakeRuleAdmin, FakeSessionStore } from "../fakes/fake-owner-storage.js";
@@ -288,6 +288,27 @@ describe("Stark end to end on fakes (TASKS.md S6-11)", () => {
     await clock.advance(1);
     await stopping;
     expect(lines.some((l) => l.includes('"event":"app.drain_timeout"'))).toBe(true);
+  });
+
+  // R-6 (F-009, probe P-02 of MSAP-2026-11-04-01 as a test): one Binance trade timed in the future used to make
+  // the pipeline drop every later tick of the pair as out of order, so its rules stopped until a restart.
+  it("keeps alerting on a pair after Binance sends a trade timed in the future (R-6)", async () => {
+    const { clock, sockets, internet, web, lines } = await boot();
+    await web("POST", "/api/v1/session", { password: "demo-password" });
+    // ETH/USDT: the pair the demo exchange-info fixture lists.
+    await web("POST", "/api/v1/rules", { kind: "above", pair: "ETH/USDT", level: "1", channels: ["telegram"] });
+    await clock.advance(0);
+    expect(sockets.last.url).toContain("ethusdt@trade");
+    sockets.last.open();
+    const trade = (time: number, price: string) =>
+      BINANCE_TRADE.replaceAll("1672515782136", String(time)).replace("BTCUSDT", "ETHUSDT").replace('"p": "0.001"', `"p": "${price}"`);
+    sockets.last.message(trade(Date.parse("2100-01-01T00:00:00.000Z"), "0.5"));
+    await clock.advance(1000);
+    sockets.last.message(trade(clock.now().getTime() - 200, "2"));
+    await clock.advance(1000);
+    await clock.advance(0);
+    expect(internet.telegramTexts().some((t) => t.startsWith("[Stark] ETH/USDT"))).toBe(true);
+    expect(lines.some((l) => l.includes('"event":"feed.tick_rejected"'))).toBe(true);
   });
 
   it("never logs a credential", async () => {
