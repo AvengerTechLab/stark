@@ -284,6 +284,57 @@ vps# node -v
 ถ้าต้องถอยกลับเป็น 22: เปลี่ยน `node_24.x` กลับเป็น `node_22.x` ด้วย `sed` แบบเดียวกัน แล้ว
 `apt-get update && apt-get install -y --allow-downgrades nodejs=22.*` และ deploy โค้ด commit ก่อน D-64
 
+## 12. ติดตั้งอัปเดตและ reboot
+
+ใช้เมื่อข้อความตอน SSH ขึ้นว่า `*** System restart required ***` หรือมี updates รอติดตั้ง Stark จะหยุดประมาณ 1–2 นาที
+แล้วเปิดเองหลังบูต (`systemctl enable`) backup ที่พลาดไประหว่างนั้นจะรันเองเมื่อเครื่องกลับมา (`Persistent=true`)
+อย่าทำช่วง 03:20–03:50 น. (เวลา backup) และอย่าใช้ `do-release-upgrade` (อัปเกรด Ubuntu ทั้งรุ่น เป็นเรื่องแยก PO ตัดสิน)
+
+1. ตรวจก่อน:
+
+   ```
+   vps# systemctl is-active stark-backup.service
+   vps# debconf-show grub-pc | grep install_devices
+   ```
+
+   บรรทัดแรกต้องได้ `inactive` (backup ไม่ได้รันอยู่) บรรทัดที่สองต้องมี `/dev/sda` (ดิสก์ที่เครื่องใช้บูต) ถ้าว่าง
+   หรือเป็นอย่างอื่น ให้หยุดแล้วแจ้ง Claude
+
+2. ติดตั้งอัปเดต:
+
+   ```
+   vps# apt-get update
+   vps# apt-get upgrade
+   ```
+
+   ตอบ `Y` เมื่อถาม ถ้ามีหน้าจอถามขึ้นมา:
+   - **ไฟล์ตั้งค่าที่เราแก้ไว้** (เช่น `sshd_config`): เลือก **keep the local version currently installed**
+     เพื่อเก็บการตั้งค่าความปลอดภัยเดิมไว้ (ข้อ 1)
+   - **console-setup** และ **grub-pc**: ตอบตามข้อ 2 ด้านบน (grub-pc เลือก `/dev/sda` ทั้งลูก)
+
+3. Reboot:
+
+   ```
+   vps# reboot
+   ```
+
+   หน้าต่าง SSH จะหลุด รอ 1–2 นาทีแล้ว `mac$ ssh root@143.14.11.53` ใหม่ ถ้าเกิน 5 นาทีแล้วยังเข้าไม่ได้ ให้เปิด
+   console บนหน้าเว็บ VisperHost
+
+4. ตรวจหลังบูต:
+
+   ```
+   vps# uname -r; uptime
+   vps# systemctl is-active stark postgresql ufw
+   vps# journalctl -u stark -b --no-pager | grep -E '"event":"(app|db|http)\.'
+   vps# systemctl list-timers stark-backup.timer --no-pager
+   vps# ss -tlnp | grep -E ':8080|:5432'
+   vps# ls /var/run/reboot-required 2>/dev/null || echo no-reboot-needed
+   ```
+
+   ต้องได้ `active` ทั้ง 3 ตัว มี `app.started` หลังเวลาบูต backup มีเวลารันครั้งถัดไป พอร์ต 8080 และ 5432 อยู่บน
+   `127.0.0.1` เท่านั้น และบรรทัดสุดท้ายได้ `no-reboot-needed` จากนั้นส่ง `/status` ถึงบอทใน Telegram
+
 ## ส่งผลกลับมา
 
 ส่งผลของ 4 คำสั่งนี้มาให้ Claude (ไม่มีข้อมูลลับในผลเหล่านี้):
