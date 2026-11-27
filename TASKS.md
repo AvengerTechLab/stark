@@ -277,6 +277,9 @@ Tick a task only with evidence: the commit, the file created, or the command run
   - R-9 and R-10 authorised (D-66).
   - R-9 done: a malformed request target gets `400`; the handler never rejects; uncaught errors are logged, then
     exit 1 (`AUDIT/MSAP-2026-11-09-01/R-9_REMEDIATION_CONTEXT.md`; F-101 RESOLVED on re-audit).
+  - R-10 done: a change rule's reference must be within 2 minutes before its cutoff, so a price from before a gap
+    no longer fires a false "N นาที" alert (`R-10_REMEDIATION_CONTEXT.md`; F-102 RESOLVED on re-audit). `change`
+    rules may be used again once R-10 is on the VPS.
 
 ## Next Phases (not started)
 

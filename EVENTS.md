@@ -178,7 +178,10 @@ Reaching the level counts (`SPEC.md` D-31).
 ### 3.3 Percentage rules
 
 1. The reference price is the price of the last stored tick for the same exchange and pair whose `exchangeTime` is at
-   or before `tick.exchangeTime − windowMinutes`.
+   or before `tick.exchangeTime − windowMinutes` (the cutoff) and **no more than 2 minutes before the cutoff**
+   (`SPEC.md` D-66, R-10). An older tick means a gap in the price log (Stark or the feed was down, or the pair had no
+   rule and was not streamed), so it is no reference: "N นาทีก่อน" in the message stays true within 2 minutes. A pair
+   with no tick in those 2 minutes gives no change alert for that tick.
 2. If no such tick exists (Stark has not been running that long, or there is a gap), or its price is 0, the condition
    is false.
 3. `changePercent = (price − referencePrice) ÷ referencePrice × 100`, computed exactly.
@@ -204,6 +207,8 @@ A new or re-enabled rule starts `armed`. If its condition is already true on its
 | `above` BTC/THB, level 100 | 99 → 100 → 101 → 99 → 100 | Fires at the first 100; re-arms at 99; fires again at the second 100. If the second 100 comes within 5 minutes of the first send, it is stored but its sends are skipped (`cooldown`, D-42) |
 | `change` BTC/USDT, 5 %, 60 min, `up`; price 60 min earlier 100 | 104 → 105 → 106 | Fires at 105 (+5.00 %); nothing at 106 |
 | `change` as above, Stark started 10 min ago | any | Nothing: no reference price yet |
+| `change` as above; the last stored tick before the cutoff is 3 hours older than it (Stark was down, or the pair had no rule) | 110 | Nothing: no tick within 2 minutes before the cutoff (R-10) |
+| `change` as above; a tick of 100 exactly 2 minutes before the cutoff, none after it | 105 | Fires (+5.00 %): the 2-minute limit is inclusive |
 
 ### 2.5 Health messages (wording decided in `SPEC.md` D-55)
 

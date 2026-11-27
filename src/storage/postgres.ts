@@ -166,13 +166,13 @@ export class PgPriceLog implements PriceLog {
     }
   }
 
-  async priceAtOrBefore(exchange: Exchange, pair: string, time: Date): Promise<string | undefined> {
+  async priceAtOrBefore(exchange: Exchange, pair: string, time: Date, notBefore: Date): Promise<string | undefined> {
     const { base, quote } = splitPair(pair);
     const { rows } = await this.pool.query<{ price: string }>(
       `SELECT price FROM ${TABLES.priceTicks}
-       WHERE exchange = $1 AND base = $2 AND quote = $3 AND exchange_time <= $4
+       WHERE exchange = $1 AND base = $2 AND quote = $3 AND exchange_time <= $4 AND exchange_time >= $5
        ORDER BY exchange_time DESC LIMIT 1`,
-      [exchange, base, quote, time],
+      [exchange, base, quote, time, notBefore],
     );
     return rows[0]?.price;
   }

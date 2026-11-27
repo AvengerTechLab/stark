@@ -56,6 +56,17 @@ export function referenceCutoff(exchangeTime: Date, windowMinutes: number): Date
   return new Date(exchangeTime.getTime() - windowMinutes * 60_000);
 }
 
+/**
+ * How much older than the cutoff a reference may be (SPEC.md D-66). An older one means a gap in the price log
+ * (Stark or the feed was down, or the pair had no rule), and "N minutes ago" would not be true (R-10, F-102).
+ */
+export const REFERENCE_MAX_AGE_MS = 2 * 60_000;
+
+/** The earliest exchange time a reference tick may have (EVENTS.md §3.3 step 1). */
+export function referenceEarliest(exchangeTime: Date, windowMinutes: number): Date {
+  return new Date(referenceCutoff(exchangeTime, windowMinutes).getTime() - REFERENCE_MAX_AGE_MS);
+}
+
 function conditionHolds(rule: Rule, price: string, reference: string | undefined): boolean {
   switch (rule.kind) {
     case "above":
